@@ -1,11 +1,11 @@
 // Statistiques d'un enfant : résumé global, temps par activité, puis le bilan de chaque jeu (la lecture et les
 // mini-jeux du hub — ARCHITECTURE §7, HUB.md §5.5/§6.4). Pas de carte de compétences dans Petits Lecteurs.
 import { useEffect, useState } from 'preact/hooks';
-import { trackLabel } from '../engine';
-import { GAMES, visibleGameIds } from '../games';
-import { ColoringStats } from '../games/coloring/ColoringStats';
-import { PuzzleStats } from '../games/puzzle/PuzzleStats';
-import { ReadingStats } from '../games/reading/ReadingStats';
+import { trackLabel } from '../../engine';
+import { GAMES, visibleGameIds } from '../../games';
+import { ColoringStats } from '../../games/coloring/ColoringStats';
+import { PuzzleStats } from '../../games/puzzle/PuzzleStats';
+import { ReadingStats } from '../../games/reading/ReadingStats';
 import {
   dayKey,
   getProfile,

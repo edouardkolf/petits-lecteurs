@@ -1,6 +1,6 @@
 // CONTRAT (signatures) — maîtrise et progression, recalculées à partir des séances. LECTURE.md §5. Pur.
-import { dayKey } from '../../storage/day';
-import type { ReadingRecord } from '../../storage/readings';
+import { dayKey } from '../../socle/storage/day';
+import type { ReadingRecord } from '../../socle/storage/readings';
 import { allItems, gatedItems, stageItems } from './curriculum';
 import { READING_STAGES } from './types';
 import type { ItemId, ItemProgress, ReadingGameId, ReadingProgress, ReadingStage } from './types';
@@ -21,7 +21,7 @@ export const SKILL_LOSE_CORRECT = 5;
 export const STAGE_MIN_RATE = 0.8;
 export const STAGE_RATE_SESSIONS = 2;
 
-/** Jour local AAAA-MM-JJ d'un instant (même convention que src/storage/day.ts). */
+/** Jour local AAAA-MM-JJ d'un instant (même convention que src/socle/storage/day.ts). */
 export function dayOf(at: number): string {
   return dayKey(new Date(at));
 }

@@ -2,8 +2,8 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { MechanicViewProps } from '../../engine/types';
 import { MISS } from '../../engine/types';
-import { Emoji } from '../../ui/Emoji';
-import { getObject } from '../../ui/objects';
+import { Emoji } from '../../socle/ui/Emoji';
+import { getObject } from '../../socle/ui/objects';
 import { createTable, flip, gridFor, hideMismatch, isCleared, isFaceUp, takeMissSignal } from './logic';
 import type { MemoryTable } from './logic';
 import type { MemoryRoundData } from './types';

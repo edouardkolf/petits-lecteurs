@@ -1,10 +1,10 @@
 // Fin de séance (LECTURE.md §2 et §16). Niveau gagné : fanfare, étoile, confettis, et le niveau suivant s'ouvre.
 // Niveau pas encore gagné : pas de fête, la voix invite à réessayer. Un seul bouton (coche) ramène à l'accueil.
 import { useEffect, useState } from 'preact/hooks';
-import { IconButton } from '../../ui/IconButton';
-import { Icon } from '../../ui/icons/Icon';
-import { playFanfare } from '../../ui/sound';
-import { cancelSpeech, speak } from '../../ui/voice';
+import { IconButton } from '../../socle/ui/IconButton';
+import { Icon } from '../../socle/ui/icons/Icon';
+import { playFanfare } from '../../socle/ui/sound';
+import { cancelSpeech, speak } from '../../socle/ui/voice';
 import { LevelIcon, TRACK_COLORS } from './LevelIcon';
 import type { ReadingLevel } from './levels';
 

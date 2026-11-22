@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { ReadingAnswer } from '../games/reading/types';
+import type { ReadingAnswer } from '../../games/reading/types';
 import { getDB } from './db';
 import { resetStorageForTests } from './test-helpers';
 import {

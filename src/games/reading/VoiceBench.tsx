@@ -1,8 +1,8 @@
 // Banc d'écoute (LECTURE.md §8.5) : le parent écoute ce que la voix du téléphone dit, repère les sons qui sonnent faux.
 // Replié par défaut. N'affiche rien si le contenu n'est pas disponible (`benchEntries()` lève).
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { cancelSpeech, checkVoice, speakSequence } from '../../ui/voice';
-import type { SpeechStep } from '../../ui/voice';
+import { cancelSpeech, checkVoice, speakSequence } from '../../socle/ui/voice';
+import type { SpeechStep } from '../../socle/ui/voice';
 import { benchEntries } from './speech';
 import type { BenchEntry } from './speech';
 

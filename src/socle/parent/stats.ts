@@ -46,7 +46,7 @@ function shiftDayKey(day: string, deltaDays: number): string {
   return localDayKey(date.getTime());
 }
 
-/** Secondes actives par activité (ActivityId de src/app/session.ts), pour une période. */
+/** Secondes actives par activité (ActivityId de src/socle/app/session.ts), pour une période. */
 export type ActivityTotals = Record<string, number>;
 
 export interface ActivityTimeSummary {

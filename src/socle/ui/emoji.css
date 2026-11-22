@@ -1,4 +1,4 @@
-/* Règle générique du composant <Emoji> (src/ui/Emoji.tsx) : hérite du font-size ambiant comme le
+/* Règle générique du composant <Emoji> (src/socle/ui/Emoji.tsx) : hérite du font-size ambiant comme le
    faisait le glyphe texte qu'il remplace, pour ne rien changer aux mises en page existantes. */
 .emoji {
   width: 1em;

@@ -1,5 +1,5 @@
 // Picto de la mécanique « maze » (fragment SVG, viewBox 48) : un labyrinthe vu de dessus avec un chemin coloré.
-// À brancher dans src/ui/icons/MechanicIcon.tsx par l'orchestrateur.
+// À brancher dans src/socle/ui/icons/MechanicIcon.tsx par l'orchestrateur.
 export const mazeMechanicIcon = () => (
   <>
     <rect x="6" y="6" width="36" height="36" rx="9" fill="#8fd49c" />

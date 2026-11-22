@@ -1,7 +1,7 @@
 // « Le tambour » : l'enfant tape une fois par syllabe (la vue compte), puis touche la coche pour valider.
 import { useEffect, useState } from "preact/hooks";
-import { Icon } from "../../../ui/icons/Icon";
-import { playTap } from "../../../ui/sound";
+import { Icon } from "../../../socle/ui/icons/Icon";
+import { playTap } from "../../../socle/ui/sound";
 import type { ReadingViewProps } from "../types";
 import { PictureCard } from "./PictureCard";
 import {

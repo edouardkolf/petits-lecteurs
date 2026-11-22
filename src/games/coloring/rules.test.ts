@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyPaint, helpFor, isComplete, stateFromRecord } from './rules';
-import type { ColoringRecord } from '../../storage/colorings';
+import type { ColoringRecord } from '../../socle/storage/colorings';
 
 describe('applyPaint', () => {
   it('case peinte : cible atteinte', () => {

@@ -1,5 +1,5 @@
 // Picto d'un niveau du parcours : la lettre elle-même pour les niveaux « lettres », un dessin par jeu sinon.
-import { Emoji } from '../../ui/Emoji';
+import { Emoji } from '../../socle/ui/Emoji';
 import { getGrapheme, keywordPicture } from './curriculum';
 import type { LevelTrack, ReadingLevel } from './levels';
 import { STAGE_COLORS, StageIcon, type StageColors } from './StageIcon';

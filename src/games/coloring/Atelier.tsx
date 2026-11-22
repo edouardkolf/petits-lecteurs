@@ -3,7 +3,7 @@
 // vidange) est tenu par `ColoringScreen`, comme le geste appris au labo des couleurs.
 import type { Color } from '../../engine/types';
 import { Flask, Erlenmeyer, type LiquidFill, type LiquidLevel } from '../../mechanics/color-mix/parts';
-import { COLOR_HEX } from '../../ui/palette';
+import { COLOR_HEX } from '../../socle/ui/palette';
 import type { CupState } from './cup';
 import { paintOf } from './cup';
 import './coloring.css';

@@ -1,16 +1,16 @@
 // Coquille de l'app : routeur par hash + état global (profil actif) + initialisation.
 import { useEffect, useState } from 'preact/hooks';
-import { ensureHistoryDepth, isChildRoute, isGameRoute, isSoftEndRoute, parseHash, navigate, type Route } from './routes';
-import { ProfileContext, useProfile } from './context';
-import { SessionProvider, useSession } from './SessionProvider';
-import type { Profile } from '../storage/types';
-import { closeStaleGameRecords, closeStaleRuns, getProfile, getSettings, requestPersistence } from '../storage';
+import { ensureHistoryDepth, isChildRoute, isGameRoute, isSoftEndRoute, parseHash, navigate, type Route } from '../socle/app/routes';
+import { ProfileContext, useProfile } from '../socle/app/context';
+import { SessionProvider, useSession } from '../socle/app/SessionProvider';
+import type { Profile } from '../socle/storage/types';
+import { closeStaleGameRecords, closeStaleRuns, getProfile, getSettings, requestPersistence } from '../socle/storage';
 import { visibleGameIds } from '../games';
-import { setSoundEnabled, unlockAudio } from '../ui/sound';
+import { setSoundEnabled, unlockAudio } from '../socle/ui/sound';
 import { ProfilePicker } from '../screens/ProfilePicker';
 import { ReadingMap } from '../screens/adventure/ReadingMap';
 import { LockScreen } from '../screens/LockScreen';
-import { ParentSpace } from '../parent/ParentSpace';
+import { ParentSpace } from '../socle/parent/ParentSpace';
 import { Hub } from '../screens/Hub';
 import { ColoringScreen } from '../games/coloring/ColoringScreen';
 import { ReadingScreen } from '../games/reading/ReadingScreen';

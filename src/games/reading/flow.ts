@@ -1,7 +1,7 @@
 // Enchaînement d'une séance de lecture : machine d'état PURE de la file de questions et fabrication des
 // `ReadingAnswer`. Aucun effet (ni voix, ni son, ni stockage, ni minuteur) : l'écran les exécute
 // (`useQuestionFlow.ts`) ; ici on décide seulement ce qui est enregistré et dans quel ordre on pose les questions.
-import type { SpeechStep } from '../../ui/voice';
+import type { SpeechStep } from '../../socle/ui/voice';
 import { getPicture } from './pictures';
 import { requeueAfterMiss } from './session';
 import { drumPrompt, soundStep, SOUND_RATE } from './speech';

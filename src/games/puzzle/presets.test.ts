@@ -5,7 +5,7 @@ import { validateMaze } from '../../mechanics/maze/validate';
 import { validateMemory } from '../../mechanics/memory/validate';
 import { validateOrder } from '../../mechanics/order/validate';
 import { validateRobot } from '../../mechanics/robot/validate';
-import { PUZZLE_PRESETS } from '../../storage/puzzles';
+import { PUZZLE_PRESETS } from '../../socle/storage/puzzles';
 import { PUZZLE_PRESET_PARAMS, type HubPuzzleId } from './presets';
 
 const HUB_PUZZLES = Object.keys(PUZZLE_PRESET_PARAMS) as HubPuzzleId[];

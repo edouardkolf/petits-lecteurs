@@ -2,7 +2,7 @@
 // panneau d'entrée, fond d'une partie, outils de tracé. Chaque monde (forest.tsx, sea.tsx…) s'en sert
 // à sa guise : aucune règle n'impose le même sentier partout.
 import type { FunctionComponent, JSX } from 'preact';
-import { emojiUrl } from '../../../ui/emoji';
+import { emojiUrl } from '../../../socle/ui/emoji';
 import {
   BACKDROP_HEIGHT,
   BACKDROP_WIDTH,

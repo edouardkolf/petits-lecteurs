@@ -1,4 +1,4 @@
-// Espace parent : fonctions de contrôle (voir docs/ARCHITECTURE.md §8, src/parent/**).
+// Espace parent : fonctions de contrôle (voir docs/ARCHITECTURE.md §8, src/socle/parent/**).
 // Helpers de navigation copiés de vertical-slice.spec.ts (non exportés là-bas).
 import { readFileSync } from 'node:fs';
 import { test, expect, type Page, type Locator } from '@playwright/test';

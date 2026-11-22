@@ -3,7 +3,7 @@
 import { DrawingView } from './DrawingView';
 import type { Detail, Drawing } from './model';
 import type { Color } from '../../engine/types';
-import type { ColoringTier } from '../../storage/colorings';
+import type { ColoringTier } from '../../socle/storage/colorings';
 import './coloring-screen.css';
 
 export interface ChoiceCard {

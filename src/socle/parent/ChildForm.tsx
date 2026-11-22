@@ -2,12 +2,12 @@
 import { useEffect, useState } from 'preact/hooks';
 import { navigate } from '../app/routes';
 import { useProfile } from '../app/context';
-import { getTracks, trackLabel } from '../engine';
-import type { Track } from '../engine';
-import { GAMES, defaultGameIds, isAdventureGame, resolveAvailability } from '../games';
-import type { Availability, GameId } from '../games';
-import { ColoringSettings } from '../games/coloring/ColoringSettings';
-import { ReadingSettings } from '../games/reading/ReadingSettings';
+import { getTracks, trackLabel } from '../../engine';
+import type { Track } from '../../engine';
+import { GAMES, defaultGameIds, isAdventureGame, resolveAvailability } from '../../games';
+import type { Availability, GameId } from '../../games';
+import { ColoringSettings } from '../../games/coloring/ColoringSettings';
+import { ReadingSettings } from '../../games/reading/ReadingSettings';
 import type { ColoringSettings as ColoringSettingsValue } from '../storage/colorings';
 import type { ReadingSettingsValue } from '../storage/readings';
 import { deleteProfile, getProfile, getSettings, saveProfile } from '../storage';

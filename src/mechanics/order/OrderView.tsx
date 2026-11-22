@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { MechanicViewProps } from '../../engine/types';
 import { MISS } from '../../engine/types';
-import { Emoji } from '../../ui/Emoji';
+import { Emoji } from '../../socle/ui/Emoji';
 import type { OrderItem, OrderRoundData } from './types';
 import './order.css';
 

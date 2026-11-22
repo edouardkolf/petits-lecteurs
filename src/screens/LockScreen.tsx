@@ -3,16 +3,16 @@
 // Bloquant même après rechargement (settings.lock persisté). Coin haut droit : appui long 2 s sur
 // le cadenas → code parent (PinGate) → panneau parent (+5 min / +15 min / Terminer).
 import { useEffect, useState } from 'preact/hooks';
-import { navigate, returnTo } from '../app/routes';
-import { useProfile } from '../app/context';
-import { computeTime } from '../app/session';
-import { getProfile, getSettings, getUsage, grantExtraMinutes, updateSettings, dayKey } from '../storage';
-import type { AppSettings, Profile, SessionState } from '../storage';
-import { LongPressButton } from '../ui/LongPressButton';
-import { Icon } from '../ui/icons/Icon';
-import { Emoji } from '../ui/Emoji';
-import { PinGate } from '../parent/PinGate';
-import '../parent/parent.css';
+import { navigate, returnTo } from '../socle/app/routes';
+import { useProfile } from '../socle/app/context';
+import { computeTime } from '../socle/app/session';
+import { getProfile, getSettings, getUsage, grantExtraMinutes, updateSettings, dayKey } from '../socle/storage';
+import type { AppSettings, Profile, SessionState } from '../socle/storage';
+import { LongPressButton } from '../socle/ui/LongPressButton';
+import { Icon } from '../socle/ui/icons/Icon';
+import { Emoji } from '../socle/ui/Emoji';
+import { PinGate } from '../socle/parent/PinGate';
+import '../socle/parent/parent.css';
 
 const STARS = [
   { left: '12%', top: '18%', delay: '0s' },

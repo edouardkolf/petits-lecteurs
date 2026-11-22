@@ -3,16 +3,16 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { Color } from '../../engine/types';
 import { COLORS } from '../../engine/types';
-import { useProfile } from '../../app/context';
-import { useSession } from '../../app/SessionProvider';
-import { returnTo } from '../../app/routes';
-import { IconButton } from '../../ui/IconButton';
-import { Icon } from '../../ui/icons/Icon';
-import { TutorialHand } from '../../ui/TutorialHand';
-import { playBoing, playBubble, playDing, playDrain, playFanfare, playPour, playStar, playTap } from '../../ui/sound';
+import { useProfile } from '../../socle/app/context';
+import { useSession } from '../../socle/app/SessionProvider';
+import { returnTo } from '../../socle/app/routes';
+import { IconButton } from '../../socle/ui/IconButton';
+import { Icon } from '../../socle/ui/icons/Icon';
+import { TutorialHand } from '../../socle/ui/TutorialHand';
+import { playBoing, playBubble, playDing, playDrain, playFanfare, playPour, playStar, playTap } from '../../socle/ui/sound';
 import { recipeFor } from '../../mechanics/color-mix/generate';
 import { DROP_D } from '../../mechanics/color-mix/parts';
-import { COLOR_HEX } from '../../ui/palette';
+import { COLOR_HEX } from '../../socle/ui/palette';
 import { useSoftEnd } from '../useSoftEnd';
 import {
   abandonColoring,
@@ -23,9 +23,9 @@ import {
   type ColoringInit,
   type ColoringRecord,
   type PaintAttempt,
-} from '../../storage/colorings';
-import type { ColoringTier } from '../../storage/colorings';
-import type { GameEndReason } from '../../storage/types';
+} from '../../socle/storage/colorings';
+import type { ColoringTier } from '../../socle/storage/colorings';
+import type { GameEndReason } from '../../socle/storage/types';
 import { DRAWINGS, findDrawing } from './catalog';
 import { DETAIL_FOR_TIER, type CodeSymbol, type Detail, type Drawing } from './model';
 import { applyPaint, helpFor, isComplete, stateFromRecord } from './rules';

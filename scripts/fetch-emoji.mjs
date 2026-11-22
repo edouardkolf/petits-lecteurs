@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Télécharge les SVG Noto (style « 2D », plat) des émojis de CONTENU utilisés par l'app, pour un
-// rendu strictement identique sur tous les appareils (Android, iOS, Windows…) — voir src/ui/emoji.ts.
+// rendu strictement identique sur tous les appareils (Android, iOS, Windows…) — voir src/socle/ui/emoji.ts.
 // Usage : node scripts/fetch-emoji.mjs
 // Aucune dépendance npm : fetch natif de Node ≥ 18, écrit directement dans public/emoji/.
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -16,11 +16,11 @@ const BASE_URL = 'https://raw.githubusercontent.com/googlefonts/noto-emoji/main/
 // (Volontairement pas de scan automatique du code source : ce script n'a aucune dépendance npm et
 // doit rester exécutable isolément, contenu et interface pouvant diverger avec le temps.)
 export const CONTENT_EMOJIS = [
-  // src/ui/objects.ts (catalogue des objets illustrés)
+  // src/socle/ui/objects.ts (catalogue des objets illustrés)
   '🍎', '🍌', '🍐', '🍓', '🍒', '🍇', '🐶', '🐱', '🐰', '🐟', '🐦', '🐞', '🐄', '🐷', '🐑', '🐔', '🐴',
   '🦀', '🐙', '🐳', '🐬', '🐠', '🦋', '🐝', '🦉', '🚗', '🚌', '🚲', '⛵', '🚂', '🚜', '⚽', '🧸', '🎈',
   '🪁', '🪀', '🥁', '🌻', '🌷', '🌵', '🌳', '🌲', '🍀',
-  // src/ui/avatars.ts (profils enfants)
+  // src/socle/ui/avatars.ts (profils enfants)
   '🦊', '🐼', '🐯', '🦁', '🐸', '🐵', '🦄', '🐙', '🐧', '🐨', '🐰', '🐻',
   // src/mechanics/read/catalog.ts (sujets et supports de « Lis et montre »)
   '🎩', '🍄', '🐤', '🎂', '🏰', '🐓', '⛸️', '🦆', '🛋️', '🛶', '🐌', '🐢', '🟫', '🪑', '📦', '🛏️',
@@ -36,7 +36,7 @@ export const CONTENT_EMOJIS = [
   '🌙', '💤',
   // src/screens/LevelFailed.tsx (visage triste)
   '😢',
-  // src/ui/TutorialHand.tsx (doigt qui tape)
+  // src/socle/ui/TutorialHand.tsx (doigt qui tape)
   '👆',
   // src/screens/SagaMap.tsx (soleil de l'anneau de temps)
   '☀️',

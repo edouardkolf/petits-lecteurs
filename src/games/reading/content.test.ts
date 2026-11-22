@@ -2,7 +2,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { notoFileName } from '../../ui/emoji';
+import { notoFileName } from '../../socle/ui/emoji';
 import {
   GRAPHEMES,
   READ_WORDS,

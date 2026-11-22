@@ -1,7 +1,7 @@
 // Onglet « Réglages » : son, changement du code parent, protection du stockage, et mode admin (caché : il
 // apparaît après 7 tapes sur le nom de l'app en bas de l'onglet, ou s'il est déjà actif).
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { APP_NAME } from '../app/appInfo';
+import { APP_NAME } from '../../app/appInfo';
 import { getSettings, isPersisted, requestPersistence, updateSettings } from '../storage';
 import type { AppSettings } from '../storage';
 import { Icon } from '../ui/icons/Icon';

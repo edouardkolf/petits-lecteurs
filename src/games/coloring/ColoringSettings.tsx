@@ -1,7 +1,7 @@
 // Réglage « Palier du code » de la fiche enfant (docs/specs/COLORIAGE.md §6.3, cadre A6). Sélecteur
 // segmenté comme « Déblocage » dans ChildStats : Automatique · Goutte · Objet · Formes · Dé.
 import type { GameSettingsProps } from '../index';
-import type { ColoringSettings as ColoringSettingsValue, ColoringTier } from '../../storage/colorings';
+import type { ColoringSettings as ColoringSettingsValue, ColoringTier } from '../../socle/storage/colorings';
 
 const OPTIONS: { key: ColoringTier | 'auto'; label: string }[] = [
   { key: 'auto', label: 'Automatique' },

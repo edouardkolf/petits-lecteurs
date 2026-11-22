@@ -1,6 +1,6 @@
 // Validation de contenu (npm run validate:content) : messages en français pour un PM non développeur.
 import type { MemoryParams } from '../../engine/types';
-import { getObject } from '../../ui/objects';
+import { getObject } from '../../socle/ui/objects';
 
 export function validateMemory(p: MemoryParams): string[] {
   const errors: string[] = [];

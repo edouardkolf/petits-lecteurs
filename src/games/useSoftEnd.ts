@@ -5,8 +5,8 @@
 // La décision (faut-il finir tout de suite, ou attendre combien de temps) est une fonction pure,
 // `decideSoftEnd`, testable sous Vitest sans DOM ; le hook ne fait qu'y brancher les refs et les effets.
 import { useEffect, useRef } from 'preact/hooks';
-import { useSession } from '../app/SessionProvider';
-import { navigate } from '../app/routes';
+import { useSession } from '../socle/app/SessionProvider';
+import { navigate } from '../socle/app/routes';
 
 /** = NO_ANSWER_TIMEOUT_MS de LevelPlayer. */
 export const SOFT_END_MAX_MS = 60_000;

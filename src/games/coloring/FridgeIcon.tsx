@@ -1,4 +1,4 @@
-// Picto du frigo (docs/specs/COLORIAGE.md §2.5), dans le même style que src/ui/icons/Icon.tsx :
+// Picto du frigo (docs/specs/COLORIAGE.md §2.5), dans le même style que src/socle/ui/icons/Icon.tsx :
 // aplats, un reflet clair, pas de contour noir. Composant à part (le frigo n'est pas un picto
 // d'interface générique comme ceux de la barre d'onglets parent).
 export function FridgeIcon({ size = 36 }: { size?: number }) {

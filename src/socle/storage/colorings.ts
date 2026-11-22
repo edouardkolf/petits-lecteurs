@@ -1,8 +1,8 @@
 // CONTRAT — parties du coloriage magique (store "colorings"). Voir docs/specs/COLORIAGE.md §5.
 // Les types font foi ; les corps sont écrits par la tâche « stockage v2 » (bâtis sur game-records.ts).
 // Les fonctions sont des déclarations `function` (hissées) : game-records.ts les importe en retour.
-import { COLORS, type Color } from '../engine/types';
-import { mixColors } from '../mechanics/color-mix/generate';
+import { COLORS, type Color } from '../../engine/types';
+import { mixColors } from '../../mechanics/color-mix/generate';
 import { finishGameRecord, isGameRecordBase, listGameRecords, startGameRecord, updateGameRecord } from './game-records';
 import type { GameEndReason, GameRecordBase } from './types';
 import { isFiniteNumber, isNonEmptyString, isPlainObject } from './validate';

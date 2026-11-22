@@ -1,5 +1,5 @@
 // CONTRAT — couleurs des formes (contrastées, lisibles sur fond crème).
-import type { Color } from '../engine/types';
+import type { Color } from '../../engine/types';
 
 export const COLOR_HEX: Record<Color, string> = {
   red: '#E63946',

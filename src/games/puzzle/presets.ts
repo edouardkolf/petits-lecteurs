@@ -1,7 +1,7 @@
 // Difficultés des jeux libres du hub (docs/specs/JEUX-LOGIQUE.md §4) : un jeu de paramètres de la
 // mécanique par palier (1, 2 ou 3 étoiles), contrôlé par le même validateur que les niveaux.
 import type { MazeParams, MemoryParams, OrderParams, RobotParams } from '../../engine/types';
-import type { PuzzleGameId, PuzzlePreset } from '../../storage/puzzles';
+import type { PuzzleGameId, PuzzlePreset } from '../../socle/storage/puzzles';
 
 /** Jeux du hub : « devine le nombre » et « code secret » (Petits Malins) gardent leurs parties dans le store, sans écran. */
 export type HubPuzzleId = Exclude<PuzzleGameId, 'guess-number' | 'code-breaker'>;

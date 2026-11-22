@@ -2,8 +2,8 @@
 // Une partie = une séance (8 à 10 questions). Créée à la première réponse (arbitrage A9), close quand
 // toutes les questions prévues ont une première réponse.
 // Les fonctions sont des déclarations `function` (hissées) : game-records.ts les importe en retour.
-import { READING_GAMES, READING_SKILLS } from '../games/reading/types';
-import type { ItemId, ReadingAnswer, ReadingGameId, ReadingStage } from '../games/reading/types';
+import { READING_GAMES, READING_SKILLS } from '../../games/reading/types';
+import type { ItemId, ReadingAnswer, ReadingGameId, ReadingStage } from '../../games/reading/types';
 import { finishGameRecord, isGameRecordBase, listGameRecords, startGameRecord, updateGameRecord } from './game-records';
 import type { GameEndReason, GameRecordBase } from './types';
 import { isFiniteNumber, isNonEmptyString, isPlainObject } from './validate';

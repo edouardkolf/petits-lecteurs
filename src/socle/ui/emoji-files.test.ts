@@ -7,7 +7,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { notoFileName } from './emoji';
 
-const ROOT = path.resolve(__dirname, '../..');
+const ROOT = path.resolve(__dirname, '../../..');
 /** Pictos encore affichés en texte, volontairement sans SVG (écran rare « mécanique indisponible »). */
 const TEXT_ONLY = new Set(['🚧']);
 /** Une séquence émoji : pictogramme étendu, suivi éventuellement d'un sélecteur de variation. */

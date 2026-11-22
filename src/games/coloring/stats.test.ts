@@ -1,6 +1,6 @@
 // Tests de summarizeColorings (docs/specs/COLORIAGE.md §5.4, tâche C6).
 import { describe, expect, it } from 'vitest';
-import type { ColoringRecord, PaintAttempt } from '../../storage/colorings';
+import type { ColoringRecord, PaintAttempt } from '../../socle/storage/colorings';
 import { summarizeColorings } from './stats';
 
 let seq = 0;

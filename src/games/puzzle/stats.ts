@@ -1,7 +1,7 @@
 // Indicateurs propres aux jeux libres de logique (docs/specs/JEUX-LOGIQUE.md §4). Les indicateurs communs
 // sont calculés par parent/stats.ts. Fonction pure, testée sous Vitest.
-import { PUZZLE_PRESETS } from '../../storage/puzzles';
-import type { PuzzlePreset, PuzzleRecord } from '../../storage/puzzles';
+import { PUZZLE_PRESETS } from '../../socle/storage/puzzles';
+import type { PuzzlePreset, PuzzleRecord } from '../../socle/storage/puzzles';
 
 export interface PresetSummary {
   preset: PuzzlePreset;

@@ -1,6 +1,6 @@
 // Tests de la maîtrise et de la progression (LECTURE.md §5.1 à 5.3). Le cœur est testé avec un programme fictif.
 import { describe, expect, it } from 'vitest';
-import type { ReadingRecord } from '../../storage/readings';
+import type { ReadingRecord } from '../../socle/storage/readings';
 import { allItems, gatedItems, stageItems } from './curriculum';
 import { computeProgress, computeProgressFor, dayOf } from './progress';
 import type { ReadingProgram } from './progress';

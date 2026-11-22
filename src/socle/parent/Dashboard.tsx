@@ -2,8 +2,8 @@
 // et l'ajout d'un enfant. Les données et les réglages ont leurs propres onglets (ParentShell).
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { navigate } from '../app/routes';
-import { trackLabel } from '../engine';
-import { getGame, hubGameIds } from '../games';
+import { trackLabel } from '../../engine';
+import { getGame, hubGameIds } from '../../games';
 import { dayKey, getUsage, grantExtraMinutes, listProfiles } from '../storage';
 import type { Profile, UsageDay } from '../storage';
 import { Emoji } from '../ui/Emoji';

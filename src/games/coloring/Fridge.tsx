@@ -1,7 +1,7 @@
 // Le frigo (docs/specs/COLORIAGE.md §2.5) : grille 3 × 4 des 12 derniers dessins terminés. Un tap sur
 // un dessin l'agrandit et rejoue sa prise de vie ; un nouveau tap, ou le bouton frigo, revient.
 import { useState } from 'preact/hooks';
-import type { ColoringRecord } from '../../storage/colorings';
+import type { ColoringRecord } from '../../socle/storage/colorings';
 import type { Drawing } from './model';
 import { DrawingView } from './DrawingView';
 import './coloring-screen.css';

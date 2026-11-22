@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { autoTier, currentTier, fridgeItems, proposeDrawings, resumableRecord } from './progression';
-import type { ColoringRecord } from '../../storage/colorings';
+import type { ColoringRecord } from '../../socle/storage/colorings';
 import type { Drawing } from './model';
 
 let nextId = 0;

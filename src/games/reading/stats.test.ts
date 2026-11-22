@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ReadingRecord } from '../../storage/readings';
+import type { ReadingRecord } from '../../socle/storage/readings';
 import { alertsFrom, confusionsFrom, itemLabel, summarizeReading } from './stats';
 import type { ReadingAnswer } from './types';
 

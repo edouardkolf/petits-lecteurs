@@ -3,8 +3,8 @@
 // partie, jouée par la vue de la mécanique avec le même contrat à plusieurs coups que les anciens niveaux de compétences.
 // La partie est créée au premier tap de l'enfant (A9), jamais à l'affichage.
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { returnTo } from '../../app/routes';
-import { useProfile } from '../../app/context';
+import { returnTo } from '../../socle/app/routes';
+import { useProfile } from '../../socle/app/context';
 import { createRng } from '../../engine/rng';
 import { MISS, type ChoiceId, type Round } from '../../engine/types';
 import { getMechanic } from '../../mechanics';
@@ -15,12 +15,12 @@ import {
   recordPuzzleMiss,
   startPuzzle,
   type PuzzlePreset,
-} from '../../storage/puzzles';
-import type { GameEndReason } from '../../storage/types';
-import { GameIcon } from '../../ui/icons/GameIcon';
-import { Icon } from '../../ui/icons/Icon';
-import { IconButton } from '../../ui/IconButton';
-import { playError, playSuccess, playTap } from '../../ui/sound';
+} from '../../socle/storage/puzzles';
+import type { GameEndReason } from '../../socle/storage/types';
+import { GameIcon } from '../../socle/ui/icons/GameIcon';
+import { Icon } from '../../socle/ui/icons/Icon';
+import { IconButton } from '../../socle/ui/IconButton';
+import { playError, playSuccess, playTap } from '../../socle/ui/sound';
 import { useActiveClock } from '../useActiveClock';
 import { useSoftEnd } from '../useSoftEnd';
 import { PUZZLE_PRESET_PARAMS, type HubPuzzleId } from './presets';

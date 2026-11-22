@@ -1,8 +1,8 @@
 // Fête d'arrivée dans un nouveau monde : grand panneau de bois qui surgit, rayons et particules du monde.
 // Se ferme seule au bout de BANNER_MS, ou au premier tap.
 import { useEffect, useMemo } from 'preact/hooks';
-import { Emoji } from '../../ui/Emoji';
-import { playFanfare } from '../../ui/sound';
+import { Emoji } from '../../socle/ui/Emoji';
+import { playFanfare } from '../../socle/ui/sound';
 import type { WorldId } from './layout';
 import { WORLD_META } from './worlds';
 

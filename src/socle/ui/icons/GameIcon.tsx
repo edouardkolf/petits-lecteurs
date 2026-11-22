@@ -1,10 +1,10 @@
 // Pictos des tuiles de jeu du hub (docs/specs/HUB.md §2.1). Même style que MechanicIcon : aplats, un
 // reflet clair, pas de contour noir, viewBox 48. Doivent se distinguer de la fiole de `color-mix`.
 import type { JSX } from 'preact';
-import { mazeMechanicIcon } from '../../mechanics/maze/icon';
-import { memoryGameIcon } from '../../mechanics/memory/icon';
-import { orderMechanicIcon } from '../../mechanics/order/icon';
-import type { GameId } from '../../games';
+import { mazeMechanicIcon } from '../../../mechanics/maze/icon';
+import { memoryGameIcon } from '../../../mechanics/memory/icon';
+import { orderMechanicIcon } from '../../../mechanics/order/icon';
+import type { GameId } from '../../../games';
 
 const SHADOW = 'rgba(61, 44, 30, 0.14)';
 

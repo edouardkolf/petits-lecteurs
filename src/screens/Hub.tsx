@@ -1,16 +1,16 @@
 // Écran hub (docs/specs/HUB.md §2.1) : avatar (→ profils), anneau de temps, tuile carte et tuiles de
 // jeu. Aucun texte visible : seulement des aria-label, pour une enfant de 4 ans non lectrice.
 import { useEffect, useRef, useState } from 'preact/hooks';
-import type { Route } from '../app/routes';
-import { markHistoryAnchor, navigate, returnTo } from '../app/routes';
-import { useProfile } from '../app/context';
-import { useSession } from '../app/SessionProvider';
+import type { Route } from '../socle/app/routes';
+import { markHistoryAnchor, navigate, returnTo } from '../socle/app/routes';
+import { useProfile } from '../socle/app/context';
+import { useSession } from '../socle/app/SessionProvider';
 import { ADVENTURE_GAME_ID, getGame, hubGameIds, resolveAvailability } from '../games';
-import { playTap } from '../ui/sound';
-import { Emoji } from '../ui/Emoji';
-import { Icon } from '../ui/icons/Icon';
-import { GameIcon } from '../ui/icons/GameIcon';
-import { TimeRing } from '../ui/TimeRing';
+import { playTap } from '../socle/ui/sound';
+import { Emoji } from '../socle/ui/Emoji';
+import { Icon } from '../socle/ui/icons/Icon';
+import { GameIcon } from '../socle/ui/icons/GameIcon';
+import { TimeRing } from '../socle/ui/TimeRing';
 import { WorldBackdrop } from './map/WorldBackdrop';
 import { worldIdAt } from './map/layout';
 import { HubTile } from './hub/HubTile';

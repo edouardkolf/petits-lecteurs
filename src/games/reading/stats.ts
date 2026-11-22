@@ -1,7 +1,7 @@
 // Indicateurs du bloc parent « J'apprends à lire » (LECTURE.md §8.3). Pur, testé sous Vitest.
 // Les confusions et les alertes se calculent à partir des seules réponses (`confusionsFrom`, `alertsFrom`) :
 // elles se testent sans la progression ni le contenu.
-import type { ReadingRecord } from '../../storage/readings';
+import type { ReadingRecord } from '../../socle/storage/readings';
 import { getGrapheme, gatedItems, stageItems } from './curriculum';
 import { LEVELS, levelProgress } from './levels';
 import { computeProgress } from './progress';

@@ -14,7 +14,7 @@ import {
   updateGameRecord,
   updateSettings,
 } from './index';
-import type { ReadingAnswer } from '../games/reading/types';
+import type { ReadingAnswer } from '../../games/reading/types';
 import type { ColoringRecord } from './colorings';
 
 beforeEach(async () => {

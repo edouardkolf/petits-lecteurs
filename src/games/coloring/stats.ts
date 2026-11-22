@@ -2,7 +2,7 @@
 // dessins (chaînes reliées par `resumedFrom`), pas des séances (déjà comptées par ChildStats, cadre A8).
 import type { Color } from '../../engine/types';
 import { COLORS } from '../../engine/types';
-import type { ColoringRecord, ColoringTier } from '../../storage/colorings';
+import type { ColoringRecord, ColoringTier } from '../../socle/storage/colorings';
 
 const MIN_ATTEMPTS_FOR_RECIPE = 5;
 

@@ -1,6 +1,6 @@
 // CONTRAT — « J'apprends à lire » (docs/specs/LECTURE.md). Types partagés par le contenu, la logique,
 // l'écran, les vues de jeu, le stockage et les statistiques. On le modifie volontairement, jamais en passant.
-import type { SpeechStep } from '../../ui/voice';
+import type { SpeechStep } from '../../socle/ui/voice';
 
 /** Les cinq étapes du programme (LECTURE.md §3). */
 export type ReadingStage = 1 | 2 | 3 | 4 | 5;

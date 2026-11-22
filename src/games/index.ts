@@ -1,9 +1,9 @@
 // CONTRAT — registre des jeux hors parcours (docs/specs/HUB.md §4.2). Un jeu = une route du même nom =
 // une activité du temps de jeu. Aucun accès au DOM au chargement du module (testable sous Vitest, node).
-import type { GameRouteName, Route } from '../app/routes';
+import type { GameRouteName, Route } from '../socle/app/routes';
 import { getTrackOrDefault } from '../engine';
-import type { GameRecordBase, GameStoreName, Profile } from '../storage/types';
-import { checkVoice, type VoiceProblem } from '../ui/voice';
+import type { GameRecordBase, GameStoreName, Profile } from '../socle/storage/types';
+import { checkVoice, type VoiceProblem } from '../socle/ui/voice';
 
 export type GameId = GameRouteName;
 

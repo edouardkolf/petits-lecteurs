@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createRng } from '../../engine/rng';
-import type { ReadingRecord } from '../../storage/readings';
+import type { ReadingRecord } from '../../socle/storage/readings';
 import { gamesForItem, GRAPHEMES } from './curriculum';
 import { getLevel, isLevelPass, isPlayable, LEVELS, levelProgress, levelState, passMark, type ReadingLevel } from './levels';
 import { computeProgress } from './progress';

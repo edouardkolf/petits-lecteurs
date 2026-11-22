@@ -2,7 +2,7 @@
 // Un niveau = un seul jeu, une séance courte. Le chemin alterne une piste « oreille » (tambour, commence pareil,
 // finit pareil, puis la machine à syllabes) et une piste « lettres » (chaque lettre : son seul, puis son dans un
 // mot). Un niveau est gagné quand une séance terminée atteint la barre (4 sur 5) ; sinon on le rejoue.
-import type { ReadingRecord } from '../../storage/readings';
+import type { ReadingRecord } from '../../socle/storage/readings';
 import { gamesForItem, getGrapheme, GRAPHEMES } from './curriculum';
 import type { ReadingSettings } from './progress';
 import type { GraphemeId, ItemId, ReadingGameId, ReadingStage } from './types';

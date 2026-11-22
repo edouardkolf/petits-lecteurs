@@ -1,5 +1,5 @@
 // CONTRAT — catalogue des objets illustrés (comptage, intrus par catégorie).
-import type { ObjectCategory, ObjectId } from '../engine/types';
+import type { ObjectCategory, ObjectId } from '../../engine/types';
 
 export interface ObjectDef {
   id: ObjectId;

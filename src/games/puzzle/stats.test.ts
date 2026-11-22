@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { PuzzleRecord } from '../../storage/puzzles';
+import type { PuzzleRecord } from '../../socle/storage/puzzles';
 import { summarizePuzzles } from './stats';
 
 function rec(preset: PuzzleRecord['preset'], solved: boolean, firstTry = true): PuzzleRecord {

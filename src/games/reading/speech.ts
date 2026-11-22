@@ -1,6 +1,6 @@
 // Textes envoyés à la voix du téléphone. LECTURE.md §6. Fonctions pures.
 // La synthèse lit « eu » de façon stable : « leu », « meu »… ; « re » ou « fe » seuls seraient épelés.
-import type { SpeechStep } from '../../ui/voice';
+import type { SpeechStep } from '../../socle/ui/voice';
 import { GRAPHEMES, SYLLABLES } from './curriculum';
 import { PICTURES } from './pictures';
 import type { GraphemeId, ReadingGameId } from './types';

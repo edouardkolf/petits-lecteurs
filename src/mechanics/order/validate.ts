@@ -1,6 +1,6 @@
 // Validation de contenu (utilisée par `npm run validate:content`) : messages en français pour le parent.
 import type { OrderParams } from '../../engine/types';
-import { getObject } from '../../ui/objects';
+import { getObject } from '../../socle/ui/objects';
 import { MIN_SCALE, maxFeasibleGap } from './generate';
 
 export function validateOrder(p: OrderParams): string[] {

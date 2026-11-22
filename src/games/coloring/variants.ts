@@ -3,7 +3,7 @@ import { SHAPES } from '../../engine/types';
 import type { Color } from '../../engine/types';
 import { createRng } from '../../engine/rng';
 import type { CodeSymbol, Detail, Drawing, ZoneLayer } from './model';
-import type { ColoringTier } from '../../storage/colorings';
+import type { ColoringTier } from '../../socle/storage/colorings';
 
 const SECONDARY_COLORS = new Set<Color>(['orange', 'green', 'purple']);
 

@@ -6,7 +6,7 @@ import type { JSX } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { MechanicViewProps } from '../../engine/types';
 import { MISS } from '../../engine/types';
-import { emojiUrl } from '../../ui/emoji';
+import { emojiUrl } from '../../socle/ui/emoji';
 import { addStrike, isNeighbor, sameCell, stepTrail, stepTrailLenient } from './logic';
 import type { Cell, Maze, MazeRoundData } from './types';
 import './maze.css';

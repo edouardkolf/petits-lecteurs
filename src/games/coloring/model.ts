@@ -2,7 +2,7 @@
 // Repère 100 × 100, origine en haut à gauche, comme les figures du constructeur.
 import type { Color, FigureId, Shape } from '../../engine/types';
 import type { EndAnimation } from '../../mechanics/builder/figures';
-import type { ColoringTier } from '../../storage/colorings';
+import type { ColoringTier } from '../../socle/storage/colorings';
 
 export type Primitive =
   | { kind: 'rect'; x: number; y: number; w: number; h: number; r?: number } // (x, y) = coin haut-gauche

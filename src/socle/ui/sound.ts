@@ -37,7 +37,7 @@ export function setSoundEnabled(on: boolean): void {
   soundEnabled = on;
 }
 
-/** Son de l'app activé ou non (lu par src/ui/voice.ts pour le statut `muted`). */
+/** Son de l'app activé ou non (lu par src/socle/ui/voice.ts pour le statut `muted`). */
 export function isSoundEnabled(): boolean {
   return soundEnabled;
 }

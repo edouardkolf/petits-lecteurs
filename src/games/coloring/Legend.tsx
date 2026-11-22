@@ -3,7 +3,7 @@
 import type { Color } from '../../engine/types';
 import { COLORS } from '../../engine/types';
 import { TargetDrop } from '../../mechanics/color-mix/parts';
-import { COLOR_HEX } from '../../ui/palette';
+import { COLOR_HEX } from '../../socle/ui/palette';
 import type { CodeSymbol } from './model';
 import { dotPositions } from '../../mechanics/count/generate';
 

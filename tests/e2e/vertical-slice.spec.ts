@@ -4,7 +4,7 @@
 // Chromium headless n'a pas de voix : fausse voix de `reading-helpers.ts`.
 import { readFileSync } from 'node:fs';
 import { test, expect, type Page, type Locator } from '@playwright/test';
-import { EXPORT_FORMAT, type ExportBundle } from '../../src/storage/types';
+import { EXPORT_FORMAT, type ExportBundle } from '../../src/socle/storage/types';
 import { backToProfiles, enterMap, profileCard } from './nav';
 import {
   answerFirstRealQuestion,

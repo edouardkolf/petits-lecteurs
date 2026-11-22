@@ -2,8 +2,8 @@
 // indicateurs communs (parties, abandons, interruptions, temps de jeu…) sont affichés par ChildStats ;
 // ce bloc ne montre que ce qui est propre au coloriage : des dessins (chaînes), pas des séances.
 import type { GameStatsProps } from '../index';
-import type { ColoringRecord } from '../../storage/colorings';
-import { formatDuration, formatPercentage } from '../../parent/format';
+import type { ColoringRecord } from '../../socle/storage/colorings';
+import { formatDuration, formatPercentage } from '../../socle/parent/format';
 import { currentTier } from './progression';
 import { summarizeColorings } from './stats';
 

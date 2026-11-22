@@ -4,8 +4,8 @@
 import type { Color } from '../../engine/types';
 import { resolveTap, type Point } from './geometry';
 import type { CodeSymbol, Detail, Drawing, Layer, Primitive, Subject, ZoneLayer } from './model';
-import { COLOR_HEX } from '../../ui/palette';
-import type { ColoringTier } from '../../storage/colorings';
+import { COLOR_HEX } from '../../socle/ui/palette';
+import type { ColoringTier } from '../../socle/storage/colorings';
 import { CodeMark } from './CodeMark';
 import { Legend } from './Legend';
 import '../../mechanics/builder/builder.css';

@@ -3,17 +3,17 @@
 // comme les emplacements agrandis du constructeur (`bld-slot-hit`).
 import type { Color } from '../../engine/types';
 import { OBJECT_FOR_COLOR, TargetDrop } from '../../mechanics/color-mix/parts';
-import { Emoji } from '../../ui/Emoji';
-import { COLOR_HEX } from '../../ui/palette';
+import { Emoji } from '../../socle/ui/Emoji';
+import { COLOR_HEX } from '../../socle/ui/palette';
 import { recipeFor } from '../../mechanics/color-mix/generate';
 import type { CodeSymbol } from './model';
-import type { ColoringTier } from '../../storage/colorings';
+import type { ColoringTier } from '../../socle/storage/colorings';
 import { HIT_RADIUS_PX } from './model';
 import { dotPositions } from '../../mechanics/count/generate';
 
 const HIT_PX = HIT_RADIUS_PX * 2; // 72 px, cible tactile minimale
 
-// Repris de src/ui/Shape.tsx (shapeInner) : Shape impose une couleur, alors que le code est au trait.
+// Repris de src/socle/ui/Shape.tsx (shapeInner) : Shape impose une couleur, alors que le code est au trait.
 function starPoints(cx: number, cy: number, outerR: number, innerR: number): string {
   const points: string[] = [];
   for (let i = 0; i < 10; i += 1) {

@@ -1,4 +1,4 @@
-// Rendu d'un émoji de contenu en SVG embarqué (voir src/ui/emoji.ts) plutôt qu'en glyphe texte :
+// Rendu d'un émoji de contenu en SVG embarqué (voir src/socle/ui/emoji.ts) plutôt qu'en glyphe texte :
 // remplace un `{char}` existant sans rien changer à la mise en page (taille = font-size hérité,
 // comme le texte qu'il remplace — voir emoji.css). Décoratif par défaut (`alt=""`) : si l'émoji est
 // le seul contenu d'un bouton sans aria-label, mets l'aria-label sur le bouton plutôt qu'un alt ici.

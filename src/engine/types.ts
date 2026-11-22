@@ -20,7 +20,7 @@ export interface Token {
 export const OBJECT_CATEGORIES = ['fruit', 'animal', 'vehicle', 'toy', 'plant'] as const;
 export type ObjectCategory = (typeof OBJECT_CATEGORIES)[number];
 
-/** Identifiant d'un objet illustré du catalogue `src/ui/objects.ts` (ex. "apple"). */
+/** Identifiant d'un objet illustré du catalogue `src/socle/ui/objects.ts` (ex. "apple"). */
 export type ObjectId = string;
 
 // ---------- Niveaux et parcours ----------

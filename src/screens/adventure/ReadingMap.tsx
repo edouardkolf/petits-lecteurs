@@ -3,17 +3,17 @@
 // Même décor et même mise en page que la carte de compétences ; chaque étape est un médaillon de lecture.
 // Toucher un niveau ouvre sa séance (`#/reading/<niveau>`) ; la fin de séance ramène ici.
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { markHistoryAnchor, navigate, returnTo } from '../../app/routes';
-import { useProfile } from '../../app/context';
-import { useSession } from '../../app/SessionProvider';
+import { markHistoryAnchor, navigate, returnTo } from '../../socle/app/routes';
+import { useProfile } from '../../socle/app/context';
+import { useSession } from '../../socle/app/SessionProvider';
 import type { LevelState as MapLevelState } from '../../engine/types';
-import { getSettings, listReadings, saveProfile } from '../../storage';
-import { Emoji } from '../../ui/Emoji';
-import { Icon } from '../../ui/icons/Icon';
-import { IconButton } from '../../ui/IconButton';
-import { TimeRing } from '../../ui/TimeRing';
-import { playError, playTap } from '../../ui/sound';
-import { checkVoice } from '../../ui/voice';
+import { getSettings, listReadings, saveProfile } from '../../socle/storage';
+import { Emoji } from '../../socle/ui/Emoji';
+import { Icon } from '../../socle/ui/icons/Icon';
+import { IconButton } from '../../socle/ui/IconButton';
+import { TimeRing } from '../../socle/ui/TimeRing';
+import { playError, playTap } from '../../socle/ui/sound';
+import { checkVoice } from '../../socle/ui/voice';
 import { LevelIcon, TRACK_COLORS } from '../../games/reading/LevelIcon';
 import { isPlayable, LEVELS, levelProgress, levelState, type LevelState } from '../../games/reading/levels';
 import { MapScenery } from '../map/MapScenery';

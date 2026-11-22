@@ -1,5 +1,5 @@
 // Image du catalogue lecture : l'émoji de getPicture(id) ; rien du tout si l'image est introuvable.
-import { Emoji } from "../../../ui/Emoji";
+import { Emoji } from "../../../socle/ui/Emoji";
 import { getPicture } from "../pictures";
 import type { PictureId } from "../types";
 

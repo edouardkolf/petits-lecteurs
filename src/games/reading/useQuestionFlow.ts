@@ -4,15 +4,15 @@
 //  - une seule écriture à la fois (file), jamais de double enregistrement d'une première tentative ;
 //  - au démontage : minuteurs et voix coupés, séance close en `abandoned` si elle ne l'est pas déjà.
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { playError, playSuccess, playTap } from '../../ui/sound';
-import { cancelSpeech, speakSequence, type SpeakResult, type SpeechStep } from '../../ui/voice';
+import { playError, playSuccess, playTap } from '../../socle/ui/sound';
+import { cancelSpeech, speakSequence, type SpeakResult, type SpeechStep } from '../../socle/ui/voice';
 import {
   abandonReading,
   completeReading,
   saveReadingAnswers,
   startReading,
-} from '../../storage/readings';
-import type { GameEndReason } from '../../storage/types';
+} from '../../socle/storage/readings';
+import type { GameEndReason } from '../../socle/storage/types';
 import { useActiveClock } from '../useActiveClock';
 import { useSoftEnd } from '../useSoftEnd';
 import {

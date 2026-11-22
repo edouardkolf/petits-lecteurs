@@ -709,7 +709,7 @@ svg {
   opacity: 0;
 }
 
-/* ---------- Pictos dessinés (src/ui/icons) ---------- */
+/* ---------- Pictos dessinés (src/socle/ui/icons) ---------- */
 
 /* 1em par défaut : un picto remplace un glyphe dans le flux du texte sans rien décaler. */
 .icon {

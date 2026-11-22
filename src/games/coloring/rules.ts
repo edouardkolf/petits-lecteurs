@@ -1,6 +1,6 @@
 // Peindre une case, aides graduées, complétion, reprise (docs/specs/COLORIAGE.md §3.2, §3.3, §2.6, §3.6).
 import type { Color } from '../../engine/types';
-import type { ColoringRecord, ColoringTier } from '../../storage/colorings';
+import type { ColoringRecord, ColoringTier } from '../../socle/storage/colorings';
 
 /** Issue d'un tap résolu (`resolveTap`, `geometry.ts`) combiné à la peinture du récipient. */
 export type PaintOutcome = 'painted' | 'missed' | 'empty-cup' | 'already-painted' | 'none';

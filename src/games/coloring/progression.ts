@@ -1,6 +1,6 @@
 // Progression du code magique, proposition de dessins, reprise et frigo (docs/specs/COLORIAGE.md §3.4, §3.5, §3.6, §2.5).
 import type { Detail, Drawing } from './model';
-import type { ColoringRecord, ColoringTier } from '../../storage/colorings';
+import type { ColoringRecord, ColoringTier } from '../../socle/storage/colorings';
 import { createRng } from '../../engine/rng';
 import { stateFromRecord } from './rules';
 

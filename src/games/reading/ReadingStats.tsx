@@ -1,8 +1,8 @@
 // Bloc de statistiques « J'apprends à lire » (LECTURE.md §8.3). Les indicateurs communs sont affichés par ChildStats.
 import { useMemo } from 'preact/hooks';
 import type { GameStatsProps } from '..';
-import type { ReadingRecord } from '../../storage/readings';
-import { formatPercentage } from '../../parent/format';
+import type { ReadingRecord } from '../../socle/storage/readings';
+import { formatPercentage } from '../../socle/parent/format';
 import { VoiceBench } from './VoiceBench';
 import { STAGE_TITLES, summarizeReading } from './stats';
 import type { ReadingStatsSummary } from './stats';

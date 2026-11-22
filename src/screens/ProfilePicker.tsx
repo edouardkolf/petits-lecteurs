@@ -1,16 +1,16 @@
 // Écran profils : grandes cartes avatar (l'enfant se reconnaît, pas besoin de lire).
 // Accès parent : appui long de 2 s sur le cadenas (jamais un tap bref).
 import { useEffect, useState } from 'preact/hooks';
-import { dayKey, getUsage, listProfiles } from '../storage';
-import type { Profile } from '../storage/types';
-import { markHistoryAnchor, navigate } from '../app/routes';
-import { useProfile } from '../app/context';
-import { computeTime } from '../app/session';
-import { applyPendingUpdateIfAny } from '../app/updates';
-import { LongPressButton } from '../ui/LongPressButton';
-import { Icon } from '../ui/icons/Icon';
+import { dayKey, getUsage, listProfiles } from '../socle/storage';
+import type { Profile } from '../socle/storage/types';
+import { markHistoryAnchor, navigate } from '../socle/app/routes';
+import { useProfile } from '../socle/app/context';
+import { computeTime } from '../socle/app/session';
+import { applyPendingUpdateIfAny } from '../socle/app/updates';
+import { LongPressButton } from '../socle/ui/LongPressButton';
+import { Icon } from '../socle/ui/icons/Icon';
 import { WorldBackdrop } from './map/WorldBackdrop';
-import { Emoji } from '../ui/Emoji';
+import { Emoji } from '../socle/ui/Emoji';
 
 const DISC_COLORS = ['#FFB347', '#7FC8A9', '#6EC6FF', '#FF8FA3', '#C9A0FF', '#FFD166'];
 

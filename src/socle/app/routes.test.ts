@@ -1,4 +1,4 @@
-// Tests de src/app/routes.ts (docs/specs/HUB.md §4.1). `history`, `location` et `window` sont de
+// Tests de src/socle/app/routes.ts (docs/specs/HUB.md §4.1). `history`, `location` et `window` sont de
 // faux objets (vi.stubGlobal) : Vitest tourne en environnement node, sans DOM.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Route } from './routes';

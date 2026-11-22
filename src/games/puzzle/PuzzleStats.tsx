@@ -1,8 +1,8 @@
 // Bloc de statistiques des jeux libres de logique (docs/specs/JEUX-LOGIQUE.md §4). Les indicateurs communs
 // sont affichés par ChildStats ; ce bloc n'ajoute que la répartition par difficulté.
 import type { GameStatsProps } from '../index';
-import type { PuzzlePreset, PuzzleRecord } from '../../storage/puzzles';
-import { formatPercentage } from '../../parent/format';
+import type { PuzzlePreset, PuzzleRecord } from '../../socle/storage/puzzles';
+import { formatPercentage } from '../../socle/parent/format';
 import { summarizePuzzles } from './stats';
 
 export const PRESET_LABELS: Record<PuzzlePreset, string> = {

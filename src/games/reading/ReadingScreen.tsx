@@ -2,14 +2,14 @@
 // démarre tout de suite, puis la fête de fin ; tout retour mène à la carte d'aventure (`#/reading` seul y redirige).
 // La progression n'est jamais stockée : elle est recalculée à partir des séances.
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { useProfile } from '../../app/context';
-import { returnTo } from '../../app/routes';
-import { getSettings } from '../../storage/settings';
+import { useProfile } from '../../socle/app/context';
+import { returnTo } from '../../socle/app/routes';
+import { getSettings } from '../../socle/storage/settings';
 import { createRng } from '../../engine/rng';
-import { IconButton } from '../../ui/IconButton';
-import { Icon } from '../../ui/icons/Icon';
-import { checkVoice } from '../../ui/voice';
-import { listReadings } from '../../storage/readings';
+import { IconButton } from '../../socle/ui/IconButton';
+import { Icon } from '../../socle/ui/icons/Icon';
+import { checkVoice } from '../../socle/ui/voice';
+import { listReadings } from '../../socle/storage/readings';
 import { computeProgress, type ReadingSettings } from './progress';
 import { getLevel, isLevelPass, isPlayable, levelProgress, levelState, type LevelProgress, type ReadingLevel } from './levels';
 import { planLevel } from './session';

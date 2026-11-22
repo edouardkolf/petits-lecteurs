@@ -1,9 +1,9 @@
 // Une séance de « J'apprends à lire » (LECTURE.md §2 et §9) : maison, points d'avancement, haut-parleur, et la vue
 // du jeu en cours. Tout l'enchaînement (voix, relance, enregistrement) est dans `useQuestionFlow`.
-import { returnTo, type HistoryAnchor } from '../../app/routes';
-import { IconButton } from '../../ui/IconButton';
-import { Icon } from '../../ui/icons/Icon';
-import { TutorialHand } from '../../ui/TutorialHand';
+import { returnTo, type HistoryAnchor } from '../../socle/app/routes';
+import { IconButton } from '../../socle/ui/IconButton';
+import { Icon } from '../../socle/ui/icons/Icon';
+import { TutorialHand } from '../../socle/ui/TutorialHand';
 import { STAGE_COLORS } from './StageIcon';
 import { useQuestionFlow } from './useQuestionFlow';
 import { READING_VIEWS } from './views';

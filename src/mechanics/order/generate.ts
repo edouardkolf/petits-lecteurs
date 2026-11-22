@@ -1,6 +1,6 @@
 // Génération pure des manches « ranger du plus petit au plus grand ». Aucun DOM, aucun stockage.
 import type { OrderParams, Rng, Round } from '../../engine/types';
-import { OBJECTS, getObject } from '../../ui/objects';
+import { OBJECTS, getObject } from '../../socle/ui/objects';
 import type { OrderItem, OrderRoundData } from './types';
 
 /** La plus petite taille reste bien visible : au moins 40 % de la plus grande. */

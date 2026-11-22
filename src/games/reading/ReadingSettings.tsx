@@ -1,6 +1,6 @@
 // Réglage « Étape de départ » de la fiche enfant (LECTURE.md §8.4). Défaut : 1 (valeur absente).
 import type { GameSettingsProps } from '..';
-import type { ReadingSettingsValue } from '../../storage/readings';
+import type { ReadingSettingsValue } from '../../socle/storage/readings';
 import { STAGE_TITLES } from './stats';
 import { READING_STAGES } from './types';
 import type { ReadingStage } from './types';

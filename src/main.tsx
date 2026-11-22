@@ -1,7 +1,7 @@
 import { render } from 'preact';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './app/App';
-import { setPendingUpdate } from './app/updates';
+import { setPendingUpdate } from './socle/app/updates';
 import './styles/fonts.css';
 import './styles/global.css';
 

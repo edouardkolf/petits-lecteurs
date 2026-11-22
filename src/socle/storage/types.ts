@@ -7,7 +7,7 @@ import type { PuzzleRecord } from './puzzles';
 import type { ReadingRecord, ReadingSettingsValue } from './readings';
 import type { TicTacToeRecord } from './tictactoes';
 
-export type AvatarId = string; // un emoji d'animal, ex. "🦊" (liste dans src/ui/avatars.ts)
+export type AvatarId = string; // un emoji d'animal, ex. "🦊" (liste dans src/socle/ui/avatars.ts)
 
 export interface ProfileLimits {
   /** Durée d'une session de jeu en minutes ; null = pas de limite. */
@@ -99,7 +99,7 @@ export interface UsageDay {
   /** Minutes supplémentaires accordées ce jour-là par le parent. */
   extraMinutes: number;
   /**
-   * Secondes actives du jour par activité (`ActivityId` de src/app/session.ts : hub, map, dictation,
+   * Secondes actives du jour par activité (`ActivityId` de src/socle/app/session.ts : hub, map, dictation,
    * coloring). Absent pour les jours d'avant la v2 ; la somme peut être inférieure à `activeSeconds`.
    */
   activitySeconds?: Record<string, number>;

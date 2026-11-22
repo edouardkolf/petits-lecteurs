@@ -3,7 +3,7 @@ import { assignColors, fnv1a, legendFor, nextVariantSeed } from './variants';
 import { DETAIL_FOR_TIER } from './model';
 import type { Color } from '../../engine/types';
 import type { Drawing } from './model';
-import type { ColoringTier } from '../../storage/colorings';
+import type { ColoringTier } from '../../socle/storage/colorings';
 import { DRAWINGS } from './catalog';
 
 const house = DRAWINGS.find((d) => d.id === 'house') as Drawing;
