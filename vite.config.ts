@@ -34,7 +34,7 @@ export default defineConfig(() => {
           display_override: ['fullscreen', 'standalone'],
           orientation: 'portrait',
           background_color: '#FFF7E8',
-          theme_color: '#FFB347',
+          theme_color: '#825FD8',
           start_url: '.',
           scope: '.',
           icons: [
