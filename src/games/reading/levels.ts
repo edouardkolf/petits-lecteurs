@@ -113,7 +113,10 @@ function buildLevels(): ReadingLevel[] {
     push('sound', 'letters', 'letter-sound', item, g.stage, `sound-${g.id}`);
     if (gamesForItem(item).includes('first-sound')) {
       pushOther(otherStage);
-      push('first', 'letters', 'first-sound', item, g.stage, `first-${g.id}`);
+      // Une seule lettre connue (la première, A) : « par quoi ça commence ? » n'aurait pas de leurre de lettre, la
+      // bonne réponse serait toujours la même. On inverse : un son, deux images (« word-start »).
+      const alone = known.every((id) => id === g.id);
+      push('first', 'letters', alone ? 'word-start' : 'first-sound', item, g.stage, `first-${g.id}`);
     }
   }
 

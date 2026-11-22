@@ -30,6 +30,8 @@ import {
   soundText,
   twinsPraise,
   twinsPrompt,
+  wordStartPraise,
+  wordStartPrompt,
 } from './speech';
 import type {
   GraphemeId,
@@ -129,6 +131,24 @@ interface Ctx {
   drumCounts: [number, number, number];
   blendStopAsked: number;
   blendStopShort: number;
+  /** Images déjà dites dans la félicitation de « la lettre qui chante », par graphème. */
+  praiseUsed: Map<GraphemeId, Set<string>>;
+  /** Position (0 ou 1) de la bonne image à « quel mot commence par », et combien de fois de suite. */
+  wordStartSide: { pos: number; run: number };
+}
+
+function newCtx(progress: ReadingProgress, rng: Rng): Ctx {
+  return {
+    progress,
+    rng,
+    used: new Set(),
+    usedPictures: new Set(),
+    drumCounts: [0, 0, 0],
+    blendStopAsked: 0,
+    blendStopShort: 0,
+    praiseUsed: new Map(),
+    wordStartSide: { pos: -1, run: 0 },
+  };
 }
 
 function pickUnused<T>(ctx: Ctx, items: readonly T[], key: (t: T) => string): T | undefined {
@@ -203,6 +223,9 @@ function makeLetterSound(ctx: Ctx, slot: Slot): ReadingQuestion | null {
   const kw = keywordPicture(id);
   const keyword = kw && kw.firstSound === id ? kw.word : null;
   const base = letterSoundPrompt(id);
+  // Le mot repère reste l'ancre de la présentation ; les autres questions disent un mot qui commence pareil.
+  const praisePic = slot.presentation ? undefined : pickPraisePicture(ctx, id, kw && kw.firstSound === id ? kw : undefined);
+  if (slot.presentation && kw && kw.firstSound === id) markPraiseUsed(ctx, id, kw.id);
   return {
     game: 'letter-sound',
     itemId: slot.item,
@@ -212,9 +235,30 @@ function makeLetterSound(ctx: Ctx, slot: Slot): ReadingQuestion | null {
     answer: id,
     prompt: slot.presentation ? [...presentationSteps(id, keyword), ...base] : base,
     speakChoices: false,
-    praise: letterSoundPraise(id, keyword),
+    praise: letterSoundPraise(id, praisePic ? praisePic.word : keyword),
+    ...(praisePic ? { praisePicture: praisePic.id } : {}),
     isNew: slot.presentation,
   };
+}
+
+function markPraiseUsed(ctx: Ctx, id: GraphemeId, picture: string): void {
+  const set = ctx.praiseUsed.get(id) ?? new Set<string>();
+  set.add(picture);
+  ctx.praiseUsed.set(id, set);
+}
+
+/**
+ * Image du mot dit dans la félicitation d'une lettre qui chante : un mot qui commence par ce graphème, jamais le
+ * même deux fois dans la séance tant qu'il en reste d'autres ; à défaut, le mot repère (ou rien).
+ */
+function pickPraisePicture(ctx: Ctx, id: GraphemeId, keyword: Picture | undefined): Picture | undefined {
+  const all = picturesStartingWith(id);
+  if (all.length === 0) return keyword;
+  const used = ctx.praiseUsed.get(id);
+  const fresh = all.filter((p) => !used?.has(p.id));
+  const pic = ctx.rng.pick(fresh.length > 0 ? fresh : all);
+  markPraiseUsed(ctx, id, pic.id);
+  return pic;
 }
 
 function makeFirstSound(ctx: Ctx, slot: Slot): ReadingQuestion | null {
@@ -237,6 +281,53 @@ function makeFirstSound(ctx: Ctx, slot: Slot): ReadingQuestion | null {
     prompt: firstSoundPrompt(pic.word),
     speakChoices: false,
     praise: firstSoundPraise(pic.word, id),
+    isNew: slot.presentation,
+  };
+}
+
+/** Mot sans accent ni « h » muet initial : « hibou » commence par « i ». */
+function soundBase(p: Picture): string {
+  return strip(p.word).replace(/^h/, '');
+}
+
+/**
+ * Image qui ne ressemble pas au début d'un mot de `id` : ni le même graphème, ni le même son initial, ni un
+ * graphème voisin (a/é, m/n…) ; pour une voyelle, uniquement des mots qui commencent par une consonne (jamais
+ * « an », « am », « ai », « au », « eau », « en »… qui sonnent comme la voyelle).
+ */
+function isWordStartDecoy(p: Picture, id: GraphemeId, target: Picture): boolean {
+  const near = NEAR.get(id) ?? [];
+  const base = soundBase(p);
+  if (p.firstSound === id || base.startsWith(strip(id)) || onsetKey(p) === onsetKey(target)) return false;
+  if (near.some((n) => p.firstSound === n || base.startsWith(strip(n)))) return false;
+  if (getGrapheme(id)?.kind === 'vowel' && /^[aeiouy]/.test(base)) return false;
+  return true;
+}
+
+function makeWordStart(ctx: Ctx, slot: Slot): ReadingQuestion | null {
+  const id = slot.item.slice(2);
+  const pic = pickUnused(ctx, picturesStartingWith(id), (p) => p.id);
+  if (!pic) return null;
+  const decoy = pickUnused(ctx, PICTURES.filter((p) => isWordStartDecoy(p, id, pic)), (p) => p.id);
+  if (!decoy) return null;
+  ctx.usedPictures.add(pic.id);
+  ctx.usedPictures.add(decoy.id);
+  // Position de la bonne image : jamais plus de 2 fois de suite du même côté.
+  const side = ctx.wordStartSide;
+  let pos = ctx.rng.next() < 0.5 ? 0 : 1;
+  if (pos === side.pos && side.run >= 2) pos = 1 - pos;
+  ctx.wordStartSide = { pos, run: pos === side.pos ? side.run + 1 : 1 };
+  const picks = pos === 0 ? [pic, decoy] : [decoy, pic];
+  return {
+    game: 'word-start',
+    itemId: slot.item,
+    target: id,
+    stimulus: { kind: 'sound', grapheme: id },
+    choices: picks.map((p) => pictureChoice(p, true)),
+    answer: pic.id,
+    prompt: wordStartPrompt(id),
+    speakChoices: true,
+    praise: wordStartPraise(pic.word, id),
     isNew: slot.presentation,
   };
 }
@@ -499,6 +590,8 @@ function makeQuestion(ctx: Ctx, slot: Slot): ReadingQuestion | null {
       return makeLetterSound(ctx, slot);
     case 'first-sound':
       return makeFirstSound(ctx, slot);
+    case 'word-start':
+      return makeWordStart(ctx, slot);
     case 'syllable-machine':
       return makeMachine(ctx, slot);
     case 'mystery-word':
@@ -756,15 +849,7 @@ function plan(progress: ReadingProgress, rng: Rng, opts?: PlanOptions): ReadingS
   const stage: ReadingStage = review ? (opts?.stage as ReadingStage) : finished ? 5 : progress.stage;
   const alloc = allocate(progress, stage, review, finished);
   const slots = arrange(buildSlots(alloc, rng), rng);
-  const ctx: Ctx = {
-    progress,
-    rng,
-    used: new Set(),
-    usedPictures: new Set(),
-    drumCounts: [0, 0, 0],
-    blendStopAsked: 0,
-    blendStopShort: 0,
-  };
+  const ctx = newCtx(progress, rng);
   const questions: ReadingQuestion[] = [];
   for (const slot of slots) {
     const q = makeQuestion(ctx, slot) ?? fallbackQuestion(ctx, slot);
@@ -804,6 +889,10 @@ function progressAtLevel(progress: ReadingProgress, level: ReadingLevel): Readin
 function levelSlots(level: ReadingLevel, rng: Rng): Slot[] {
   const n = level.questions;
   const plain = (item: ItemId, forNew = false, presentation = false): Slot => ({ item, game: level.game, forNew, presentation });
+  if (level.game === 'word-start') {
+    // Toutes les questions portent sur la lettre du niveau, chacune avec une image cible différente.
+    return Array.from({ length: n }, () => plain(level.item, true));
+  }
   if (level.game !== 'letter-sound' && level.game !== 'first-sound') {
     return Array.from({ length: n }, () => plain(level.item));
   }
@@ -835,15 +924,7 @@ function levelSlots(level: ReadingLevel, rng: Rng): Slot[] {
 export function planLevel(level: ReadingLevel, progress: ReadingProgress, rng: Rng): ReadingSessionPlan {
   try {
     const at = progressAtLevel(progress, level);
-    const ctx: Ctx = {
-      progress: at,
-      rng,
-      used: new Set(),
-      usedPictures: new Set(),
-      drumCounts: [0, 0, 0],
-      blendStopAsked: 0,
-      blendStopShort: 0,
-    };
+    const ctx = newCtx(at, rng);
     const questions: ReadingQuestion[] = [];
     for (const slot of levelSlots(level, rng)) {
       // Jamais un autre jeu en secours : à défaut, une question de plus sur l'item du niveau.

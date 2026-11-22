@@ -130,7 +130,7 @@ pour « par quoi ça commence », au moins 3 images par graphème des étapes 2 
 `e` ; `c` = mots en ca/co/cu ; `g` = ga/go/gu ; ne jamais classer sous `s` un mot en « ch », ni sous `o` un mot en
 « ou/on/oi », ni sous `a` un mot en « an/ai/au »). Mots connus d'une enfant de 4 ans, images non ambiguës.
 
-## 4. Les huit jeux
+## 4. Les neuf jeux
 
 Chaque vue reçoit `ReadingViewProps` et ne fait qu'afficher : pas de voix, pas de son, pas de stockage. Tout élément
 tapable porte `data-choice="<id>"`. Cibles ≥ 72 px, bien espacées (≥ 12 px). Une seule action : **toucher**. Pas de
@@ -143,6 +143,7 @@ glisser-déposer, pas de bouton de validation. Rien ne défile en 360 × 640. `p
 | `same-end` | `k:rhyme` | image modèle | 3 images (1 même rime) | « {mot}. Qui finit comme {mot} ? » + choix énumérés |
 | `letter-sound` | `g:*` | haut-parleur | 2 ou 3 lettres capitales | « Touche la lettre qui chante », pause, son |
 | `first-sound` | `g:*` | image | 2 ou 3 lettres capitales | « {mot}. Par quoi ça commence ? » |
+| `word-start` | `g:*` (niveau `first-a` seulement) | haut-parleur (le son) | 2 images (1 mot qui commence par le son) | « Quel mot commence par {son} ? » + choix énumérés |
 | `syllable-machine` | `k:blend`, `k:blend-stop` | 2 blocs qui glissent l'un vers l'autre | 3 syllabes écrites | son 1, pause, son 2, pause, syllabe ; « Touche », syllabe |
 | `mystery-word` | `k:read` | mot écrit | 3 images | aucune (la voix ne lit pas le mot) |
 | `letter-twins` | `k:case` | capitale | 3 minuscules | « Touche la même lettre, en petit. » |
@@ -162,6 +163,17 @@ Précisions :
   avant 2 passages). Résolue : `praise` = le mot lu par la voix.
 - **Jumelles** : choix en minuscules scriptes (police Andika, déjà embarquée). Les paires b/d et p/q n'apparaissent
   comme leurres l'une de l'autre que si l'item `k:case` a déjà au moins 20 réponses.
+- **« Quel mot commence par… ? »** (`word-start`, décembre 2026) : quand la seule lettre connue est A, « par quoi ça
+  commence » aurait toujours A pour réponse. On inverse : le son, puis 2 images (`data-choice` = id d'image,
+  `answer` = la bonne, `choiceCount` 2, position variée, jamais 3 fois de suite du même côté). La bonne image commence
+  par la lettre (une cible différente à chaque question de la séance) ; le leurre ne commence ni par la même lettre ni
+  par le même son, ni par une lettre proche (a/é…), et pour une voyelle jamais par une voyelle (an, am, ai, au, eau, en
+  sonnent comme « a »). Toucher le haut-parleur répète le son ; une image fausse se grise et dit son nom. Les choix sont
+  des images : hors de la table des confusions de lettres. Aucun jeu libre d'item (`gamesForItem` inchangé).
+- **Mot de la félicitation** (« la lettre qui chante ») : le mot repère reste l'ancre de la présentation (`isNew`) ;
+  ensuite, « {son}, comme {mot} » prend un mot parmi les images qui commencent par ce graphème, sans répétition dans la
+  séance tant qu'il en reste (repli : le mot repère). La vue montre cette image (`question.praisePicture`) une fois la
+  question résolue.
 - **Lettre nouvelle** (`isNew` sur la première question d'un item `g:*`) : avant la consigne, `prompt` commence par la
   présentation : son, pause, « comme », mot repère (ex. « meu… comme moto »), et la vue `letter-sound` montre la lettre
   seule en grand avec l'image du mot repère pendant cette présentation (`question.isNew` ; 2 choix seulement).
@@ -247,7 +259,7 @@ Les réponses `retry: true` et les exemples guidés ne comptent jamais.
    `data-testid="reading-bench"`) : nom de la voix du téléphone, puis `benchEntries()` par groupe, un bouton par
    entrée, et « Tout écouter » par groupe. Sert à repérer en deux minutes les sons qui sonnent faux.
 
-## 9. Autonomie (règles communes aux huit jeux)
+## 9. Autonomie (règles communes aux neuf jeux)
 
 1. **Consigne parlée** au début de chaque question ; une seule phrase courte.
 2. **Bouton haut-parleur** toujours visible : rejoue consigne et stimulus (`replays` + 1 avant la première tentative).
@@ -308,7 +320,7 @@ Les réponses `retry: true` et les exemples guidés ne comptent jamais.
 | L1 socle | `src/storage/**` (dont `readings.ts`), `src/app/routes.ts` (+ test), `src/app/AppShell.tsx`, `src/app/session.ts` si besoin, `src/games/index.ts` (+ test), `src/ui/icons/GameIcon.tsx`, `src/screens/hub/**`, `src/screens/Hub.tsx` si besoin, `src/parent/ChildStats.tsx`, `src/parent/ChildForm.tsx`, `src/parent/import.ts` (+ test), `src/parent/stats.ts` si besoin | L0 |
 | L2 contenu et logique | `src/games/reading/{curriculum,pictures,speech,progress,session}.ts` et leurs tests, `scripts/fetch-emoji.mjs`, `public/emoji/**` | L0 |
 | L3 écran | `src/games/reading/ReadingScreen.tsx`, `ReadingHome.tsx`, `ReadingSession.tsx`, `ReadingEnd.tsx`, `StageIcon.tsx`, `reading.css`, hooks locaux (`useQuestionFlow.ts`…) | L0 |
-| L4 vues de jeu | `src/games/reading/views/**` (huit vues, `views.css`, petits composants partagés des vues) | L0 |
+| L4 vues de jeu | `src/games/reading/views/**` (neuf vues, `views.css`, petits composants partagés des vues) | L0 |
 | L5 parent | `src/games/reading/{stats.ts,stats.test.ts,ReadingStats.tsx,ReadingSettings.tsx,VoiceBench.tsx,reading-parent.css}` | L0 |
 | L6 e2e, docs, revue | `tests/e2e/**`, `docs/ARCHITECTURE.md`, `docs/CONTENU.md`, `docs/PROGRESSION-MS.md`, `docs/specs/README.md` | L1–L5 |
 
@@ -342,6 +354,9 @@ reste calculée pour les statistiques parent et le choix des leurres.
   l'ordre du §3.2 : pour chaque lettre un niveau « la lettre qui chante », puis un niveau « par quoi ça commence »
   si elle a au moins 2 images. La première lettre (A) est le **niveau 2**. Fin du parcours : mot mystère et
   jumelles en alternance avec les lettres rares. 104 niveaux.
+  **Niveau 4 (`first-a`)** : même identifiant (les séances enregistrées restent valides), mais son jeu est
+  `word-start` (§4) tant que l'enfant ne connaît qu'une lettre ; tous les autres niveaux « par quoi ça commence »
+  gardent `first-sound`.
 - **Contenu d'un niveau « lettre »** : la lettre du niveau est présentée d'abord, puis ~60 % des questions portent
   sur elle et le reste révise les lettres déjà vues (jamais une lettre à venir comme cible). Pour A, tout porte sur A.
 - **Déblocage** : un niveau est gagné quand une séance terminée a **4 bonnes réponses du premier coup sur 5**

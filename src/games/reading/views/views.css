@@ -59,6 +59,14 @@
   background: radial-gradient(circle at 50% 35%, #fffef9 0 55%, #ddefff 100%);
 }
 
+/* Image du mot de la félicitation (la lettre qui chante), à la place du haut-parleur une fois résolu. */
+.rv-stim--praise {
+  --card: calc(var(--u) * 38);
+  border-color: #9be0a0;
+  background: radial-gradient(circle at 50% 35%, #fffef9 0 55%, #e6f8e0 100%);
+  animation: rv-pop 700ms ease-out;
+}
+
 /* ---------- Choix ---------- */
 
 .rv-choices {

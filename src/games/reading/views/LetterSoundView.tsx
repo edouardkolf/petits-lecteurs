@@ -1,5 +1,6 @@
 // « La lettre qui chante » : un grand haut-parleur, 2 ou 3 lettres au choix. Pour une lettre nouvelle,
 // pendant la présentation (consigne en cours) : la lettre seule en grand avec l'image du mot repère.
+// Une fois la question résolue, l'image du mot dit dans la félicitation (« a… comme abeille ») remplace le haut-parleur.
 import { getGrapheme } from "../curriculum";
 import type { ReadingViewProps } from "../types";
 import { ChoiceRow } from "./ChoiceRow";
@@ -27,6 +28,10 @@ export function LetterSoundView(props: ReadingViewProps) {
               <Pic id={grapheme.keyword} />
             </div>
           )}
+        </div>
+      ) : solved && question.praisePicture ? (
+        <div class="rv-stim rv-stim--praise" data-testid="reading-praise-pic">
+          <Pic id={question.praisePicture} />
         </div>
       ) : (
         <button

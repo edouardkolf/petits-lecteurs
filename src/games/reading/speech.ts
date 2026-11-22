@@ -59,6 +59,7 @@ const INSTRUCTIONS: Readonly<Record<ReadingGameId, string>> = {
   'same-end': 'Écoute les mots. Touche celui qui finit pareil.',
   'letter-sound': 'Écoute le son. Touche la lettre qui chante.',
   'first-sound': "Regarde l'image. Touche la lettre par laquelle ça commence.",
+  'word-start': "Écoute le son. Touche l'image du mot qui commence par ce son.",
   'syllable-machine': 'Écoute la syllabe. Touche la même.',
   'mystery-word': "Lis le mot. Touche la bonne image.",
   'letter-twins': 'Touche la même lettre, en petit.',
@@ -110,6 +111,11 @@ export function firstSoundPrompt(w: string): SpeechStep[] {
   return [word(w), pause(300), { text: 'Par quoi ça commence ?' }];
 }
 
+/** « Quel mot commence par a ? » : le son est dit seul, jamais noyé dans la phrase. */
+export function wordStartPrompt(grapheme: GraphemeId): SpeechStep[] {
+  return [{ text: 'Quel mot commence par' }, pause(300), soundStep(grapheme)];
+}
+
 /** Fusion : son 1, pause, son 2, pause, syllabe entière ; puis « Touche », syllabe. */
 export function machinePrompt(first: GraphemeId, second: GraphemeId, syllable: string): SpeechStep[] {
   return [
@@ -133,6 +139,11 @@ export function letterSoundPraise(grapheme: GraphemeId, keyword: string | null):
   const steps: SpeechStep[] = [soundStep(grapheme)];
   if (keyword) steps.push(pause(250), { text: 'comme' }, word(keyword));
   return steps;
+}
+
+/** « avion… a » : le mot trouvé, puis le son par lequel il commence. */
+export function wordStartPraise(w: string, grapheme: GraphemeId): SpeechStep[] {
+  return [word(w), pause(250), soundStep(grapheme)];
 }
 
 export function firstSoundPraise(w: string, grapheme: GraphemeId): SpeechStep[] {

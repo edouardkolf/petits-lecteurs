@@ -414,8 +414,12 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
     }
     playError();
     // La lettre ou la syllabe touchée chante son propre son.
-    const sound = soundOfChoice(q.choices.find((c) => c.id === id));
-    if (sound) {
+    const touched = q.choices.find((c) => c.id === id);
+    const sound = soundOfChoice(touched);
+    if (q.game === 'word-start' && touched?.speech) {
+      // « Quel mot commence par… » : l'image touchée dit son nom, pour entendre que ce n'est pas le bon son.
+      void say([{ text: touched.speech, rate: SOUND_RATE }]);
+    } else if (sound) {
       const text = safe(() => (sound.type === 'grapheme' ? soundText(sound.id) : syllableText(sound.id)), '');
       if (text) void say([{ text, rate: SOUND_RATE }]);
     }

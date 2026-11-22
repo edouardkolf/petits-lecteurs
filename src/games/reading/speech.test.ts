@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { GRAPHEMES, SYLLABLES } from './curriculum';
 import { PICTURES } from './pictures';
-import { BLEND_PAUSE_MS, SOUND_RATE, benchEntries, gameInstruction, machinePrompt, nameText, soundText, syllableText } from './speech';
+import { BLEND_PAUSE_MS, SOUND_RATE, benchEntries, gameInstruction, machinePrompt, nameText, soundText, syllableText, wordStartPraise, wordStartPrompt } from './speech';
 import { READING_GAMES } from './types';
 
 describe('soundText', () => {
@@ -51,7 +51,7 @@ describe('syllableText', () => {
 });
 
 describe('gameInstruction', () => {
-  it('une phrase courte pour chacun des huit jeux, tutoiement', () => {
+  it('une phrase courte pour chacun des neuf jeux, tutoiement', () => {
     for (const g of READING_GAMES) {
       const t = gameInstruction(g);
       expect(t.length, g).toBeGreaterThan(10);
@@ -59,6 +59,11 @@ describe('gameInstruction', () => {
       expect(/\b(vous|votre)\b/i.test(t)).toBe(false);
     }
     expect(gameInstruction('letter-sound')).toContain('lettre qui chante');
+  });
+
+  it('« quel mot commence par » : le son est dit seul, à débit lent, après la consigne', () => {
+    expect(wordStartPrompt('a')).toEqual([{ text: 'Quel mot commence par' }, { pauseMs: 300 }, { text: 'a', rate: SOUND_RATE }]);
+    expect(wordStartPraise('avion', 'a')).toEqual([{ text: 'avion', rate: SOUND_RATE }, { pauseMs: 250 }, { text: 'a', rate: SOUND_RATE }]);
   });
 });
 

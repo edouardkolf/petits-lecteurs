@@ -4,6 +4,7 @@ import type { ReadingRecord } from '../../socle/storage/readings';
 import { gamesForItem, GRAPHEMES } from './curriculum';
 import { getLevel, isLevelPass, isPlayable, LEVELS, levelProgress, levelState, passMark, type ReadingLevel } from './levels';
 import { computeProgress } from './progress';
+import { getPicture, picturesStartingWith } from './pictures';
 import { planLevel } from './session';
 import type { ReadingAnswer } from './types';
 
@@ -72,7 +73,8 @@ describe('parcours de niveaux : structure', () => {
     expect(new Set(LEVELS.map((l) => l.id)).size).toBe(LEVELS.length);
     LEVELS.forEach((l, i) => {
       expect(l.index).toBe(i + 1);
-      expect(gamesForItem(l.item), l.id).toContain(l.game);
+      // « word-start » n'est qu'une variante de « first-sound » (niveau first-a) : il n'est pas un jeu libre d'item.
+      expect(gamesForItem(l.item), l.id).toContain(l.game === 'word-start' ? 'first-sound' : l.game);
       expect(getLevel(l.id)).toBe(l);
     });
   });
@@ -100,6 +102,23 @@ describe('parcours de niveaux : structure', () => {
     }
     expect(LEVELS.some((l) => l.game === 'syllable-machine')).toBe(true);
     expect(LEVELS.some((l) => l.game === 'letter-twins')).toBe(true);
+  });
+
+  it('first-a joue « word-start » (une seule lettre connue) ; les autres first-* restent « first-sound »', () => {
+    const a = getLevel('first-a')!;
+    expect(a.game).toBe('word-start');
+    expect(a.item).toBe('g:a');
+    expect(a.known).toEqual(['a']);
+    expect(a.index).toBe(4);
+    expect(a.questions).toBe(5);
+    const firsts = LEVELS.filter((l) => l.id.startsWith('first-'));
+    expect(firsts.length).toBeGreaterThan(10);
+    for (const l of firsts.filter((x) => x.id !== 'first-a')) {
+      expect(l.game, l.id).toBe('first-sound');
+      expect(l.known.length, l.id).toBeGreaterThan(1);
+    }
+    expect(LEVELS.filter((l) => l.game === 'word-start').map((l) => l.id)).toEqual(['first-a']);
+    expect(LEVELS.length).toBe(104);
   });
 
   it('séances courtes aux étapes 1 et 2 (5 questions), 8 ensuite', () => {
@@ -206,6 +225,84 @@ describe('planLevel : une séance = un niveau = un seul jeu', () => {
   it('première lettre : tout le niveau porte sur A', () => {
     const plan = planLevel(getLevel('sound-a')!, blank, createRng(5));
     expect(plan.questions.every((q) => q.target === 'a')).toBe(true);
+  });
+
+  it('first-a (« word-start ») : 5 questions sur A, 2 images dont la bonne, cibles toutes différentes', () => {
+    const l = getLevel('first-a')!;
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const plan = planLevel(l, blank, createRng(seed));
+      expect(plan.questions).toHaveLength(5);
+      const targets = new Set<string>();
+      for (const q of plan.questions) {
+        expect(q.game).toBe('word-start');
+        expect(q.target).toBe('a');
+        expect(q.itemId).toBe('g:a');
+        expect(q.stimulus).toEqual({ kind: 'sound', grapheme: 'a' });
+        expect(q.choices).toHaveLength(2);
+        expect(q.speakChoices).toBe(true);
+        const ids = q.choices.map((c) => c.id);
+        expect(new Set(ids).size).toBe(2);
+        expect(ids).toContain(q.answer);
+        expect(picturesStartingWith('a').map((p) => p.id)).toContain(q.answer);
+        targets.add(q.answer);
+        const decoy = getPicture(ids.find((i) => i !== q.answer) as string)!;
+        const base = decoy.word.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+        expect(decoy.firstSound, decoy.word).not.toBe('a');
+        expect(decoy.firstSound, decoy.word).not.toBe('é');
+        // Jamais un mot dont la première voyelle sonne comme « a » (an, am, ai, au, eau, en…) ni une voyelle initiale.
+        expect(base, decoy.word).not.toMatch(/^h?[aeiouy]/);
+      }
+      expect(targets.size, `graine ${seed}`).toBe(5);
+    }
+  });
+
+  it('first-a : déterministe pour une graine, la bonne image change de côté', () => {
+    const l = getLevel('first-a')!;
+    const a = planLevel(l, blank, createRng(9));
+    expect(planLevel(l, blank, createRng(9)).questions).toEqual(a.questions);
+    let left = 0;
+    let right = 0;
+    for (let seed = 1; seed <= 60; seed += 1) {
+      const qs = planLevel(l, blank, createRng(seed)).questions;
+      qs.forEach((q) => (q.choices[0]?.id === q.answer ? (left += 1) : (right += 1)));
+      // jamais plus de deux fois de suite du même côté
+      for (let i = 2; i < qs.length; i += 1) {
+        const sides = [i - 2, i - 1, i].map((k) => (qs[k]!.choices[0]?.id === qs[k]!.answer ? 0 : 1));
+        expect(new Set(sides).size, `graine ${seed}`).toBe(2);
+      }
+    }
+    expect(left).toBeGreaterThan(60);
+    expect(right).toBeGreaterThan(60);
+  });
+
+  it('« la lettre qui chante » : mot de la félicitation varié, mot repère gardé pour la présentation', () => {
+    const l = getLevel('sound-a')!;
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const plan = planLevel(l, blank, createRng(seed));
+      const [first, ...rest] = plan.questions;
+      expect(first?.isNew).toBe(true);
+      expect(first?.praisePicture).toBeUndefined();
+      expect(first?.prompt.some((s) => 'text' in s && s.text === 'avion')).toBe(true);
+      const words = rest.map((q) => q.praisePicture);
+      expect(words.every((w) => w !== undefined && picturesStartingWith('a').some((p) => p.id === w))).toBe(true);
+      // pas de répétition tant qu'il en reste, et pas le mot repère déjà dit à la présentation
+      expect(new Set(words).size, `graine ${seed}`).toBe(words.length);
+      expect(words).not.toContain('avion');
+      for (const q of rest) {
+        const w = getPicture(q.praisePicture as string)!.word;
+        expect(q.praise.some((s) => 'text' in s && s.text === w)).toBe(true);
+        expect(q.praise.some((s) => 'text' in s && s.text === 'comme')).toBe(true);
+      }
+    }
+    expect(planLevel(l, blank, createRng(4)).questions).toEqual(planLevel(l, blank, createRng(4)).questions);
+  });
+
+  it('« la lettre qui chante » sans autre image : le mot repère sert de repli', () => {
+    const plan = planLevel(getLevel('sound-u')!, blank, createRng(2));
+    const pics = picturesStartingWith('u');
+    for (const q of plan.questions.filter((x) => !x.isNew && x.target === 'u')) {
+      expect(q.praisePicture).toBe(pics[0]?.id);
+    }
   });
 
   it('niveau « son dans un mot » : images différentes, lettres déjà vues seulement', () => {
