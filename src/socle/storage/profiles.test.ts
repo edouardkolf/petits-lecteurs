@@ -1,0 +1,145 @@
+import 'fake-indexeddb/auto';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { resetStorageForTests } from './test-helpers';
+import {
+  addActiveSeconds,
+  deleteProfile,
+  getProfile,
+  getSettings,
+  getUsage,
+  listColorings,
+  listDictations,
+  listHangmans,
+  listTicTacToes,
+  listOverrides,
+  listPuzzles,
+  listProfiles,
+  listRuns,
+  saveProfile,
+  setOverride,
+  startColoring,
+  startDictation,
+  startHangman,
+  startTicTacToe,
+  startPuzzle,
+  startRun,
+  updateSettings,
+} from './index';
+
+beforeEach(async () => {
+  await resetStorageForTests();
+});
+
+const newProfile = () => ({
+  name: 'Léo',
+  avatar: '🦊',
+  trackId: 'ms',
+  limits: { sessionMinutes: null, dailyMinutes: null },
+});
+
+describe('profils : CRUD', () => {
+  it('crée un profil avec id et createdAt générés', async () => {
+    const created = await saveProfile(newProfile());
+    expect(created.id).toBeTruthy();
+    expect(created.createdAt).toBeGreaterThan(0);
+    expect(await listProfiles()).toEqual([created]);
+  });
+
+  it('met à jour un profil existant en conservant createdAt', async () => {
+    const created = await saveProfile(newProfile());
+    const updated = await saveProfile({ ...created, name: 'Léa' });
+
+    expect(updated.id).toBe(created.id);
+    expect(updated.createdAt).toBe(created.createdAt);
+    expect(updated.name).toBe('Léa');
+    expect(await listProfiles()).toEqual([updated]);
+  });
+
+  it('getProfile renvoie undefined pour un id inconnu', async () => {
+    expect(await getProfile('inconnu')).toBeUndefined();
+  });
+
+  it('liste plusieurs profils', async () => {
+    const a = await saveProfile(newProfile());
+    const b = await saveProfile({ ...newProfile(), name: 'Mia' });
+    const all = await listProfiles();
+    expect(all).toHaveLength(2);
+    expect(all.map((p) => p.id).sort()).toEqual([a.id, b.id].sort());
+  });
+});
+
+describe('deleteProfile : suppression en cascade', () => {
+  it('supprime le profil, ses parties, ses réglages de niveaux et son temps de jeu ; ' +
+    'retire son entrée de settings.sessions et remet lock à null s\'il concernait ce profil ; ' +
+    'laisse les autres profils intacts', async () => {
+    const profile = await saveProfile(newProfile());
+    const other = await saveProfile({ ...newProfile(), name: 'Mia' });
+
+    await startRun({ profileId: profile.id, levelId: 'ms-suite-01', trackId: 'ms', replay: false });
+    await setOverride(profile.id, 'ms-suite-02', 'unlocked');
+    await addActiveSeconds(profile.id, '2026-09-25', 120);
+    await startDictation(profile.id, { seriesId: 's1', seed: 1, words: [{ wordId: 'chat', seriesId: 's1', sentenceIndex: 0 }] });
+    await startColoring(profile.id, {
+      drawingId: 'house',
+      tier: 1,
+      detail: 1,
+      variantSeed: 1,
+      zones: [{ id: 'z1', target: 'red' }],
+      legend: null,
+      paintedAtStart: [],
+      missesAtStart: {},
+    });
+    await startTicTacToe(profile.id, { mode: 'solo', xStarts: true, moves: [4] });
+    await startHangman(profile.id, { wordId: 'lion', word: 'lion', maxMistakes: 8, guesses: ['l'], mistakes: 0 });
+    await startPuzzle(profile.id, { game: 'robot', preset: 'easy' });
+    const otherSession = { profileId: other.id, startedAt: Date.now(), activeSeconds: 0, lastActiveAt: Date.now() };
+    await updateSettings({
+      sessions: {
+        [profile.id]: { profileId: profile.id, startedAt: Date.now(), activeSeconds: 0, lastActiveAt: Date.now() },
+        [other.id]: otherSession,
+      },
+      lock: { reason: 'session', profileId: profile.id, lockedAt: Date.now() },
+    });
+
+    const otherRun = await startRun({ profileId: other.id, levelId: 'ms-suite-01', trackId: 'ms', replay: false });
+    const otherDictation = await startDictation(other.id, {
+      seriesId: 's1',
+      seed: 2,
+      words: [{ wordId: 'chien', seriesId: 's1', sentenceIndex: 0 }],
+    });
+
+    await deleteProfile(profile.id);
+
+    expect(await getProfile(profile.id)).toBeUndefined();
+    expect(await listRuns(profile.id)).toEqual([]);
+    expect(await listOverrides(profile.id)).toEqual([]);
+    expect((await getUsage(profile.id, '2026-09-25')).activeSeconds).toBe(0);
+    expect(await listDictations(profile.id)).toEqual([]);
+    expect(await listColorings(profile.id)).toEqual([]);
+    expect(await listTicTacToes(profile.id)).toEqual([]);
+    expect(await listHangmans(profile.id)).toEqual([]);
+    expect(await listPuzzles(profile.id)).toEqual([]);
+
+    const settings = await getSettings();
+    expect(settings.sessions[profile.id]).toBeUndefined();
+    expect(settings.lock).toBeNull();
+    // La session de l'enfant non supprimé n'est pas touchée (une session par enfant, F3).
+    expect(settings.sessions[other.id]).toEqual(otherSession);
+
+    // Le profil non concerné garde ses données.
+    expect(await getProfile(other.id)).toEqual(other);
+    expect(await listRuns(other.id)).toEqual([otherRun]);
+    expect(await listDictations(other.id)).toEqual([otherDictation]);
+  });
+
+  it('ne remet pas lock à null s\'il concerne un autre profil', async () => {
+    const profile = await saveProfile(newProfile());
+    const other = await saveProfile({ ...newProfile(), name: 'Mia' });
+    const lock = { reason: 'session' as const, profileId: other.id, lockedAt: Date.now() };
+    await updateSettings({ lock });
+
+    await deleteProfile(profile.id);
+
+    expect((await getSettings()).lock).toEqual(lock);
+  });
+});

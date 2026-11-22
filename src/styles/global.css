@@ -1,0 +1,1219 @@
+/* Styles globaux — Petits Lecteurs. Chaleureux, rond, très contrasté, peu d'éléments à l'écran. */
+
+:root {
+  --bg: #fff7e8;
+  --bg-sky-top: #bfe6ff;
+  --bg-sky-bottom: #fff3da;
+  --surface: #fffdf7;
+  --accent: #ffb347;
+  --accent-ink: #5a3a12;
+  --ink: #3d2c1e;
+  --ink-soft: #7a6a58;
+  --locked-bg: #d9d2c4;
+  --locked-ink: #948a78;
+  --radius: 20px;
+  --radius-sm: 12px;
+  --shadow: 0 8px 20px rgba(61, 44, 30, 0.16);
+  --shadow-sm: 0 3px 8px rgba(61, 44, 30, 0.14);
+  /* F14 : force le glyphe emoji couleur plutôt que le glyphe monochrome de la police système. */
+  --emoji-font:
+    'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'Twemoji Mozilla', sans-serif;
+  --font-body: 'Andika', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Fredoka Variable', 'Andika', system-ui, sans-serif;
+}
+
+/* ---------- Reset ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overscroll-behavior: none;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+html,
+body,
+button,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+body,
+button {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+ul,
+ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* ---------- Mouvement réduit ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Animations réutilisables ---------- */
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 179, 71, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(255, 179, 71, 0);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-8px);
+  }
+  40% {
+    transform: translateX(7px);
+  }
+  60% {
+    transform: translateX(-5px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.4;
+  }
+  60% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-6deg);
+  }
+  75% {
+    transform: rotate(6deg);
+  }
+}
+
+/* ---------- Écran générique ---------- */
+
+.screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  width: 100%;
+  overflow-x: hidden;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) calc(env(safe-area-inset-right, 0px) + 16px)
+    calc(env(safe-area-inset-bottom, 0px) + 16px) calc(env(safe-area-inset-left, 0px) + 16px);
+  gap: 24px;
+}
+
+.screen--loading {
+  background: var(--bg);
+}
+
+/* ---------- Accueil (aucun profil) ---------- */
+
+.screen--welcome {
+  background: radial-gradient(circle at 50% 20%, var(--bg-sky-bottom), var(--bg));
+  text-align: center;
+}
+
+.welcome-illustration {
+  font-family: var(--emoji-font);
+  font-size: 88px;
+  line-height: 1;
+  animation: bounce 2.4s ease-in-out infinite;
+}
+
+.welcome-button {
+  min-height: 56px;
+  padding: 14px 28px;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 18px;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+.welcome-button:active {
+  transform: scale(0.96);
+}
+
+/* ---------- Profils ---------- */
+
+.screen--profiles {
+  justify-content: center;
+  isolation: isolate;
+}
+
+/* Accès parent : toujours ancré en haut à droite de l'écran. Spécificité renforcée
+   pour l'emporter sur `.long-press-button { position: relative }`, déclarée plus bas. */
+.long-press-button.lock-button,
+.long-press-button.lock-screen__unlock {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: calc(env(safe-area-inset-right, 0px) + 12px);
+  z-index: 10;
+}
+
+.profile-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 20px;
+  max-width: 460px;
+}
+
+.profile-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 150px;
+  min-height: 168px;
+  padding: 18px 8px 14px;
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow: 0 6px 0 #eadfca, var(--shadow);
+  transition: opacity 200ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+/* Les cartes arrivent l'une après l'autre (délai posé en style inline). Animation portée par une
+   enveloppe : la secousse (carte épuisée) et l'estompage de la carte ne la relancent jamais. */
+.profile-card-slot {
+  animation: profile-card-in 480ms cubic-bezier(0.34, 1.56, 0.64, 1) var(--enter-delay, 0ms) backwards;
+}
+
+@keyframes profile-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.profile-card:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #eadfca, var(--shadow-sm);
+}
+
+.profile-card--exhausted {
+  opacity: 0.45;
+}
+
+.profile-card__badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-family: var(--emoji-font);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.profile-card.is-shaking {
+  animation: shake 400ms ease;
+}
+
+.profile-card__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  font-family: var(--emoji-font);
+  font-size: 58px;
+  box-shadow:
+    inset 0 -6px 0 rgba(0, 0, 0, 0.08),
+    0 0 0 5px #ffffff;
+}
+
+.profile-card__name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ---------- Bouton à appui long (cadenas parent) ---------- */
+
+.long-press-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.long-press-button.is-pressing {
+  transform: scale(1.05);
+}
+
+.long-press-button__ring {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.long-press-button__track {
+  fill: none;
+  stroke: rgba(61, 44, 30, 0.12);
+  stroke-width: 4;
+}
+
+.long-press-button__progress {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.long-press-button__icon {
+  position: relative;
+  font-family: var(--emoji-font);
+  font-size: 26px;
+  line-height: 1;
+}
+
+/* ---------- Carte du parcours ---------- */
+
+.screen--map {
+  padding: 0;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+/* Avatar du hub (docs/specs/HUB.md §2.1) : ramène aux profils. Auparavant sur la carte
+   (.map-back-avatar) ; le picto et la position n'ont pas changé, seul son écran a bougé. */
+.hub-avatar {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  left: calc(env(safe-area-inset-left, 0px) + 12px);
+  z-index: 10;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--emoji-font);
+  font-size: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pop 360ms ease-out;
+}
+
+.hub-avatar:active {
+  transform: scale(0.94);
+}
+
+/* Maison de la carte (ramène au hub) : même emplacement que l'ancien avatar. */
+.map-home {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  left: calc(env(safe-area-inset-left, 0px) + 12px);
+  z-index: 10;
+}
+
+.map-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  /* Couleur du sol de la forêt, visible seulement le temps de la première mesure. */
+  background: #b5d98a;
+}
+
+.map-track {
+  position: relative;
+  width: 100%;
+}
+
+.map-scenery {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.map-scenery__path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Milieu du sentier, tassé par les pas : plus clair, par plaques irrégulières. */
+.map-scenery__path--worn {
+  stroke-dasharray: 70 22 38 30 90 18;
+  opacity: 0.65;
+}
+
+/* Grains de terre, décalés des plaques claires. */
+.map-scenery__path--specks {
+  stroke-dasharray: 0.4 11 0.4 23;
+  stroke-dashoffset: 6;
+  opacity: 0.8;
+}
+
+.map-scenery__sign-icon {
+  font-family: var(--emoji-font);
+}
+
+.map-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.map-node__disc {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--emoji-font);
+  font-size: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  border: 4px solid var(--accent);
+}
+
+.map-node--completed .map-node__disc {
+  background: var(--accent);
+  border-color: var(--accent-ink);
+}
+
+.map-node--locked .map-node__disc {
+  background: var(--locked-bg);
+  border-color: var(--surface);
+  color: var(--locked-ink);
+  box-shadow: inset 0 3px 0 rgba(61, 44, 30, 0.08);
+  font-size: 34px;
+}
+
+/* Niveau terminé : le disque orange garde un reflet, comme un bonbon. */
+.map-node--completed .map-node__disc {
+  background: radial-gradient(circle at 35% 30%, #ffd08a, var(--accent) 60%);
+}
+
+/* Étoiles lisibles sur le chemin crème ; rien sous un niveau verrouillé (moins de bruit). */
+.map-node .star-row {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 253, 247, 0.9);
+  box-shadow: var(--shadow-sm);
+}
+
+.map-node--locked .star-row {
+  visibility: hidden;
+}
+
+.map-node.is-current .map-node__disc {
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+.map-node__avatar {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--emoji-font);
+  font-size: 20px;
+  animation: bounce 1.6s ease-in-out infinite;
+}
+
+.map-node.is-shaking {
+  animation: shake 400ms ease;
+}
+
+/* « Suivant » : l'avatar vient d'atterrir sur le niveau, qui rebondit avant que la partie s'ouvre. */
+.map-node.is-arrived .map-node__disc {
+  animation: map-node-arrive 480ms ease-out;
+}
+
+@keyframes map-node-arrive {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ---------- Indicateur de temps restant (hub et carte seulement, HUB.md §2.1) ---------- */
+
+.time-ring {
+  position: absolute;
+  /* Zone sûre + 20px : le centre de l'ancien cadenas, retiré du hub et de la carte (HUB.md §10.1 Q1). */
+  top: calc(env(safe-area-inset-top, 0px) + 20px);
+  right: calc(env(safe-area-inset-right, 0px) + 20px);
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.time-ring__ring {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+}
+
+.time-ring__track {
+  fill: none;
+  stroke: rgba(61, 44, 30, 0.15);
+  stroke-width: 3;
+}
+
+.time-ring__progress {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear;
+}
+
+.time-ring__sun {
+  position: relative;
+  font-size: 18px;
+  filter: drop-shadow(0 1px 2px rgba(61, 44, 30, 0.3));
+}
+
+/* ---------- Partie ---------- */
+
+.screen--play {
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) calc(env(safe-area-inset-right, 0px) + 12px)
+    calc(env(safe-area-inset-bottom, 0px) + 12px) calc(env(safe-area-inset-left, 0px) + 12px);
+  justify-content: flex-start;
+  gap: 0;
+}
+
+.play-topbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 12px;
+}
+
+.play-progress {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* Pastilles de la barre du haut : posées sur une bulle crème, lisibles quel que soit le décor dessous. */
+.play-progress,
+.play-lives {
+  flex: 0 1 auto;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 253, 247, 0.92);
+  box-shadow: var(--shadow-sm);
+}
+
+.play-topbar {
+  justify-content: space-between;
+}
+
+.play-progress__dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e8dfcf;
+  transition: background 300ms ease, transform 300ms ease;
+}
+
+.play-progress__dot.is-done {
+  background: var(--accent);
+}
+
+/* Manche en cours : un peu plus grosse, cerclée, elle respire. */
+.play-progress__dot.is-current {
+  background: var(--surface);
+  border: 4px solid var(--accent);
+  transform: scale(1.25);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.play-lives {
+  display: flex;
+  gap: 2px;
+  padding: 0 10px;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.play-lives__heart {
+  display: inline-flex;
+}
+
+/* Vie perdue : le cœur se vide (dessin gris) avec un petit tremblement. */
+.play-lives__heart.is-lost {
+  animation: shake 400ms ease-in-out;
+}
+
+.play-round {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- Main du tutoriel ---------- */
+
+.tutorial-hand-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 80;
+}
+
+.tutorial-hand {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: var(--emoji-font);
+  font-size: 64px;
+  line-height: 1;
+  opacity: 0;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 4px 6px rgba(61, 44, 30, 0.35));
+}
+
+.tutorial-hand__ripple {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  opacity: 0;
+}
+
+/* ---------- Pictos dessinés (src/socle/ui/icons) ---------- */
+
+/* 1em par défaut : un picto remplace un glyphe dans le flux du texte sans rien décaler. */
+.icon {
+  display: inline-block;
+  vertical-align: -0.125em;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.mechanic-icon {
+  display: block;
+  overflow: visible;
+}
+
+/* ---------- Bouton icône ---------- */
+
+.icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+  font-family: var(--emoji-font);
+}
+
+.icon-button--primary {
+  background: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.icon-button:active {
+  transform: scale(0.94);
+}
+
+.icon-button:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ---------- Étoiles ---------- */
+
+.star-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.star-row__star {
+  display: inline-flex;
+  line-height: 1;
+}
+
+/* Grande rangée de fin de niveau : l'étoile du milieu, plus haute, fait une petite couronne. */
+.level-end__stars .star-row__star:nth-child(2) .icon {
+  transform: translateY(-14px) scale(1.12);
+}
+
+.level-end__stars .star-row__star.is-filled .icon {
+  filter: drop-shadow(0 6px 10px rgba(245, 159, 0, 0.35));
+}
+
+.star-row--animated .star-row__star.is-filled {
+  animation: pop 420ms ease-out;
+}
+
+/* ---------- Fin de niveau ---------- */
+
+.screen--level-end {
+  background: radial-gradient(circle at 50% 25%, var(--bg-sky-bottom), var(--bg));
+}
+
+.level-end__stars {
+  position: relative;
+  padding: 32px 24px 24px;
+}
+
+/* Halo doré derrière les étoiles : la récompense est le centre de l'écran. */
+.level-end__stars::before {
+  content: '';
+  position: absolute;
+  inset: -40px -30px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 224, 138, 0.85), rgba(255, 224, 138, 0));
+  animation: level-end-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes level-end-glow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+.level-end__actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ---------- Plus de vies ---------- */
+
+.screen--level-failed {
+  background: radial-gradient(circle at 50% 25%, var(--bg-sky-bottom), var(--bg));
+  gap: 32px;
+}
+
+.level-failed__face {
+  font-size: 120px;
+  line-height: 1;
+  font-family: var(--emoji-font);
+  animation: pop 420ms ease-out;
+}
+
+/* Pluie de confettis/étoiles plein écran, décorative (aucune interaction, pointer-events: none). */
+.level-end__confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.level-end__confetti-piece {
+  position: absolute;
+  top: -10%;
+  font-size: 30px;
+  line-height: 1;
+  animation-name: level-end-confetti-fall;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+
+/* Papier de confetti : petit rectangle arrondi qui papillonne en tombant. */
+.level-end__confetti-piece--paper i {
+  display: block;
+  width: 10px;
+  height: 16px;
+  border-radius: 3px;
+  animation: level-end-confetti-flutter 600ms ease-in-out infinite alternate;
+}
+
+@keyframes level-end-confetti-flutter {
+  from {
+    transform: rotateY(0deg) rotate(0deg);
+  }
+  to {
+    transform: rotateY(70deg) rotate(25deg);
+  }
+}
+
+@keyframes level-end-confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(130vh) rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .level-end__confetti {
+    display: none;
+  }
+}
+
+/* ---------- Fond « monde » des parties ---------- */
+
+/* Le fond passe sous le contenu de l'écran sans toucher à son positionnement (z-index négatif
+   dans le contexte d'empilement isolé de l'écran). */
+.screen--play,
+.screen--level-end,
+.screen--level-failed {
+  isolation: isolate;
+}
+
+.world-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.world-backdrop__scene {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Voile blanc : le monde reste reconnaissable, l'exercice garde tout le contraste. */
+.world-backdrop__veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.world-backdrop--soft .world-backdrop__veil {
+  background: rgba(255, 255, 255, 0.42);
+}
+
+/* ---------- Écran de fin (minuteur / quota atteint) ---------- */
+
+.screen--locked {
+  background: linear-gradient(180deg, #0b1633 0%, #1b2a55 55%, #2c3d72 100%);
+  overflow: hidden;
+  justify-content: center;
+}
+
+.lock-screen__sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lock-screen__star {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff8e4;
+  animation: twinkle 3.6s ease-in-out infinite;
+}
+
+.lock-screen__moon {
+  position: absolute;
+  right: 14%;
+  top: 12%;
+  font-family: var(--emoji-font);
+  font-size: 88px;
+  line-height: 1;
+  filter: drop-shadow(0 0 24px rgba(255, 244, 214, 0.45));
+}
+
+.lock-screen__avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.07);
+}
+
+.lock-screen__avatar-emoji {
+  font-family: var(--emoji-font);
+  font-size: 72px;
+}
+
+.lock-screen__zzz {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  font-family: var(--emoji-font);
+  font-size: 34px;
+  animation: bounce 2.4s ease-in-out infinite;
+}
+
+.lock-screen__message {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 340px;
+  text-align: center;
+  color: #fff8e4;
+}
+
+.lock-screen__message p {
+  margin: 0;
+}
+
+.lock-screen__title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.lock-screen__ask {
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+/* Consigne adulte : plus discrète que le message enfant, mais lisible sur fond nuit. */
+.lock-screen__hint {
+  margin-top: 6px !important;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 15px;
+  line-height: 1.4;
+  color: rgba(255, 248, 228, 0.85);
+}
+
+.lock-screen__hint svg {
+  display: inline-block;
+  vertical-align: -4px;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* ---------- Mécanique non disponible ---------- */
+
+.screen--unavailable {
+  background: var(--bg);
+}
+
+.unavailable-picto {
+  font-family: var(--emoji-font);
+  font-size: 80px;
+  line-height: 1;
+}
+
+/* ---------- Carte : arrivée dans un nouveau monde ---------- */
+
+/* Pendant le trajet de l'avatar : bloque les taps sur les niveaux (un tap saute le trajet). */
+.map-travel-shield {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+}
+
+.map-traveller {
+  position: absolute;
+  z-index: 5;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--emoji-font);
+  font-size: 34px;
+  pointer-events: none;
+}
+
+.world-banner {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: rgba(61, 44, 30, 0.35);
+  animation: world-banner-fade 300ms ease-out;
+}
+
+.world-banner--forest {
+  background: radial-gradient(circle at 50% 45%, rgba(181, 217, 138, 0.55), rgba(47, 90, 40, 0.55));
+}
+
+.world-banner--sea {
+  background: radial-gradient(circle at 50% 45%, rgba(142, 207, 232, 0.55), rgba(20, 80, 130, 0.55));
+}
+
+.world-banner--mountain {
+  background: radial-gradient(circle at 50% 45%, rgba(230, 238, 245, 0.6), rgba(80, 100, 120, 0.55));
+}
+
+.world-banner__sign {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: world-banner-pop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.world-banner__rays {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 420px;
+  height: 420px;
+  margin: -280px 0 0 -210px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(rgba(255, 247, 214, 0.55) 0deg 12deg, transparent 12deg 30deg);
+  mask-image: radial-gradient(circle, #000 30%, transparent 70%);
+  animation: world-banner-spin 12s linear infinite;
+}
+
+.world-banner__board {
+  position: relative;
+  width: 180px;
+  height: 130px;
+  border-radius: 28px;
+  background: #c68a4e;
+  border: 8px solid #8b5a2b;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.world-banner__icon {
+  font-family: var(--emoji-font);
+  font-size: 84px;
+  line-height: 1;
+  animation: wiggle 1.2s ease-in-out 700ms infinite;
+}
+
+.world-banner__post {
+  position: relative;
+  width: 20px;
+  height: 90px;
+  border-radius: 0 0 6px 6px;
+  background: #8b5a2b;
+}
+
+.world-banner__particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.world-banner__particle {
+  position: absolute;
+  top: -40px;
+  font-family: var(--emoji-font);
+  line-height: 1;
+  animation-name: world-banner-fall;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+}
+
+/* Dans la mer, les particules remontent comme des bulles. */
+.world-banner--sea .world-banner__particle {
+  top: auto;
+  bottom: -40px;
+  animation-name: world-banner-rise;
+  animation-timing-function: ease-out;
+}
+
+@keyframes world-banner-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes world-banner-pop {
+  0% {
+    transform: scale(0.2) translateY(120px);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes world-banner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes world-banner-fall {
+  from {
+    transform: translateY(0) rotate(0deg);
+  }
+  to {
+    transform: translateY(110vh) rotate(300deg);
+  }
+}
+
+@keyframes world-banner-rise {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-110vh);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .world-banner__particles,
+  .world-banner__rays {
+    display: none;
+  }
+}
