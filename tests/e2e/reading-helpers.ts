@@ -266,7 +266,7 @@ export async function playFullSession(
     await waitReady(question);
     const game = await question.getAttribute('data-game');
     // Erreur volontaire seulement sur un jeu à lettres ou syllabes : ce sont les seuls choix qui « chantent ».
-    const lettered = ['letter-sound', 'first-sound', 'syllable-machine', 'letter-twins'].includes(game ?? '');
+    const lettered = ['letter-sound', 'sound-gate', 'first-sound', 'syllable-machine', 'letter-twins'].includes(game ?? '');
     const guided = (await question.getAttribute('data-guided')) === 'true';
     const retry = (await question.getAttribute('data-retry')) === 'true';
     const eligible = (errOnce && !erred && lettered && !guided) || (missed < missFirst && !guided && !retry);

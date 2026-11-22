@@ -7,6 +7,7 @@ import { LetterTwinsView } from "./LetterTwinsView";
 import { MysteryWordView } from "./MysteryWordView";
 import { SameEndView } from "./SameEndView";
 import { SameStartView } from "./SameStartView";
+import { SoundGateView } from "./SoundGateView";
 import { SyllableDrumView } from "./SyllableDrumView";
 import { SyllableMachineView } from "./SyllableMachineView";
 import { WordStartView } from "./WordStartView";
@@ -20,6 +21,7 @@ export const READING_VIEWS: Record<
   "same-start": SameStartView,
   "same-end": SameEndView,
   "letter-sound": LetterSoundView,
+  "sound-gate": SoundGateView,
   "first-sound": FirstSoundView,
   "word-start": WordStartView,
   "syllable-machine": SyllableMachineView,

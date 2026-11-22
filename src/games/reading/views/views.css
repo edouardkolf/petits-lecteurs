@@ -302,6 +302,27 @@
   font-size: calc(var(--cw) * 0.6);
 }
 
+/* « A ou pas A ? » : le choix « pas A » est un nuage gris barré, dessiné sans texte. */
+.rv-none-art {
+  width: 86%;
+  height: 86%;
+  overflow: visible;
+}
+.rv-none-cloud {
+  fill: #aebac8;
+  filter: drop-shadow(0 3px 2px rgba(61, 44, 30, 0.2));
+}
+.rv-none-slash-halo {
+  stroke: #fff;
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+.rv-none-slash {
+  stroke: #e5484d;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
 /* Jumelles : la capitale, une chevron, les minuscules. */
 .rv-twins .rv-stim {
   --card: calc(var(--u) * 42);

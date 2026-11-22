@@ -133,7 +133,7 @@ pour « par quoi ça commence », au moins 3 images par graphème des étapes 2 
 `e` ; `c` = mots en ca/co/cu ; `g` = ga/go/gu ; ne jamais classer sous `s` un mot en « ch », ni sous `o` un mot en
 « ou/on/oi », ni sous `a` un mot en « an/ai/au »). Mots connus d'une enfant de 4 ans, images non ambiguës.
 
-## 4. Les neuf jeux
+## 4. Les dix jeux
 
 Chaque vue reçoit `ReadingViewProps` et ne fait qu'afficher : pas de voix, pas de son, pas de stockage. Tout élément
 tapable porte `data-choice="<id>"`. Cibles ≥ 72 px, bien espacées (≥ 12 px). Une seule action : **toucher**. Pas de
@@ -145,6 +145,7 @@ glisser-déposer, pas de bouton de validation. Rien ne défile en 360 × 640. `p
 | `same-start` | `k:onset` | image modèle | 3 images (1 même première syllabe), chacune avec son petit haut-parleur | « {mot}. Qui commence comme {mot} ? » + choix énumérés |
 | `same-end` | `k:rhyme` | image modèle | 3 images (1 même rime), chacune avec son petit haut-parleur | « {mot}. Qui finit comme {mot} ? » + choix énumérés |
 | `letter-sound` | `g:*` | haut-parleur | 2 ou 3 lettres capitales | « Touche la lettre qui chante », pause, son |
+| `sound-gate` | `g:a` (niveau `sound-a` seulement) | haut-parleur (le son) | la lettre, ou « pas A » (nuage gris barré, sans texte) | « Écoute. Si c'est le son a, touche la lettre. Sinon, touche le nuage barré. », pause, son |
 | `first-sound` | `g:*` | image | 2 ou 3 lettres capitales | « {mot}. Par quoi ça commence ? » |
 | `word-start` | `g:*` (niveau `first-a` seulement) | la lettre en grand (se touche : le son) | 2 images (1 mot qui commence par le son), chacune avec son petit haut-parleur | « Quel mot commence par {son} ? » + choix énumérés |
 | `syllable-machine` | `k:blend`, `k:blend-stop` | 2 blocs qui glissent l'un vers l'autre | 3 syllabes écrites | son 1, pause, son 2, pause, syllabe ; « Touche », syllabe |
@@ -182,6 +183,19 @@ Précisions :
   par le même son, ni par une lettre proche (a/é…), et pour une voyelle jamais par une voyelle (an, am, ai, au, eau, en
   sonnent comme « a »). Toucher la lettre répète le son ; une image fausse se grise et dit son nom. Les choix sont
   des images : hors de la table des confusions de lettres. Aucun jeu libre d'item (`gamesForItem` inchangé).
+- **« A ou pas A ? »** (`sound-gate`, décembre 2026) : retour d'usage — au niveau 2, A est la seule lettre connue, donc
+  l'enfant tapait A cinq fois de suite sans écouter. Quand la seule lettre connue est celle du niveau (A, niveau
+  `sound-a`), la lettre qui chante devient un petit jeu d'écoute : deux grands choix, la lettre « A »
+  (`data-choice="a"`) et le nuage gris barré « pas A » (`data-choice="none"`, `kind: 'none'`, SVG, aucun texte).
+  Le haut-parleur (`reading-model`) rejoue le son. La première question est la présentation (« a… comme avion », la
+  lettre et l'image du mot repère pendant la consigne), réponse A ; ensuite la voix dit un son : « a » → toucher A ;
+  un autre son → toucher le nuage. Les sons « pas a » sont très éloignés de « a » : i, o, ou, « meu », « leu »
+  (`SOUND_GATE_OTHERS`, textes de `speech.ts`) ; jamais é (couple a/é), an, ai, au (`SOUND_GATE_EXCLUDED`) ; jamais le
+  même son deux fois dans la séance. Sur 5 questions : au moins 2 « a » et 2 « pas a », jamais plus de 2 réponses
+  identiques d'affilée, déterministe pour une graine (`soundGateAnswers`). Bonne réponse « a » : « a, comme {mot} »
+  avec un mot varié (comme la lettre qui chante, `praisePicture`) ; « pas a » : « Bravo ! ». Faux : le choix se grise,
+  elle réessaie ; toucher la lettre A chante « a ». Enregistré comme l'item `g:a`, `choiceCount` 2 ; démonstration à la
+  première rencontre (la main touche A). L'identifiant de niveau `sound-a` ne change pas.
 - **Mot de la félicitation** (« la lettre qui chante ») : le mot repère reste l'ancre de la présentation (`isNew`) ;
   ensuite, « {son}, comme {mot} » prend un mot parmi les images qui commencent par ce graphème, sans répétition dans la
   séance tant qu'il en reste (repli : le mot repère). La vue montre cette image (`question.praisePicture`) une fois la
@@ -271,7 +285,7 @@ Les réponses `retry: true` et les exemples guidés ne comptent jamais.
    `data-testid="reading-bench"`) : nom de la voix du téléphone, puis `benchEntries()` par groupe, un bouton par
    entrée, et « Tout écouter » par groupe. Sert à repérer en deux minutes les sons qui sonnent faux.
 
-## 9. Autonomie (règles communes aux neuf jeux)
+## 9. Autonomie (règles communes aux dix jeux)
 
 1. **Consigne parlée** : une seule phrase courte, dite en entier à la première question de chaque jeu dans la séance,
    puis réduite au stimulus (10).
@@ -301,6 +315,7 @@ Les réponses `retry: true` et les exemples guidés ne comptent jamais.
    | `syllable-drum` | « {mot} » | « {mot} » (déjà court) |
    | `same-start`, `same-end` | « {mot}. Qui commence / finit comme {mot} ? » + choix énumérés | « {mot} » |
    | `letter-sound` | « Touche la lettre qui chante », pause, son | le son |
+   | `sound-gate` | consigne « A ou pas A ? », pause, son | le son |
    | `first-sound` | « {mot}. Par quoi ça commence ? » | « {mot} » |
    | `word-start` | « Quel mot commence par », son + choix énumérés | le son |
    | `syllable-machine` | son, pause, son, pause, syllabe, « Touche », syllabe | son, pause, son, pause, syllabe |
@@ -355,7 +370,7 @@ Les réponses `retry: true` et les exemples guidés ne comptent jamais.
 | L1 socle | `src/storage/**` (dont `readings.ts`), `src/app/routes.ts` (+ test), `src/app/AppShell.tsx`, `src/app/session.ts` si besoin, `src/games/index.ts` (+ test), `src/ui/icons/GameIcon.tsx`, `src/screens/hub/**`, `src/screens/Hub.tsx` si besoin, `src/parent/ChildStats.tsx`, `src/parent/ChildForm.tsx`, `src/parent/import.ts` (+ test), `src/parent/stats.ts` si besoin | L0 |
 | L2 contenu et logique | `src/games/reading/{curriculum,pictures,speech,progress,session}.ts` et leurs tests, `scripts/fetch-emoji.mjs`, `public/emoji/**` | L0 |
 | L3 écran | `src/games/reading/ReadingScreen.tsx`, `ReadingHome.tsx`, `ReadingSession.tsx`, `ReadingEnd.tsx`, `StageIcon.tsx`, `reading.css`, hooks locaux (`useQuestionFlow.ts`…) | L0 |
-| L4 vues de jeu | `src/games/reading/views/**` (neuf vues, `views.css`, petits composants partagés des vues) | L0 |
+| L4 vues de jeu | `src/games/reading/views/**` (dix vues, `views.css`, petits composants partagés des vues) | L0 |
 | L5 parent | `src/games/reading/{stats.ts,stats.test.ts,ReadingStats.tsx,ReadingSettings.tsx,VoiceBench.tsx,reading-parent.css}` | L0 |
 | L6 e2e, docs, revue | `tests/e2e/**`, `docs/ARCHITECTURE.md`, `docs/CONTENU.md`, `docs/PROGRESSION-MS.md`, `docs/specs/README.md` | L1–L5 |
 
@@ -387,7 +402,8 @@ reste calculée pour les statistiques parent et le choix des leurres.
   « lettres », et ainsi de suite. Oreille : tambour ×2, commence pareil ×2, finit pareil ×2, puis les trois en
   boucle ; dès que L et R sont connues, un niveau d'oreille sur deux est une machine à syllabes. Lettres, dans
   l'ordre du §3.2 : pour chaque lettre un niveau « la lettre qui chante », puis un niveau « par quoi ça commence »
-  si elle a au moins 2 images. La première lettre (A) est le **niveau 2**. Fin du parcours : mot mystère et
+  si elle a au moins 2 images. La première lettre (A) est le **niveau 2**, joué en « A ou pas A ? » (`sound-gate`, §4)
+  tant que A est la seule lettre connue ; les autres niveaux « son » restent « la lettre qui chante ». Fin du parcours : mot mystère et
   jumelles en alternance avec les lettres rares. 104 niveaux.
   **Niveau 4 (`first-a`)** : même identifiant (les séances enregistrées restent valides), mais son jeu est
   `word-start` (§4) tant que l'enfant ne connaît qu'une lettre ; tous les autres niveaux « par quoi ça commence »

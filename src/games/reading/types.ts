@@ -6,12 +6,13 @@ import type { SpeechStep } from '../../socle/ui/voice';
 export type ReadingStage = 1 | 2 | 3 | 4 | 5;
 export const READING_STAGES: readonly ReadingStage[] = [1, 2, 3, 4, 5];
 
-/** Les neuf jeux (LECTURE.md §4). */
+/** Les dix jeux (LECTURE.md §4). */
 export const READING_GAMES = [
   'syllable-drum', // taper une fois par syllabe
   'same-start', // qui commence pareil ?
   'same-end', // qui finit pareil ? (rime)
   'letter-sound', // la lettre qui chante : son → lettre
+  'sound-gate', // « A ou pas A ? » : son → la lettre ou « pas A » (seule lettre connue : A)
   'first-sound', // par quoi ça commence ? image → lettre
   'word-start', // trouve le mot qui commence par… : son → image (première lettre seule connue)
   'syllable-machine', // fusion : syllabe entendue → syllabe écrite
@@ -119,7 +120,7 @@ export interface ReadingProgress {
 
 // ---------- Questions et séances ----------
 
-export type ChoiceKind = 'letter' | 'lower' | 'syllable' | 'picture' | 'word';
+export type ChoiceKind = 'letter' | 'lower' | 'syllable' | 'picture' | 'word' | 'none';
 
 export interface ReadingChoice {
   /** Valeur envoyée à `onChoose`, unique dans la question (`data-choice`). */

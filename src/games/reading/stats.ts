@@ -156,6 +156,7 @@ export const GAME_LABELS: Readonly<Record<ReadingGameId, string>> = {
   'same-start': 'Commence pareil',
   'same-end': 'Rimes',
   'letter-sound': 'La lettre qui chante',
+  'sound-gate': 'A ou pas A',
   'first-sound': 'Par quoi ça commence',
   'word-start': 'Quel mot commence par',
   'syllable-machine': 'Assembler une syllabe',

@@ -110,7 +110,10 @@ function buildLevels(): ReadingLevel[] {
     const otherStage: ReadingStage = g.stage <= 2 ? 1 : g.stage;
     pushOther(otherStage);
     known.push(g.id);
-    push('sound', 'letters', 'letter-sound', item, g.stage, `sound-${g.id}`);
+    // Une seule lettre connue (A, niveau 2) : toucher « la lettre qui chante » aurait toujours la même réponse. On
+    // joue « A ou pas A ? » (`sound-gate`) : la lettre, ou le nuage barré pour tout autre son.
+    const first = known.every((id) => id === g.id);
+    push('sound', 'letters', first ? 'sound-gate' : 'letter-sound', item, g.stage, `sound-${g.id}`);
     if (gamesForItem(item).includes('first-sound')) {
       pushOther(otherStage);
       // Une seule lettre connue (la première, A) : « par quoi ça commence ? » n'aurait pas de leurre de lettre, la

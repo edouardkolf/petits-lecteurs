@@ -5,7 +5,8 @@ import { gamesForItem, GRAPHEMES } from './curriculum';
 import { getLevel, isLevelPass, isPlayable, LEVELS, levelProgress, levelState, passMark, type ReadingLevel } from './levels';
 import { computeProgress } from './progress';
 import { getPicture, picturesStartingWith } from './pictures';
-import { planLevel } from './session';
+import { GATE_MAX_RUN, planLevel, SOUND_GATE_EXCLUDED, SOUND_GATE_OTHERS, soundGateAnswers } from './session';
+import { soundText } from './speech';
 import type { ReadingAnswer } from './types';
 
 function answer(correct: boolean, retry = false): ReadingAnswer {
@@ -73,8 +74,9 @@ describe('parcours de niveaux : structure', () => {
     expect(new Set(LEVELS.map((l) => l.id)).size).toBe(LEVELS.length);
     LEVELS.forEach((l, i) => {
       expect(l.index).toBe(i + 1);
-      // « word-start » n'est qu'une variante de « first-sound » (niveau first-a) : il n'est pas un jeu libre d'item.
-      expect(gamesForItem(l.item), l.id).toContain(l.game === 'word-start' ? 'first-sound' : l.game);
+      // « word-start » et « sound-gate » ne sont que des variantes (niveaux first-a et sound-a) : pas des jeux libres d'item.
+      const free = l.game === 'word-start' ? 'first-sound' : l.game === 'sound-gate' ? 'letter-sound' : l.game;
+      expect(gamesForItem(l.item), l.id).toContain(free);
       expect(getLevel(l.id)).toBe(l);
     });
   });
@@ -119,6 +121,24 @@ describe('parcours de niveaux : structure', () => {
     }
     expect(LEVELS.filter((l) => l.game === 'word-start').map((l) => l.id)).toEqual(['first-a']);
     expect(LEVELS.length).toBe(104);
+  });
+
+  it('sound-a (niveau 2) joue « sound-gate » (une seule lettre connue) ; les autres sound-* restent « letter-sound »', () => {
+    const a = getLevel('sound-a')!;
+    expect(a.game).toBe('sound-gate');
+    expect(a.item).toBe('g:a');
+    expect(a.known).toEqual(['a']);
+    expect(a.index).toBe(2);
+    expect(a.questions).toBe(5);
+    expect(LEVELS.filter((l) => l.game === 'sound-gate').map((l) => l.id)).toEqual(['sound-a']);
+    for (const l of LEVELS.filter((x) => x.id.startsWith('sound-') && x.id !== 'sound-a')) {
+      expect(l.game, l.id).toBe('letter-sound');
+    }
+    // Le parcours ne change ni de taille ni d'identifiants.
+    expect(LEVELS.length).toBe(104);
+    expect(LEVELS.slice(0, 10).map((l) => l.id)).toEqual([
+      'drum-1', 'sound-a', 'drum-2', 'first-a', 'start-1', 'sound-i', 'start-2', 'first-i', 'end-1', 'sound-o',
+    ]);
   });
 
   it('séances courtes aux étapes 1 et 2 (5 questions), 8 ensuite', () => {
@@ -222,9 +242,9 @@ describe('planLevel : une séance = un niveau = un seul jeu', () => {
     for (const q of plan.questions) expect(['a', 'i', 'o']).toContain(q.target);
   });
 
-  it('première lettre : tout le niveau porte sur A', () => {
+  it('première lettre : tout le niveau porte sur l’item A (réponses « a » ou « pas a »)', () => {
     const plan = planLevel(getLevel('sound-a')!, blank, createRng(5));
-    expect(plan.questions.every((q) => q.target === 'a')).toBe(true);
+    expect(plan.questions.every((q) => q.itemId === 'g:a' && q.game === 'sound-gate')).toBe(true);
   });
 
   it('first-a (« word-start ») : 5 questions sur A, 2 images dont la bonne, cibles toutes différentes', () => {
@@ -279,7 +299,8 @@ describe('planLevel : une séance = un niveau = un seul jeu', () => {
     const l = getLevel('sound-a')!;
     for (let seed = 1; seed <= 40; seed += 1) {
       const plan = planLevel(l, blank, createRng(seed));
-      const [first, ...rest] = plan.questions;
+      const [first, ...others] = plan.questions;
+      const rest = others.filter((q) => q.answer === 'a');
       expect(first?.isNew).toBe(true);
       expect(first?.praisePicture).toBeUndefined();
       expect(first?.prompt.some((s) => 'text' in s && s.text === 'avion')).toBe(true);
@@ -326,7 +347,91 @@ describe('planLevel : une séance = un niveau = un seul jeu', () => {
   it('la démonstration n’est demandée que pour un jeu jamais montré', () => {
     const seen = computeProgress([session('drum-1', 5, 5, { demos: ['syllable-drum'] })]);
     expect(planLevel(getLevel('drum-2')!, seen, createRng(1)).demos).toEqual([]);
-    expect(planLevel(getLevel('sound-a')!, seen, createRng(1)).demos).toEqual(['letter-sound']);
+    expect(planLevel(getLevel('sound-a')!, seen, createRng(1)).demos).toEqual(['sound-gate']);
+  });
+});
+
+describe('« A ou pas A ? » (niveau sound-a)', () => {
+  const l = getLevel('sound-a')!;
+  const blank = computeProgress([]);
+
+  it('suite des réponses : A d’abord, au moins 2 de chaque, jamais plus de 2 identiques d’affilée, déterministe', () => {
+    const seen = new Set<string>();
+    for (let seed = 1; seed <= 300; seed += 1) {
+      const answers = soundGateAnswers(5, createRng(seed));
+      expect(answers).toHaveLength(5);
+      expect(answers[0]).toBe('a');
+      expect(answers.filter((x) => x === 'a').length, `graine ${seed}`).toBeGreaterThanOrEqual(2);
+      expect(answers.filter((x) => x === 'none').length, `graine ${seed}`).toBeGreaterThanOrEqual(2);
+      for (let i = GATE_MAX_RUN; i < answers.length; i += 1) {
+        expect(new Set(answers.slice(i - GATE_MAX_RUN, i + 1)).size, `graine ${seed} : ${answers.join()}`).toBe(2);
+      }
+      expect(soundGateAnswers(5, createRng(seed))).toEqual(answers);
+      seen.add(answers.join());
+    }
+    expect(seen.size).toBeGreaterThan(1);
+  });
+
+  it('séance : 5 questions, présentation de A en premier, réponses « a » ou « none », sons « pas a » éloignés', () => {
+    for (let seed = 1; seed <= 200; seed += 1) {
+      const plan = planLevel(l, blank, createRng(seed));
+      const label = `graine ${seed}`;
+      expect(plan.levelId).toBe('sound-a');
+      expect(plan.newItemId).toBe('g:a');
+      expect(plan.demos).toEqual(['sound-gate']);
+      expect(plan.questions).toHaveLength(5);
+      const [first] = plan.questions;
+      expect(first?.isNew, label).toBe(true);
+      expect(first?.answer, label).toBe('a');
+      expect(first?.prompt.some((s) => 'text' in s && s.text === 'comme'), label).toBe(true);
+      expect(first?.prompt.some((s) => 'text' in s && s.text === 'avion'), label).toBe(true);
+      const heard = new Set<string>();
+      for (const q of plan.questions) {
+        expect(q.game).toBe('sound-gate');
+        expect(q.itemId).toBe('g:a');
+        expect(q.choices.map((c) => c.id), label).toEqual(['a', 'none']);
+        expect(q.choices[0]?.kind).toBe('letter');
+        expect(q.choices[1]?.kind).toBe('none');
+        expect(q.choices[1]?.label).toBeUndefined();
+        expect(q.stimulus).toEqual({ kind: 'sound', grapheme: q.target });
+        expect(q.speakChoices).toBe(false);
+        if (q.answer === 'a') {
+          expect(q.target).toBe('a');
+          expect(q.praisePicture === undefined, label).toBe(q === first);
+          if (q !== first) expect(q.praise.some((s) => 'text' in s && s.text === 'comme'), label).toBe(true);
+        } else {
+          expect(q.answer).toBe('none');
+          expect(SOUND_GATE_OTHERS, label).toContain(q.target);
+          expect(SOUND_GATE_EXCLUDED, label).not.toContain(q.target);
+          expect(soundText(q.target)).not.toBe(soundText('a'));
+          expect(heard.has(q.target), `${label} : son répété`).toBe(false);
+          heard.add(q.target);
+          expect(q.praise).toEqual([{ text: 'Bravo !' }]);
+          expect(q.praisePicture).toBeUndefined();
+          expect(q.isNew).toBe(false);
+        }
+        // Rappel court : le son seul (avec la présentation pour la première question).
+        const last = q.shortPrompt.at(-1);
+        expect(last).toEqual({ text: soundText(q.target), rate: 0.8 });
+        if (q !== first) expect(q.shortPrompt).toHaveLength(1);
+        expect(q.prompt.some((s) => 'text' in s && /nuage/.test(s.text))).toBe(true);
+      }
+      const answers = plan.questions.map((q) => q.answer);
+      expect(answers.filter((x) => x === 'a').length).toBeGreaterThanOrEqual(2);
+      expect(answers.filter((x) => x === 'none').length).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('les sons « pas a » exclus ne sont jamais proposés, les autres niveaux restent inchangés', () => {
+    expect(SOUND_GATE_OTHERS).toEqual(['i', 'o', 'ou', 'm', 'l']);
+    for (const bad of ['é', 'an', 'ai', 'au']) expect(SOUND_GATE_OTHERS).not.toContain(bad);
+    for (const lv of LEVELS.filter((x) => x.game === 'letter-sound').slice(0, 5)) {
+      for (const q of planLevel(lv, blank, createRng(3)).questions) expect(q.game).toBe('letter-sound');
+    }
+  });
+
+  it('déterministe pour une graine', () => {
+    expect(planLevel(l, blank, createRng(8)).questions).toEqual(planLevel(l, blank, createRng(8)).questions);
   });
 });
 

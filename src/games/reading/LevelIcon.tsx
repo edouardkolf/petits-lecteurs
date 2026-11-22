@@ -26,6 +26,7 @@ function Drum() {
 export function LevelIcon({ level }: { level: ReadingLevel }) {
   switch (level.game) {
     case 'letter-sound':
+    case 'sound-gate':
     case 'first-sound':
     case 'word-start': {
       const id = level.item.slice(2);

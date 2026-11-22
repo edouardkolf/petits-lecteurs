@@ -57,6 +57,7 @@ const GAME_FILES: Record<string, string> = {
   'same-start': '06-game-same-start',
   'same-end': '07-game-same-end',
   'letter-sound': '08-game-letter-sound',
+  'sound-gate': '08b-game-sound-gate',
   'first-sound': '09-game-first-sound',
   'word-start': '09b-game-word-start',
   'syllable-machine': '10-game-syllable-machine',
@@ -182,7 +183,7 @@ test('présentation d’une lettre nouvelle (voix ralentie)', async ({ page }) =
   });
   await page.locator('[data-testid^="reading-level-"][data-state="current"]').click({ force: true });
   await expect(page.getByTestId('reading-question')).toBeVisible();
-  await expect(page.getByTestId('reading-question')).toHaveAttribute('data-game', 'letter-sound');
+  await expect(page.getByTestId('reading-question')).toHaveAttribute('data-game', 'sound-gate');
   await shot(page, '18-new-letter-presentation', { child: true });
 });
 

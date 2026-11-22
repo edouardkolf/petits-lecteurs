@@ -118,11 +118,18 @@ test('niveau 1 (tambour seul, 5 questions) gagné → le niveau 2 s’ouvre sur 
   // Niveau 2 : la première lettre, à la deuxième séance.
   await startCurrentLevel(page);
   await expect(page.getByTestId('reading-dots').locator('.rd-dot')).toHaveCount(5);
+  await expect(page.getByTestId('reading-question')).toHaveAttribute('data-game', 'sound-gate');
   const letters = await playFullSession(page);
+  // « A ou pas A ? » : la lettre ou le nuage barré, les deux réponses reviennent dans la séance.
   for (const q of letters) {
-    expect(q.game).toBe('letter-sound');
-    expect(q.answer).toBe('a');
+    expect(q.game).toBe('sound-gate');
+    expect(q.item).toBe('g:a');
+    expect(['a', 'none']).toContain(q.answer);
   }
+  const real = letters.filter((q) => !q.guided);
+  expect(real.filter((q) => q.answer === 'a').length).toBeGreaterThanOrEqual(2);
+  expect(real.filter((q) => q.answer === 'none').length).toBeGreaterThanOrEqual(2);
+  await expect(page.getByTestId('reading-end')).toHaveAttribute('data-passed', 'true');
   await finishEnd(page);
   await expect(page.getByTestId('reading-level-2')).toHaveAttribute('data-state', 'done');
   await expect(currentLevel(page)).toHaveAttribute('data-level', 'drum-2');
@@ -242,8 +249,9 @@ test('erreur volontaire : le choix se grise, la lettre touchée chante, la quest
       }
       spokenBefore = (await spokenTexts(p)).length;
     },
-    afterWrong: async (_info, p) => {
-      // La lettre touchée dit son propre son.
+    afterWrong: async (info, p) => {
+      // La lettre touchée dit son propre son (le nuage « pas A » ne dit rien).
+      if (info.wrongChoice === 'none') return;
       await expect.poll(async () => (await spokenTexts(p)).length).toBeGreaterThan(spokenBefore);
     },
   });
@@ -317,7 +325,7 @@ test('étape de départ 2 (réglage parent) : le parcours reprend à la lettre A
 
   await startCurrentLevel(page);
   const played = await playFullSession(page);
-  for (const q of played) expect(q.game).toBe('letter-sound');
+  for (const q of played) expect(q.game).toBe('sound-gate');
   await finishEnd(page);
 
   const records = await readReadings(page);
@@ -418,7 +426,7 @@ test('étape de départ 2 : « la lettre qui chante » puis le niveau 4 « quel 
   await onboardMs(page, 'Alice', 2);
   await chooseProfile(page, 'Alice');
   await openReading(page);
-  expect(await playCurrent(page, 'letter-sound', 5)).toBe('sound-a');
+  expect(await playCurrent(page, 'sound-gate', 5)).toBe('sound-a');
   await expect(page.getByTestId('reading-level-4')).toHaveAttribute('data-level', 'first-a');
   await expect(page.getByTestId('reading-level-4')).toHaveAttribute('data-game', 'word-start');
   // Niveau 4 : 2 images au choix, la bonne se touche par data-answer ; une image fausse se grise.

@@ -58,6 +58,7 @@ const INSTRUCTIONS: Readonly<Record<ReadingGameId, string>> = {
   'same-start': 'Écoute les mots. Touche celui qui commence pareil.',
   'same-end': 'Écoute les mots. Touche celui qui finit pareil.',
   'letter-sound': 'Écoute le son. Touche la lettre qui chante.',
+  'sound-gate': "Écoute. Si c'est le son a, touche la lettre. Sinon, touche le nuage barré.",
   'first-sound': "Regarde l'image. Touche la lettre par laquelle ça commence.",
   'word-start': "Écoute le son. Touche l'image du mot qui commence par ce son.",
   'syllable-machine': 'Écoute la syllabe. Touche la même.',
@@ -105,6 +106,16 @@ export function sameEndPrompt(w: string): SpeechStep[] {
 
 export function letterSoundPrompt(grapheme: GraphemeId): SpeechStep[] {
   return [{ text: 'Touche la lettre qui chante.' }, pause(500), soundStep(grapheme)];
+}
+
+/** « A ou pas A ? » : consigne complète, pause, puis le son à juger. */
+export function soundGatePrompt(grapheme: GraphemeId): SpeechStep[] {
+  return [{ text: gameInstruction('sound-gate') }, pause(500), soundStep(grapheme)];
+}
+
+/** Bonne réponse « pas A » : un bravo court (aucun mot à nommer). */
+export function soundGateNonePraise(): SpeechStep[] {
+  return [{ text: 'Bravo !' }];
 }
 
 export function firstSoundPrompt(w: string): SpeechStep[] {
