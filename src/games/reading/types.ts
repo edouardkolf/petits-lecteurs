@@ -152,6 +152,11 @@ export interface ReadingQuestion {
   answer: string;
   /** Consigne et stimulus parlés, joués à l'arrivée de la question et par le bouton haut-parleur. */
   prompt: readonly SpeechStep[];
+  /**
+   * Rappel court : le stimulus seul (le son, le mot…), dit à la place de `prompt` dès la 2e question d'un jeu dans
+   * la séance (LECTURE.md §9.10). Vide : la voix ne dit rien (mot mystère).
+   */
+  shortPrompt: readonly SpeechStep[];
   /** true : après la consigne, la voix énumère les choix (`choice.speech`) en les mettant en avant. */
   speakChoices: boolean;
   /** Dit après une bonne réponse (ex. « la, comme lama »), ou vide. */
@@ -221,4 +226,9 @@ export interface ReadingViewProps {
    * sans rien valider. Les choix de réponse, eux, ne font jamais répéter : toucher un choix = répondre.
    */
   onReplayModel: () => void;
+  /**
+   * Petit haut-parleur d'un choix image (commence pareil, finit pareil, quel mot commence par) : la voix dit le mot
+   * du choix (`choice.speech`) sans répondre ni griser. Compté dans `replays`.
+   */
+  onReplayChoice: (choiceId: string) => void;
 }

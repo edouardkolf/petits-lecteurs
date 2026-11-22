@@ -429,16 +429,50 @@ test('étape de départ 2 : « la lettre qui chante » puis le niveau 4 « quel 
   await expect(question).toHaveAttribute('data-item', 'g:a');
   await expect(question.locator('[data-choice]')).toHaveCount(2);
   await expect(page.getByTestId('reading-model')).toBeVisible();
-  const played = await playFullSession(page, { missFirst: 1 });
+  let checkedSpeakers = false;
+  const played = await playFullSession(page, {
+    missFirst: 1,
+    beforeAnswer: async (info, p) => {
+      if (info.guided || checkedSpeakers) return;
+      checkedSpeakers = true;
+      // Chaque image a son petit haut-parleur : bien séparé de la tuile (≥ 56 px, ≥ 12 px d'écart).
+      const tiles = question.locator('[data-choice]');
+      for (let i = 0; i < 2; i += 1) {
+        const id = (await tiles.nth(i).getAttribute('data-choice')) as string;
+        const tile = (await tiles.nth(i).boundingBox())!;
+        const speaker = (await question.getByTestId(`reading-choice-speaker-${id}`).boundingBox())!;
+        expect(speaker.width).toBeGreaterThanOrEqual(56);
+        expect(speaker.height).toBeGreaterThanOrEqual(56);
+        expect(speaker.y - (tile.y + tile.height)).toBeGreaterThanOrEqual(12);
+      }
+      // Toucher le haut-parleur d'une image dit son mot, sans répondre : ni tuile grisée, ni question résolue.
+      const decoy = question.locator(`[data-choice]:not([data-choice="${info.answer}"])`);
+      const decoyId = (await decoy.getAttribute('data-choice')) as string;
+      const before = (await spokenTexts(p)).length;
+      await question.getByTestId(`reading-choice-speaker-${decoyId}`).click();
+      await expect.poll(async () => (await spokenTexts(p)).length).toBeGreaterThan(before);
+      const said = (await spokenTexts(p)).at(-1) as string;
+      const plain = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      expect(plain(said)).toBe(plain(decoyId));
+      await expect(decoy).not.toHaveClass(/rv-choice--wrong/);
+      await expect(question).not.toHaveAttribute('data-solved', 'true');
+      await expect(page.getByTestId('reading-dots').locator('.rd-dot[data-state="done"]')).toHaveCount(0);
+    },
+  });
+  expect(checkedSpeakers).toBe(true);
   expect(played.length).toBeGreaterThanOrEqual(5);
   for (const q of played) {
     expect(q.game).toBe('word-start');
     expect(q.item).toBe('g:a');
   }
+  // La consigne complète n'est dite qu'à la première question (la démonstration) : ensuite, seulement le son.
+  expect((await spokenTexts(page)).filter((t) => t === 'Quel mot commence par')).toHaveLength(1);
   await finishEnd(page);
   const record = (await readReadings(page)).find((r) => r.levelId === 'first-a');
   expect(record?.status).toBe('completed');
   expect(record?.answers.every((a) => a.game === 'word-start' && a.itemId === 'g:a')).toBe(true);
+  // Le haut-parleur d'une image compte dans les écoutes de la question, sans faire une réponse.
+  expect(record?.answers.some((a) => a.replays > 0)).toBe(true);
 });
 
 test('étape de départ 4 : la machine à syllabes a son niveau à elle', async ({ page }) => {

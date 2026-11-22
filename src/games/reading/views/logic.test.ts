@@ -24,6 +24,7 @@ const question: ReadingQuestion = {
   ],
   answer: "a",
   prompt: [],
+  shortPrompt: [],
   speakChoices: false,
   praise: [],
   isNew: false,

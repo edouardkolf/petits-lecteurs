@@ -14,7 +14,11 @@ export function SameStartView(props: ReadingViewProps) {
           onTap={props.onReplayModel}
         />
       )}
-      <ChoiceRow view={props} render={(c) => <Pic id={c.picture} />} />
+      <ChoiceRow
+        view={props}
+        speakers
+        render={(c) => <Pic id={c.picture} />}
+      />
     </div>
   );
 }

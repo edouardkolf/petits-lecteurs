@@ -43,13 +43,16 @@ Hub ──tuile « reading »──▶ Accueil lecture (5 étapes) ──tap ét
   par question prévue), le bouton haut-parleur (`data-testid="reading-replay"`, ≥ 72 px, toujours visible). Au centre
   la vue du jeu en cours (§4). Le conteneur de question porte `data-game`, `data-answer` et `data-item` (tests e2e).
 - **Déroulé d'une question** : (1) si le jeu n'a jamais été montré : démonstration (§9.3) ; (2) la voix dit la consigne
-  (`question.prompt`), les choix sont visibles mais inactifs (`disabled`) ; si `speakChoices`, la voix énumère les
-  choix en les mettant en avant (`spokenChoice`) ; (3) l'enfant répond. Juste : `playSuccess`, `solved`, la voix dit
+  (`question.prompt`) **à la première question de chaque jeu dans la séance seulement**, ensuite le rappel court
+  (`question.shortPrompt`, le stimulus seul : §9.10) ; les choix sont visibles mais inactifs (`disabled`) ; avec la
+  consigne complète et si `speakChoices`, la voix énumère les choix en les mettant en avant (`spokenChoice`), jamais
+  avec le rappel court ; (3) l'enfant répond. Juste : `playSuccess`, `solved`, la voix dit
   `question.praise`, question suivante après ~900 ms (ou la fin de `praise`). Faux : `playError`, le choix se grise
   (`wrongChoices`), elle réessaie ; si le choix faux est une lettre ou une syllabe, la voix dit le son de ce choix
   (« la lettre touchée chante son propre son ») ; la question est reposée plus tard (`requeueAfterMiss`).
   Seule la **première tentative** est enregistrée (`ReadingAnswer`).
-- **Relance** : 9 s après la fin de la consigne sans tentative → la consigne est redite et `hintChoice = answer`
+- **Relance** : 9 s après la fin de la consigne sans tentative → le rappel court est redit (la consigne complète pour
+  l'exemple guidé) et `hintChoice = answer`
   (clignotement doux) ; `hinted: true`. Une seule relance par question.
 - **Fin de séance** (`data-testid="reading-end"`) : `playFanfare`, une animation de récompense (l'étoile de l'étape
   grandit, confettis ; si une étape vient d'être validée : le médaillon suivant s'ouvre, fête plus longue), puis un
@@ -139,14 +142,17 @@ glisser-déposer, pas de bouton de validation. Rien ne défile en 360 × 640. `p
 | Jeu | Item | Stimulus | Choix | Consigne parlée (`prompt`) |
 |---|---|---|---|---|
 | `syllable-drum` | `k:count` | image | aucun : un tambour (`data-choice="drum"`) | « {mot} » (dit lentement) |
-| `same-start` | `k:onset` | image modèle | 3 images (1 même première syllabe) | « {mot}. Qui commence comme {mot} ? » + choix énumérés |
-| `same-end` | `k:rhyme` | image modèle | 3 images (1 même rime) | « {mot}. Qui finit comme {mot} ? » + choix énumérés |
+| `same-start` | `k:onset` | image modèle | 3 images (1 même première syllabe), chacune avec son petit haut-parleur | « {mot}. Qui commence comme {mot} ? » + choix énumérés |
+| `same-end` | `k:rhyme` | image modèle | 3 images (1 même rime), chacune avec son petit haut-parleur | « {mot}. Qui finit comme {mot} ? » + choix énumérés |
 | `letter-sound` | `g:*` | haut-parleur | 2 ou 3 lettres capitales | « Touche la lettre qui chante », pause, son |
 | `first-sound` | `g:*` | image | 2 ou 3 lettres capitales | « {mot}. Par quoi ça commence ? » |
-| `word-start` | `g:*` (niveau `first-a` seulement) | haut-parleur (le son) | 2 images (1 mot qui commence par le son) | « Quel mot commence par {son} ? » + choix énumérés |
+| `word-start` | `g:*` (niveau `first-a` seulement) | la lettre en grand (se touche : le son) | 2 images (1 mot qui commence par le son), chacune avec son petit haut-parleur | « Quel mot commence par {son} ? » + choix énumérés |
 | `syllable-machine` | `k:blend`, `k:blend-stop` | 2 blocs qui glissent l'un vers l'autre | 3 syllabes écrites | son 1, pause, son 2, pause, syllabe ; « Touche », syllabe |
 | `mystery-word` | `k:read` | mot écrit | 3 images | aucune (la voix ne lit pas le mot) |
 | `letter-twins` | `k:case` | capitale | 3 minuscules | « Touche la même lettre, en petit. » |
+
+La colonne « Consigne parlée » est la consigne **complète** : elle n'est dite qu'à la première question du jeu dans la
+séance (§9.10) ; ensuite, la voix ne dit que le stimulus.
 
 Précisions :
 
@@ -154,6 +160,11 @@ Précisions :
   Après la première frappe, une **coche verte** apparaît à côté des points (`data-choice="drum-ok"`) : la toucher
   valide (`onChoose(String(n))`). Pas de validation automatique (décision du PM, 11/11/2026). C'est la seule vue
   autorisée à jouer un son (`playTap` à chaque frappe).
+  **Effacer** (décembre 2026) : à gauche des points, un bouton rond (flèche arrière, sans texte, ≥ 72 px,
+  `data-testid="drum-undo"`, **jamais** un `data-choice` : ce n'est pas une réponse) visible dès la première frappe ;
+  chaque toucher retire la dernière frappe (le point disparaît). **Anti double tap** : une frappe qui arrive moins de
+  150 ms après la précédente frappe acceptée est ignorée (`acceptTap`, `DRUM_DEBOUNCE_MS`). La main de la
+  démonstration ne change pas.
   Faux : les points s'effacent et elle recommence. Relance (`hintChoice`) : le tambour pulse `answer` fois en rythme.
   `answer` ∈ '1'..'3'. `choiceCount` enregistré = 3.
 - **Machine à syllabes** : à l'arrivée de la question, les deux blocs (`stimulus.parts`) sont écartés puis glissent et
@@ -164,11 +175,12 @@ Précisions :
 - **Jumelles** : choix en minuscules scriptes (police Andika, déjà embarquée). Les paires b/d et p/q n'apparaissent
   comme leurres l'une de l'autre que si l'item `k:case` a déjà au moins 20 réponses.
 - **« Quel mot commence par… ? »** (`word-start`, décembre 2026) : quand la seule lettre connue est A, « par quoi ça
-  commence » aurait toujours A pour réponse. On inverse : le son, puis 2 images (`data-choice` = id d'image,
+  commence » aurait toujours A pour réponse. On inverse : la lettre en grand en haut (elle remplace le haut-parleur ;
+  la toucher fait réentendre le son, `reading-model`), puis 2 images (`data-choice` = id d'image,
   `answer` = la bonne, `choiceCount` 2, position variée, jamais 3 fois de suite du même côté). La bonne image commence
   par la lettre (une cible différente à chaque question de la séance) ; le leurre ne commence ni par la même lettre ni
   par le même son, ni par une lettre proche (a/é…), et pour une voyelle jamais par une voyelle (an, am, ai, au, eau, en
-  sonnent comme « a »). Toucher le haut-parleur répète le son ; une image fausse se grise et dit son nom. Les choix sont
+  sonnent comme « a »). Toucher la lettre répète le son ; une image fausse se grise et dit son nom. Les choix sont
   des images : hors de la table des confusions de lettres. Aucun jeu libre d'item (`gamesForItem` inchangé).
 - **Mot de la félicitation** (« la lettre qui chante ») : le mot repère reste l'ancre de la présentation (`isNew`) ;
   ensuite, « {son}, comme {mot} » prend un mot parmi les images qui commencent par ce graphème, sans répétition dans la
@@ -261,7 +273,8 @@ Les réponses `retry: true` et les exemples guidés ne comptent jamais.
 
 ## 9. Autonomie (règles communes aux neuf jeux)
 
-1. **Consigne parlée** au début de chaque question ; une seule phrase courte.
+1. **Consigne parlée** : une seule phrase courte, dite en entier à la première question de chaque jeu dans la séance,
+   puis réduite au stimulus (10).
 2. **Bouton haut-parleur** toujours visible : rejoue consigne et stimulus (`replays` + 1 avant la première tentative).
 3. **Démonstration** à la première rencontre d'un jeu : la voix dit `gameInstruction(game)`, puis la première question
    de ce jeu est jouée en **exemple guidé** : `guided: true`, la main animée (`TutorialHand`) montre le bon choix, seul
@@ -272,6 +285,28 @@ Les réponses `retry: true` et les exemples guidés ne comptent jamais.
    pareil, par quoi ça commence) ou le grand haut-parleur (la lettre qui chante) fait répéter le mot ou le son, sans
    rien valider (`onReplayModel`, `data-testid="reading-model"`, compté dans `replays`). Les choix de réponse ne
    font jamais répéter : toucher un choix = répondre.
+10. **Consigne complète une fois, ensuite le stimulus seul** (retour d'usage, décembre 2026 : répéter toute la
+   consigne à chaque question cassait le rythme). `prompt` (consigne complète) n'est dit qu'à la **première question
+   de chaque jeu** dans la séance (l'exemple guidé garde sa consigne et compte comme cette première fois) ; ensuite la
+   voix dit `shortPrompt` (le stimulus seul, table ci-dessous) et **n'énumère plus les choix**. Le bouton
+   `reading-replay` rejoue toujours la consigne complète (et énumère les choix) ; toucher le modèle ne rejoue que le
+   stimulus ; la relance de 9 s dit le rappel court (la consigne complète pendant l'exemple guidé). Comme les choix ne
+   sont plus nommés, chaque choix image dont le son compte (commence pareil, finit pareil, quel mot commence par) a
+   **son petit haut-parleur** sous la tuile (`data-testid="reading-choice-speaker-<id>"`, ≥ 56 px, ≥ 12 px d'écart avec
+   la tuile, jamais un `data-choice`) : il dit le mot sans répondre ni griser, et compte dans `replays`
+   (`onReplayChoice`). Pure : `promptFor`, `hintPrompt`, `isFirstOfGame` (`flow.ts`).
+
+   | Jeu | Consigne complète (1re question) | Rappel court (suivantes) |
+   |---|---|---|
+   | `syllable-drum` | « {mot} » | « {mot} » (déjà court) |
+   | `same-start`, `same-end` | « {mot}. Qui commence / finit comme {mot} ? » + choix énumérés | « {mot} » |
+   | `letter-sound` | « Touche la lettre qui chante », pause, son | le son |
+   | `first-sound` | « {mot}. Par quoi ça commence ? » | « {mot} » |
+   | `word-start` | « Quel mot commence par », son + choix énumérés | le son |
+   | `syllable-machine` | son, pause, son, pause, syllabe, « Touche », syllabe | son, pause, son, pause, syllabe |
+   | `mystery-word` | rien | rien |
+   | `letter-twins` | « Touche la même lettre, en petit. » | « En petit. » |
+
 4. **Une seule action : toucher.** 5. **Relance** après 9 s (§2). 6. **Aucun texte à lire** hors lettres, syllabes et
    mots du programme. 7. **Grandes zones tactiles** espacées. 8. **Fin de séance claire**, sans enchaînement automatique.
 

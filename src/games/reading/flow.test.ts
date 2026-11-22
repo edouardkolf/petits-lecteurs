@@ -9,8 +9,11 @@ import {
   initFlow,
   isDemoTurn,
   isFlowOver,
+  hintPrompt,
+  isFirstOfGame,
   isRetryTurn,
   nextQuestion,
+  promptFor,
   recordFirstAttempt,
   soundOfChoice,
   type Requeue,
@@ -30,6 +33,7 @@ function question(game: ReadingGameId, target: string, answer = 'a'): ReadingQue
     ],
     answer,
     prompt: [],
+    shortPrompt: [],
     speakChoices: false,
     praise: [],
     isNew: false,
@@ -173,5 +177,34 @@ describe('aides', () => {
     expect(soundOfChoice(pic)).toBeNull();
     expect(soundOfChoice(lower)).toBeNull();
     expect(soundOfChoice(undefined)).toBeNull();
+  });
+});
+
+describe('consigne complète ou rappel court', () => {
+  const full = [{ text: 'Touche la lettre qui chante.' }, { pauseMs: 500 }, { text: 'a', rate: 0.8 }];
+  const short = [{ text: 'a', rate: 0.8 }];
+  const q: ReadingQuestion = { ...question('letter-sound', 'a'), prompt: full, shortPrompt: short, speakChoices: true };
+
+  it('première question du jeu : consigne complète et choix énumérés', () => {
+    expect(promptFor(q, { firstOfGame: true })).toEqual({ steps: full, full: true, enumerate: true });
+  });
+
+  it('questions suivantes : le stimulus seul, jamais d’énumération des choix', () => {
+    expect(promptFor(q, { firstOfGame: false })).toEqual({ steps: short, full: false, enumerate: false });
+  });
+
+  it('le bouton « réécouter » rejoue toujours la consigne complète', () => {
+    expect(promptFor(q, { firstOfGame: false, replay: true })).toEqual({ steps: full, full: true, enumerate: true });
+  });
+
+  it('relance : rappel court, sauf exemple guidé qui garde toute sa consigne', () => {
+    expect(hintPrompt(q, false)).toEqual(short);
+    expect(hintPrompt(q, true)).toEqual(full);
+  });
+
+  it('« première du jeu » se décide par jeu, pas par séance', () => {
+    const spoken = new Set<ReadingGameId>(['letter-sound']);
+    expect(isFirstOfGame(spoken, q)).toBe(false);
+    expect(isFirstOfGame(spoken, question('first-sound', 'a'))).toBe(true);
   });
 });

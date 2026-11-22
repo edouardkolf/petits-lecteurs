@@ -196,3 +196,35 @@ export function modelSpeech(question: ReadingQuestion): SpeechStep[] | null {
   if (!word) return null;
   return question.game === 'syllable-drum' ? drumPrompt(word) : [{ text: word, rate: SOUND_RATE }];
 }
+
+// ---------- Consigne complète ou rappel court (LECTURE.md §9.10) ----------
+
+/** Ce que la voix dit à l'arrivée d'une question, et si elle énumère ensuite les choix. */
+export interface SpokenPrompt {
+  steps: readonly SpeechStep[];
+  /** La consigne complète est dite (sinon : seulement le stimulus). */
+  full: boolean;
+  /** La voix énumère les choix (`choice.speech`) : seulement avec la consigne complète. */
+  enumerate: boolean;
+}
+
+/**
+ * Consigne complète à la première question de chaque jeu dans la séance (et au bouton « réécouter », qui rejoue
+ * toujours tout) ; ensuite le stimulus seul, sans énumérer les choix.
+ */
+export function promptFor(question: ReadingQuestion, opts: { firstOfGame: boolean; replay?: boolean }): SpokenPrompt {
+  if (opts.firstOfGame || opts.replay === true) {
+    return { steps: question.prompt, full: true, enumerate: question.speakChoices };
+  }
+  return { steps: question.shortPrompt, full: false, enumerate: false };
+}
+
+/** Relance après 9 s : le rappel court ; l'exemple guidé, lui, garde toute sa consigne. */
+export function hintPrompt(question: ReadingQuestion, guided: boolean): readonly SpeechStep[] {
+  return guided ? question.prompt : question.shortPrompt;
+}
+
+/** Cette question est-elle la première de son jeu dans la séance ? `spoken` : jeux dont la consigne a été dite. */
+export function isFirstOfGame(spoken: ReadonlySet<ReadingGameId>, question: ReadingQuestion): boolean {
+  return !spoken.has(question.game);
+}
