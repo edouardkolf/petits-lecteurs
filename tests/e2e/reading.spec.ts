@@ -1,7 +1,7 @@
-// « J'apprends à lire » (docs/specs/LECTURE.md §12 et §16) : tuile → parcours de niveaux → séance d'un niveau en
+// « J'apprends à lire » (docs/specs/LECTURE.md §12 et §16) : tuile carte → niveaux de lecture → séance d'un niveau en
 // répondant via `data-answer` → fête → niveau suivant débloqué ; niveau raté à rejouer, erreur volontaire, espace
 // parent, « étape de départ », voix absente.
-// Chromium headless n'a pas de voix : fausse voix de `reading-helpers.ts` (même technique que dictation.spec.ts).
+// Chromium headless n'a pas de voix : fausse voix de `reading-helpers.ts`.
 import { test, expect } from '@playwright/test';
 import { chooseProfile } from './nav';
 import {
@@ -59,7 +59,7 @@ test('niveau 1 (tambour seul, 5 questions) gagné → le niveau 2 s’ouvre sur 
 
   // Un niveau verrouillé ne lance rien.
   await page.getByTestId('reading-level-2').click({ force: true }); // aria-disabled : Playwright refuse le clic normal
-  await expect(page.getByTestId('reading-home')).toBeVisible();
+  await expect(page.getByTestId('adventure-map')).toBeVisible();
   await expect(page.getByTestId('reading-session')).toHaveCount(0);
 
   await startCurrentLevel(page);
@@ -133,8 +133,8 @@ test('niveau 1 (tambour seul, 5 questions) gagné → le niveau 2 s’ouvre sur 
   // Un niveau gagné se rejoue (révision) sans rien verrouiller.
   await page.getByTestId('reading-level-1').click();
   await expect(page.getByTestId('reading-session')).toBeVisible();
-  await page.getByTestId('to-hub').click();
-  await expect(page.getByTestId('hub')).toBeVisible();
+  await page.getByTestId('to-map').click();
+  await expect(page.getByTestId('adventure-map')).toBeVisible();
 });
 
 // ==================== 2. Niveau raté : on le rejoue ====================
@@ -237,15 +237,13 @@ test('maison pendant une séance : la séance commencée est enregistrée comme 
     info = await answerCurrent(page);
   }
   await expect.poll(async () => (await readReadings(page)).length, { timeout: 10_000 }).toBe(1);
-  await page.getByTestId('to-hub').click();
-  await expect(page.getByTestId('hub')).toBeVisible();
+  await page.getByTestId('to-map').click();
+  await expect(page.getByTestId('adventure-map')).toBeVisible();
   await expect.poll(async () => (await readReadings(page))[0]?.status).toBe('abandoned');
   const [session] = await readReadings(page);
   expect(session?.endReason).toBe('quit');
   expect(session?.levelId).toBe('drum-1');
   expect(session?.answers.length).toBeGreaterThanOrEqual(1);
-
-  await openReading(page);
   await expect(page.getByTestId('reading-level-1')).toHaveAttribute('data-state', 'current');
 });
 
@@ -319,7 +317,7 @@ test('voix absente (speechSynthesis indéfinie) : accueil « reading-unavailable
   await onboardMs(page, 'Alice');
   await chooseProfile(page, 'Alice');
 
-  await expect(page.getByTestId('hub-tile-reading').locator('.hub-tile__badge')).toBeVisible();
+  await expect(page.getByTestId('hub-tile-map')).toHaveAttribute('data-state', 'unavailable');
   await openReading(page);
   await expect(page.getByTestId('reading-unavailable')).toBeVisible();
   for (const n of [1, 2, 3]) await expect(page.getByTestId(`reading-level-${n}`)).toBeDisabled();

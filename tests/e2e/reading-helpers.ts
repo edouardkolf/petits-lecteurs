@@ -129,21 +129,32 @@ export async function openParentDashboard(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
 }
 
-/** Hub → tuile lecture → accueil du programme. */
+/** Hub → tuile carte → carte d'aventure (les niveaux de lecture). */
 export async function openReading(page: Page): Promise<void> {
-  await page.getByTestId('hub-tile-reading').click();
-  await expect(page.getByTestId('reading-home')).toBeVisible();
+  await page.getByTestId('hub-tile-map').click();
+  await expect(page.getByTestId('adventure-map')).toBeVisible();
 }
 
-/** Accueil → étape en cours → séance (attend le premier écran de question). */
-/** Médaillon du niveau en cours sur l'accueil. */
+/** Joue une réponse non guidée (après la démonstration éventuelle) : la séance est alors enregistrée. */
+export async function answerFirstRealQuestion(page: Page): Promise<void> {
+  let info = await answerCurrent(page);
+  while (info.guided) {
+    const handle = await page.getByTestId('reading-question').elementHandle();
+    await expect.poll(() => handle!.evaluate((el) => el.isConnected), { timeout: 15_000 }).toBe(false);
+    info = await answerCurrent(page);
+  }
+}
+
+/** Médaillon du niveau en cours sur la carte. */
 export function currentLevel(page: Page): Locator {
   return page.locator('[data-testid^="reading-level-"][data-state="current"]');
 }
 
 export async function startCurrentLevel(page: Page): Promise<void> {
-  // `force` : le médaillon du niveau en cours pulse en permanence (Playwright ne le juge jamais « stable »).
-  await currentLevel(page).click({ force: true });
+  // Clic DOM : le médaillon du niveau en cours pulse en permanence (Playwright ne le juge jamais « stable ») et la
+  // carte peut encore défiler vers lui (un clic aux coordonnées raterait sa cible).
+  await expect(currentLevel(page)).toBeVisible();
+  await currentLevel(page).evaluate((el) => (el as HTMLElement).click());
   await expect(page.getByTestId('reading-session')).toBeVisible();
   await expect(page.getByTestId('reading-question')).toBeVisible();
 }
@@ -265,10 +276,10 @@ export async function playFullSession(
   return played;
 }
 
-/** Fête → bouton coche → accueil. */
+/** Fête → bouton coche → retour à la carte. */
 export async function finishEnd(page: Page): Promise<void> {
   await page.getByTestId('reading-end-continue').click();
-  await expect(page.getByTestId('reading-home')).toBeVisible();
+  await expect(page.getByTestId('adventure-map')).toBeVisible();
 }
 
 interface StoredReading {
@@ -283,8 +294,8 @@ interface StoredReading {
   answers: { game: string; itemId: string; correct: boolean; chosen: string | null; retry: boolean; replays: number }[];
 }
 
-/** Lit le store `readings` d'IndexedDB (base de l'app, déjà créée ; `petits-lecteurs` pour Petits Lecteurs). */
-export async function readReadings(page: Page, dbName = 'petits-malins'): Promise<StoredReading[]> {
+/** Lit le store `readings` d'IndexedDB (base de l'app, déjà créée). */
+export async function readReadings(page: Page, dbName = 'petits-lecteurs'): Promise<StoredReading[]> {
   return page.evaluate(
     (name) =>
       new Promise<StoredReading[]>((resolve, reject) => {

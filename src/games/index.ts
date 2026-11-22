@@ -4,7 +4,6 @@ import type { GameRouteName, Route } from '../app/routes';
 import { getTrackOrDefault } from '../engine';
 import type { GameRecordBase, GameStoreName, Profile } from '../storage/types';
 import { checkVoice, type VoiceProblem } from '../ui/voice';
-import { checkDictationAvailability } from './dictation/availability';
 
 export type GameId = GameRouteName;
 
@@ -13,7 +12,8 @@ export type Availability = { available: true } | { available: false; parentHint:
 
 export interface GameDefinition {
   id: GameId;
-  route: Extract<Route, { name: GameId }>;
+  /** Route d'entrée : la tuile du hub y mène ; pour la lecture (l'aventure), la carte. */
+  route: Route;
   /** Fiche enfant, statistiques ; jamais montré à l'enfant. */
   parentLabel: string;
   /** aria-label de la tuile du hub (lecteurs d'écran, tests) ; jamais affiché. */
@@ -32,7 +32,7 @@ const READING_HINT_BY_PROBLEM: Record<VoiceProblem, string> = {
   'no-offline-voice': 'Voix française absente hors connexion : installez les données vocales Français (France).',
 };
 
-/** « J'apprends à lire » passe entièrement par la voix (LECTURE.md §8.1) : même vérification que la dictée. */
+/** « J'apprends à lire » passe entièrement par la voix (LECTURE.md §8.1). */
 async function checkReadingAvailability(): Promise<Availability> {
   const check = await checkVoice();
   if (check.status === 'muted') {
@@ -47,16 +47,17 @@ async function checkReadingAvailability(): Promise<Availability> {
   return { available: true };
 }
 
-/** Tous les jeux du code ; `GAMES` ne garde que ceux de l'app. */
-export const ALL_GAMES: readonly GameDefinition[] = [
+/** Les jeux de l'app, dans l'ordre : la lecture (l'aventure), puis les mini-jeux de maternelle du hub. */
+export const GAMES: readonly GameDefinition[] = [
+  // « J'apprends à lire » : programme de lecture de zéro au CP (docs/specs/LECTURE.md). Premier jeu du hub MS après la carte.
   {
-    id: 'dictation',
-    route: { name: 'dictation' },
-    parentLabel: 'Dictée quotidienne',
-    tileLabel: 'Dictée',
-    defaultTracks: ['ce1'],
-    store: 'dictations',
-    checkAvailability: checkDictationAvailability,
+    id: 'reading',
+    route: { name: 'map' },
+    parentLabel: "J'apprends à lire",
+    tileLabel: 'Lecture',
+    defaultTracks: ['ms'],
+    store: 'readings',
+    checkAvailability: checkReadingAvailability,
   },
   {
     id: 'coloring',
@@ -65,58 +66,6 @@ export const ALL_GAMES: readonly GameDefinition[] = [
     tileLabel: 'Coloriage',
     defaultTracks: ['ms'],
     store: 'colorings',
-  },
-  // « J'apprends à lire » : programme de lecture de zéro au CP (docs/specs/LECTURE.md). Premier jeu du hub MS après la carte.
-  {
-    id: 'reading',
-    route: { name: 'reading' },
-    parentLabel: "J'apprends à lire",
-    tileLabel: 'Lecture',
-    defaultTracks: ['ms'],
-    store: 'readings',
-    checkAvailability: checkReadingAvailability,
-  },
-  {
-    id: 'tictactoe',
-    route: { name: 'tictactoe' },
-    parentLabel: 'Morpion',
-    tileLabel: 'Morpion',
-    defaultTracks: ['ce1'],
-    store: 'tictactoes',
-  },
-  {
-    id: 'hangman',
-    route: { name: 'hangman' },
-    parentLabel: 'Pendu',
-    tileLabel: 'Pendu',
-    defaultTracks: ['ce1'],
-    store: 'hangmans',
-  },
-  // Jeux libres de logique : une mécanique en manches illimitées (docs/specs/JEUX-LOGIQUE.md §4).
-  {
-    id: 'guess-number',
-    route: { name: 'guess-number' },
-    parentLabel: 'Devine le nombre',
-    tileLabel: 'Devine le nombre',
-    defaultTracks: ['ce1'],
-    store: 'puzzles',
-  },
-  {
-    id: 'code-breaker',
-    route: { name: 'code-breaker' },
-    parentLabel: 'Code secret',
-    tileLabel: 'Code secret',
-    // Trop abstrait en maternelle (retour du PM, 29/10) : CE1 seulement, sur le hub comme sur la carte.
-    defaultTracks: ['ce1'],
-    store: 'puzzles',
-  },
-  {
-    id: 'robot',
-    route: { name: 'robot' },
-    parentLabel: 'Robot à programmer',
-    tileLabel: 'Robot',
-    defaultTracks: ['ms', 'ce1'],
-    store: 'puzzles',
   },
   {
     id: 'memory',
@@ -142,12 +91,15 @@ export const ALL_GAMES: readonly GameDefinition[] = [
     defaultTracks: ['ms'],
     store: 'puzzles',
   },
+  {
+    id: 'robot',
+    route: { name: 'robot' },
+    parentLabel: 'Robot à programmer',
+    tileLabel: 'Robot',
+    defaultTracks: ['ms'],
+    store: 'puzzles',
+  },
 ];
-
-/** Jeux de l'app, dans l'ordre : la lecture (l'aventure), puis les mini-jeux de maternelle du hub. */
-const APP_GAME_IDS: readonly string[] = ['reading', 'coloring', 'memory', 'order', 'maze', 'robot'];
-
-export const GAMES: readonly GameDefinition[] = APP_GAME_IDS.flatMap((id) => ALL_GAMES.filter((game) => game.id === id));
 
 /** Le jeu qui tient lieu d'aventure (la tuile « carte » du hub y mène) : toujours visible, jamais une tuile de jeu libre. */
 export const ADVENTURE_GAME_ID: GameId = 'reading';

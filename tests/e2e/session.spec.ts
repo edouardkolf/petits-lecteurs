@@ -4,9 +4,10 @@
 // horloge doit donc être installée AVANT `page.goto('/')`, sinon cet intervalle déjà natif ignore
 // `page.clock.runFor(...)`. On utilise `runFor` pour tout, y compris les appuis longs (l'anneau de
 // progression repose sur `requestAnimationFrame`, également piloté par l'horloge simulée une fois installée).
-// Aides et sélecteurs repris de vertical-slice.spec.ts (non exportés de ce fichier).
+// Les parties se jouent sur le memory libre (hub) ; la carte de lecture porte le minuteur hors partie.
 import { test, expect, type Page, type Locator } from '@playwright/test';
-import { enterMap, openMap, profileCard } from './nav';
+import { chooseProfile, enterMap, profileCard } from './nav';
+import { readReadings } from './reading-helpers';
 
 /**
  * Après `clock.runFor('15:05')`, l'appli a 15 minutes de tics d'horloge à enregistrer d'un coup (écritures IndexedDB
@@ -19,7 +20,7 @@ const LOCK_AFTER_FAST_FORWARD_MS = 15_000;
 async function readLock(page: Page): Promise<unknown> {
   return page.evaluate(async () => {
     const db: IDBDatabase = await new Promise((resolve, reject) => {
-      const request = indexedDB.open('petits-malins');
+      const request = indexedDB.open('petits-lecteurs');
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
@@ -83,22 +84,6 @@ async function onboardWithChild(page: Page, name: string): Promise<void> {
   await expect(page.getByText('Commencer : espace parent')).toHaveCount(0);
 }
 
-function mapNode(page: Page, levelId: string): Locator {
-  return page.locator(`[data-level="${levelId}"]`);
-}
-
-async function openLevel(page: Page, levelId: string): Promise<void> {
-  await mapNode(page, levelId).click();
-}
-
-function currentRound(page: Page): Locator {
-  return page.locator('.play-round[data-answer]');
-}
-
-function statValue(card: Locator, label: string): Locator {
-  return card.locator(`xpath=.//dt[normalize-space(text())="${label}"]/following-sibling::dd[1]`);
-}
-
 // ---------- Aides propres à ce fichier ----------
 
 /** Appui long piloté par l'horloge simulée (`page.clock` doit déjà être installée). */
@@ -129,7 +114,7 @@ test('minuteur de session sur la carte : écran de fin, persiste au rechargement
   await page.clock.install();
   await onboardWithChild(page, 'Lina');
   await enterMap(page, 'Lina');
-  await expect(mapNode(page, 'ms-suite-01')).toBeVisible();
+  await expect(page.getByTestId('reading-level-1')).toBeVisible();
 
   await page.clock.runFor('15:05'); // dépasse les 15 min de session par défaut (fixées à la création de l'enfant)
 
@@ -147,9 +132,8 @@ test('minuteur de session sur la carte : écran de fin, persiste au rechargement
   await unlockAndTap(page, 'grant-5');
 
   await expect(page.getByTestId('hub')).toBeVisible(); // déverrouillé, retour au hub (et non plus la carte)
-  await openMap(page);
-  await openLevel(page, 'ms-suite-01');
-  await expect(currentRound(page)).toBeVisible(); // l'enfant peut effectivement rejouer
+  await page.getByTestId('hub-tile-memory').click();
+  await expect(page.getByTestId('puzzle')).toBeVisible(); // l'enfant peut effectivement rejouer
 });
 
 test("verrou de la veille : le lendemain, l'enfant n'est plus bloqué et repart avec un temps neuf", async ({ page }) => {
@@ -166,81 +150,88 @@ test("verrou de la veille : le lendemain, l'enfant n'est plus bloqué et repart 
   // Plus d'écran de fin : retour aux profils, puis jeu normal (session et quota du jour neufs).
   await expect(page.getByTestId('lock-parent')).toHaveCount(0);
   await expect(profileCard(page, 'Lina')).toBeVisible();
-  await enterMap(page, 'Lina');
-  await openLevel(page, 'ms-suite-01');
-  await expect(currentRound(page)).toBeVisible();
+  await chooseProfile(page, 'Lina');
+  await page.getByTestId('hub-tile-memory').click();
+  await expect(page.getByTestId('puzzle')).toBeVisible();
 });
 
 // ==================== 2. Minuteur pendant une partie ====================
 
-test('minuteur pendant une partie : la manche se termine puis écran de fin, comptée en interruption', async ({ page }) => {
+/** Parties du store `puzzles` (memory, ranger, labyrinthe, robot), lues directement dans IndexedDB. */
+async function readPuzzles(page: Page): Promise<Array<{ game: string; status: string; endReason: string | null }>> {
+  return page.evaluate(async () => {
+    const db: IDBDatabase = await new Promise((resolve, reject) => {
+      const request = indexedDB.open('petits-lecteurs');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const records = await new Promise<Array<{ game: string; status: string; endReason: string | null }>>((resolve) => {
+      const request = db.transaction('puzzles').objectStore('puzzles').getAll();
+      request.onsuccess = () => resolve(request.result);
+    });
+    db.close();
+    return records;
+  });
+}
+
+test('minuteur pendant une partie : la manche se termine puis écran de fin', async ({ page }) => {
   test.slow();
   await page.clock.install();
   await onboardWithChild(page, 'Lina');
-  await enterMap(page, 'Lina');
-  await openLevel(page, 'ms-suite-01');
-  const round = currentRound(page);
-  await expect(round).toBeVisible();
-  const answer = await round.getAttribute('data-answer');
-  if (!answer) throw new Error('Aucune manche affichée.');
+  await chooseProfile(page, 'Lina');
+  await page.getByTestId('hub-tile-memory').click();
+  await page.getByTestId('puzzle-play').click();
+  await expect(page.getByTestId('puzzle')).toHaveAttribute('data-phase', 'play');
+  const cards = page.locator('.memory-card');
+  await expect(cards.first()).toBeVisible();
+  const objects = await cards.evaluateAll((els) => els.map((el) => el.getAttribute('data-object') ?? ''));
+  await page.clock.runFor(3000); // aperçu des cartes terminé
 
-  // Un essai faux d'abord (réaliste, et fait disparaître la main du tutoriel : ms-suite-01 en a une,
-  // animée en continu par requestAnimationFrame — mieux vaut ne pas la laisser tourner sous horloge
-  // simulée pendant les 15 minutes qui suivent).
-  const choiceIds = await round.locator('[data-choice]').evaluateAll((els) => els.map((el) => el.getAttribute('data-choice')));
-  const wrongId = choiceIds.find((id): id is string => Boolean(id) && id !== answer);
-  if (wrongId) {
-    await page.locator(`[data-choice="${wrongId}"]`).click();
-    await expect(page.locator(`[data-choice="${wrongId}"]`)).toBeDisabled();
-  }
+  // Une paire fausse d'abord (réaliste : la partie est créée au premier tap).
+  const a = 0;
+  const b = objects.findIndex((o) => o !== objects[a]);
+  await page.locator(`[data-choice="card-${a}"]`).click();
+  await page.locator(`[data-choice="card-${b}"]`).click();
+  await page.clock.runFor(2000); // elles se recachent
 
-  await page.clock.runFor('15:05'); // épuise la session pendant que la manche 1 est toujours affichée, sans réponse
-  // En temps réel, l'appli enregistre la fin du temps dans les 5 s ; ici 15 minutes de tics arrivent d'un coup : on attend
-  // qu'elle l'ait enregistrée (verrou posé) avant que l'enfant réponde, sinon la réponse passerait avant le verrou.
+  await page.clock.runFor('15:05'); // épuise la session pendant que la manche est affichée
+  // 15 minutes de tics arrivent d'un coup : on attend que l'appli ait enregistré le verrou avant de répondre.
   await expect.poll(() => readLock(page), { timeout: LOCK_AFTER_FAST_FORWARD_MS }).not.toBeNull();
 
-  // La bonne réponse malgré le minuteur écoulé : la manche en cours se termine normalement...
-  await page.locator(`[data-choice="${answer}"]`).click();
-  // ... mais au lieu de passer à la manche suivante (délai de 900 ms), la partie s'arrête : écran de fin.
-  await page.clock.runFor(1000);
+  // Les paires restantes se retrouvent malgré le minuteur écoulé : la manche en cours se termine normalement...
+  const byObject = new Map<string, number[]>();
+  objects.forEach((o, i) => byObject.set(o, [...(byObject.get(o) ?? []), i]));
+  for (const idx of byObject.values()) {
+    await page.locator(`[data-choice="card-${idx[0]}"]`).click();
+    await page.locator(`[data-choice="card-${idx[1]}"]`).click();
+  }
+  // ... mais au lieu de lancer la manche suivante, le jeu s'arrête : écran de fin.
+  await page.clock.runFor(1500);
   await expect(page.getByTestId('lock-parent')).toBeVisible({ timeout: LOCK_AFTER_FAST_FORWARD_MS });
 
   await unlockAndTap(page, 'end-session');
   await expect(profileCard(page, 'Lina')).toBeVisible();
 
-  // Statistiques parent : une interruption, pas un abandon (bouton maison jamais pressé).
-  await longPressClock(page, page.getByTestId('parent-access'), 2100);
-  await expect(page.getByText('Code parent', { exact: true })).toBeVisible();
-  await enterPin(page, PARENT_PIN);
-  await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
-  await page.getByRole('button', { name: 'Statistiques' }).click();
-
-  const card = page.getByTestId('level-stats-ms-suite-01');
-  await expect(statValue(card, 'Essais')).toHaveText('1');
-  await expect(statValue(card, 'Réussites')).toHaveText('0');
-  await expect(statValue(card, 'Abandons')).toHaveText('0');
-  await expect(statValue(card, 'Interruptions')).toHaveText('1');
+  // La manche en cours est allée au bout, et aucune nouvelle partie n'a été lancée.
+  const puzzles = await readPuzzles(page);
+  expect(puzzles).toHaveLength(1);
+  expect(puzzles[0]).toMatchObject({ game: 'memory', status: 'completed' });
 });
 
 // ==================== F1. Retour Android après l'écran de fin ne contourne jamais le verrou ====================
 
-test('F1 : le bouton retour Android après l\'écran de fin reste bloqué, aucune nouvelle partie', async ({ page }) => {
+test('F1 : le bouton retour Android après l\'écran de fin reste bloqué, aucune nouvelle séance', async ({ page }) => {
   test.slow();
   await page.clock.install();
   await onboardWithChild(page, 'Lina');
   await enterMap(page, 'Lina');
-  await openLevel(page, 'ms-suite-01');
-  await expect(currentRound(page)).toBeVisible();
+  await expect(page.getByTestId('reading-level-1')).toBeVisible();
 
-  // Retour à la carte, puis fin du temps hors partie : l'écran de fin s'affiche directement.
-  await page.getByTestId('quit').click();
-  await expect(mapNode(page, 'ms-suite-01')).toBeVisible();
+  // Fin du temps sur la carte : l'écran de fin s'affiche directement.
   await page.clock.runFor('15:05');
   await expect(page.getByTestId('lock-parent')).toBeVisible({ timeout: LOCK_AFTER_FAST_FORWARD_MS });
 
-  // Plusieurs retours Android d'affilée : toujours l'écran de fin, jamais une manche relancée.
-  await page.goBack();
-  await expect(page.getByTestId('lock-parent')).toBeVisible({ timeout: LOCK_AFTER_FAST_FORWARD_MS });
+  // Retour Android : toujours l'écran de fin, jamais le hub ni une séance relancée.
   await page.goBack();
   await expect(page.getByTestId('lock-parent')).toBeVisible({ timeout: LOCK_AFTER_FAST_FORWARD_MS });
 
@@ -249,19 +240,13 @@ test('F1 : le bouton retour Android après l\'écran de fin reste bloqué, aucun
   await page.clock.runFor('11:00');
   await page.goBack();
   await expect(page.getByTestId('lock-parent')).toBeVisible({ timeout: LOCK_AFTER_FAST_FORWARD_MS });
-  await expect(currentRound(page)).toHaveCount(0);
+  await expect(page.getByTestId('reading-session')).toHaveCount(0);
 
   await unlockAndTap(page, 'end-session');
   await expect(profileCard(page, 'Lina')).toBeVisible();
 
-  // Aucune partie sur ms-suite-01 n'a été relancée par les retours Android (seul le quit initial compte).
-  await longPressClock(page, page.getByTestId('parent-access'), 2100);
-  await expect(page.getByText('Code parent', { exact: true })).toBeVisible();
-  await enterPin(page, PARENT_PIN);
-  await page.getByRole('button', { name: 'Statistiques' }).click();
-  const card = page.getByTestId('level-stats-ms-suite-01');
-  await expect(statValue(card, 'Essais')).toHaveText('1');
-  await expect(statValue(card, 'Abandons')).toHaveText('1');
+  // Aucune séance de lecture n'a été lancée par les retours Android.
+  expect(await readReadings(page)).toHaveLength(0);
 });
 
 // ==================== 3. Quota quotidien épuisé ====================
@@ -275,7 +260,7 @@ test('quota du jour épuisé : le profil apparaît estompé et non sélectionnab
   await page.clock.install({ time: new Date('2026-09-28T10:00:00') });
   await onboardWithChild(page, 'Lina');
   await enterMap(page, 'Lina');
-  await expect(mapNode(page, 'ms-suite-01')).toBeVisible();
+  await expect(page.getByTestId('reading-level-1')).toBeVisible();
 
   // Une session de 15 min n'épuise que le minuteur de session : il en faut deux pour atteindre le
   // quota du jour (30 min par défaut). On repart via « Terminer » (pas « +X ») entre les deux : le
@@ -287,7 +272,7 @@ test('quota du jour épuisé : le profil apparaît estompé et non sélectionnab
   await expect(profileCard(page, 'Lina')).not.toHaveAttribute('data-exhausted', 'true'); // quota pas encore épuisé
 
   await enterMap(page, 'Lina');
-  await expect(mapNode(page, 'ms-suite-01')).toBeVisible();
+  await expect(page.getByTestId('reading-level-1')).toBeVisible();
   await page.clock.runFor('15:05');
   await expect(page.getByTestId('lock-parent')).toBeVisible({ timeout: LOCK_AFTER_FAST_FORWARD_MS });
 

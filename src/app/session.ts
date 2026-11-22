@@ -6,10 +6,10 @@ import { isGameRoute, type GameRouteName, type Route } from './routes';
 /** Activité à laquelle le temps actif est imputé (UsageDay.activitySeconds, docs/specs/HUB.md §5.4). */
 export type ActivityId = 'hub' | 'map' | GameRouteName;
 
-/** hub → hub ; carte et parties de niveaux → map ; route de jeu → le jeu ; autres écrans → null (pas compté). */
+/** hub → hub ; carte → map ; route de jeu → le jeu ; autres écrans → null (pas compté). */
 export function activityForRoute(name: Route['name']): ActivityId | null {
   if (name === 'hub') return 'hub';
-  if (name === 'map' || name === 'play') return 'map';
+  if (name === 'map') return 'map';
   if (isGameRoute(name)) return name;
   return null;
 }

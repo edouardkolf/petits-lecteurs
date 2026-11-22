@@ -1,6 +1,6 @@
-// Écran générique des jeux libres de logique (docs/specs/JEUX-LOGIQUE.md §4) : devine le nombre, code secret,
+// Écran générique des jeux libres du hub (docs/specs/JEUX-LOGIQUE.md §4, JEUX-MATERNELLE.md) : memory, ranger, labyrinthe,
 // robot. Phase `choose` (difficulté à 1, 2 ou 3 étoiles, ★ présélectionné), puis `play` : une manche = une
-// partie, jouée par la vue de la mécanique avec le même contrat que le moteur de niveaux (LevelPlayer).
+// partie, jouée par la vue de la mécanique avec le même contrat à plusieurs coups que les anciens niveaux de compétences.
 // La partie est créée au premier tap de l'enfant (A9), jamais à l'affichage.
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { returnTo } from '../../app/routes';
@@ -14,7 +14,6 @@ import {
   PUZZLE_PRESETS,
   recordPuzzleMiss,
   startPuzzle,
-  type PuzzleGameId,
   type PuzzlePreset,
 } from '../../storage/puzzles';
 import type { GameEndReason } from '../../storage/types';
@@ -24,11 +23,11 @@ import { IconButton } from '../../ui/IconButton';
 import { playError, playSuccess, playTap } from '../../ui/sound';
 import { useActiveClock } from '../useActiveClock';
 import { useSoftEnd } from '../useSoftEnd';
-import { PUZZLE_PRESET_PARAMS } from './presets';
+import { PUZZLE_PRESET_PARAMS, type HubPuzzleId } from './presets';
 import './puzzle.css';
 
 export interface PuzzleScreenProps {
-  game: PuzzleGameId;
+  game: HubPuzzleId;
 }
 
 const DEFAULT_SOLVED_DELAY_MS = 900;

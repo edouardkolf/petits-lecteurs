@@ -4,6 +4,7 @@
 import { useRef } from 'preact/hooks';
 import type { Color } from '../../engine/types';
 import { COLOR_HEX } from '../../ui/palette';
+import './color-mix.css';
 
 /** Objet géant qui jaillit du chaudron, un par couleur possible (résultat d'un mélange ou primaire pur). */
 export const OBJECT_FOR_COLOR: Record<Color, string> = {

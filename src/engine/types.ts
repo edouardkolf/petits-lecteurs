@@ -1,6 +1,5 @@
 // CONTRAT — types du contenu pédagogique et des mécaniques.
-// Ces types décrivent exactement les fichiers JSON de `content/` (voir content/level.schema.json).
-// Toute évolution se fait ici ET dans le schéma JSON, en même temps.
+// Hérités de Petits Malins : types des mécaniques (memory, ranger, labyrinthe, robot) et des anciens niveaux (Run, export).
 
 import type { FunctionComponent } from 'preact';
 
@@ -474,15 +473,10 @@ export type Level = {
 }[MechanicId];
 
 export interface Track {
-  $schema?: string;
   /** Identifiant du parcours (ex. "ms"). */
   id: string;
   /** Nom lisible par le parent (ex. "Moyenne section"). */
   title: string;
-  /** Étoiles minimum sur un niveau pour débloquer le suivant (1 à 3, défaut 1). */
-  minStarsToUnlockNext?: number;
-  /** Identifiants des niveaux, dans l'ordre de la carte. */
-  levels: string[];
 }
 
 // ---------- Mécaniques (moteur générique ↔ mécanique spécifique) ----------

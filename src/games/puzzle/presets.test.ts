@@ -1,19 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { createRng } from '../../engine/rng';
 import { getMechanic } from '../../mechanics';
-import { validateCodeBreaker } from '../../mechanics/code-breaker/validate';
 import { validateMaze } from '../../mechanics/maze/validate';
 import { validateMemory } from '../../mechanics/memory/validate';
 import { validateOrder } from '../../mechanics/order/validate';
-import { validateGuessNumber } from '../../mechanics/guess-number/validate';
 import { validateRobot } from '../../mechanics/robot/validate';
-import { PUZZLE_GAMES, PUZZLE_PRESETS } from '../../storage/puzzles';
-import { PUZZLE_PRESET_PARAMS } from './presets';
+import { PUZZLE_PRESETS } from '../../storage/puzzles';
+import { PUZZLE_PRESET_PARAMS, type HubPuzzleId } from './presets';
+
+const HUB_PUZZLES = Object.keys(PUZZLE_PRESET_PARAMS) as HubPuzzleId[];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const validators: Record<string, (params: any) => string[]> = {
-  'guess-number': validateGuessNumber,
-  'code-breaker': validateCodeBreaker,
   robot: validateRobot,
   memory: validateMemory,
   order: validateOrder,
@@ -21,7 +19,7 @@ const validators: Record<string, (params: any) => string[]> = {
 };
 
 describe('PUZZLE_PRESET_PARAMS', () => {
-  for (const game of PUZZLE_GAMES) {
+  for (const game of HUB_PUZZLES) {
     for (const preset of PUZZLE_PRESETS) {
       describe(`${game} / ${preset}`, () => {
         const params = PUZZLE_PRESET_PARAMS[game][preset];

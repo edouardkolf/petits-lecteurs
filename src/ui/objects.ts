@@ -1,5 +1,4 @@
 // CONTRAT — catalogue des objets illustrés (comptage, intrus par catégorie).
-// Les identifiants sont repris dans content/level.schema.json (definitions.objectId) : garder les deux synchronisés.
 import type { ObjectCategory, ObjectId } from '../engine/types';
 
 export interface ObjectDef {

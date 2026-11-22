@@ -83,52 +83,50 @@ function statValue(card: ReturnType<Page['getByTestId']>, label: string): Return
   >;
 }
 
-// ==================== 1. Bascules de jeux : 3 tuiles, puis 1, puis retour au défaut ====================
+// ==================== 1. Bascules de jeux : tout, puis rien, puis retour au défaut ====================
 
-test('bascules de jeux dans la fiche enfant : 3 tuiles, puis 1, puis retour au choix par défaut', async ({
+const MINI_GAMES = ['coloring', 'memory', 'order', 'maze', 'robot'];
+
+test('bascules de jeux dans la fiche enfant : un jeu en moins, puis la carte seule, puis retour au choix par défaut', async ({
   page,
 }) => {
   await createParentCode(page);
-  await addChild(page, 'Léa'); // parcours MS par défaut : coloriage visible, pas la dictée
+  await addChild(page, 'Léa'); // par défaut : tous les mini-jeux visibles
   await page.getByTestId('back-to-game').click();
 
   await chooseProfile(page, 'Léa');
   const hub = page.getByTestId('hub');
   await expect(hub.getByTestId('hub-tile-map')).toBeVisible();
-  await expect(hub.getByTestId('hub-tile-coloring')).toBeVisible();
+  for (const id of MINI_GAMES) await expect(hub.getByTestId(`hub-tile-${id}`)).toBeVisible();
   await expect(hub.getByTestId('hub-tile-dictation')).toHaveCount(0);
 
-  // ---- Ajoute la dictée : 3 tuiles (carte, coloriage, dictée) ----
-  await page.getByTestId('hub-to-profiles').click();
-  await openParentDashboard(page);
-  await editChild(page);
-  await page.getByTestId('game-toggle-dictation').click();
-  await expect(page.getByTestId('game-toggle-dictation')).toHaveAttribute('aria-pressed', 'true');
-  await saveChild(page);
-  await page.getByTestId('back-to-game').click();
-
-  await chooseProfile(page, 'Léa');
-  await expect(hub.getByTestId('hub-tile-map')).toBeVisible();
-  await expect(hub.getByTestId('hub-tile-coloring')).toBeVisible();
-  await expect(hub.getByTestId('hub-tile-dictation')).toBeVisible();
-
-  // ---- Retire les deux jeux : une seule tuile (la carte) ----
+  // ---- Retire le coloriage : les autres mini-jeux restent ----
   await page.getByTestId('hub-to-profiles').click();
   await openParentDashboard(page);
   await editChild(page);
   await page.getByTestId('game-toggle-coloring').click();
-  await page.getByTestId('game-toggle-dictation').click();
   await expect(page.getByTestId('game-toggle-coloring')).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.getByTestId('game-toggle-dictation')).toHaveAttribute('aria-pressed', 'false');
   await saveChild(page);
   await page.getByTestId('back-to-game').click();
 
   await chooseProfile(page, 'Léa');
   await expect(hub.getByTestId('hub-tile-map')).toBeVisible();
   await expect(hub.getByTestId('hub-tile-coloring')).toHaveCount(0);
-  await expect(hub.getByTestId('hub-tile-dictation')).toHaveCount(0);
+  await expect(hub.getByTestId('hub-tile-memory')).toBeVisible();
 
-  // ---- Revient au choix par défaut du parcours (MS → coloriage) ----
+  // ---- Retire tous les mini-jeux : une seule tuile (la carte de l'aventure) ----
+  await page.getByTestId('hub-to-profiles').click();
+  await openParentDashboard(page);
+  await editChild(page);
+  for (const id of MINI_GAMES.slice(1)) await page.getByTestId(`game-toggle-${id}`).click();
+  await saveChild(page);
+  await page.getByTestId('back-to-game').click();
+
+  await chooseProfile(page, 'Léa');
+  await expect(hub.getByTestId('hub-tile-map')).toBeVisible();
+  await expect(hub.locator('[data-testid^="hub-tile-"]')).toHaveCount(1);
+
+  // ---- Revient au choix par défaut : tous les mini-jeux ----
   await page.getByTestId('hub-to-profiles').click();
   await openParentDashboard(page);
   await editChild(page);
@@ -137,9 +135,7 @@ test('bascules de jeux dans la fiche enfant : 3 tuiles, puis 1, puis retour au c
   await page.getByTestId('back-to-game').click();
 
   await chooseProfile(page, 'Léa');
-  await expect(hub.getByTestId('hub-tile-map')).toBeVisible();
-  await expect(hub.getByTestId('hub-tile-coloring')).toBeVisible();
-  await expect(hub.getByTestId('hub-tile-dictation')).toHaveCount(0);
+  for (const id of MINI_GAMES) await expect(hub.getByTestId(`hub-tile-${id}`)).toBeVisible();
 });
 
 // ==================== 2. Temps par activité : 60 s simulées sur la carte ====================
@@ -178,20 +174,21 @@ test('export puis import dans un contexte vierge conserve les bascules de jeux',
   const pageA = await contextA.newPage();
   try {
     await createParentCode(pageA);
-    await addChild(pageA, 'Mia'); // MS par défaut : coloriage visible, pas la dictée
+    await addChild(pageA, 'Mia'); // par défaut : tous les mini-jeux
 
-    // Bascule explicite, différente du défaut du parcours : dictée seule (ni coloriage, ni défaut).
+    // Bascule explicite, différente du défaut du parcours : ni coloriage ni memory.
     await editChild(pageA);
-    await pageA.getByTestId('game-toggle-dictation').click();
+    await pageA.getByTestId('game-toggle-memory').click();
     await pageA.getByTestId('game-toggle-coloring').click();
-    await expect(pageA.getByTestId('game-toggle-dictation')).toHaveAttribute('aria-pressed', 'true');
+    await expect(pageA.getByTestId('game-toggle-memory')).toHaveAttribute('aria-pressed', 'false');
     await expect(pageA.getByTestId('game-toggle-coloring')).toHaveAttribute('aria-pressed', 'false');
     await saveChild(pageA);
     await pageA.getByTestId('back-to-game').click();
 
     await chooseProfile(pageA, 'Mia');
     const hubA = pageA.getByTestId('hub');
-    await expect(hubA.getByTestId('hub-tile-dictation')).toBeVisible();
+    await expect(hubA.getByTestId('hub-tile-order')).toBeVisible();
+    await expect(hubA.getByTestId('hub-tile-memory')).toHaveCount(0);
     await expect(hubA.getByTestId('hub-tile-coloring')).toHaveCount(0);
 
     await pageA.getByTestId('hub-to-profiles').click();
@@ -226,7 +223,8 @@ test('export puis import dans un contexte vierge conserve les bascules de jeux',
       await pageB.getByTestId('back-to-game').click();
       await chooseProfile(pageB, 'Mia');
       const hubB = pageB.getByTestId('hub');
-      await expect(hubB.getByTestId('hub-tile-dictation')).toBeVisible();
+      await expect(hubB.getByTestId('hub-tile-order')).toBeVisible();
+      await expect(hubB.getByTestId('hub-tile-memory')).toHaveCount(0);
       await expect(hubB.getByTestId('hub-tile-coloring')).toHaveCount(0);
     } finally {
       await contextB.close();

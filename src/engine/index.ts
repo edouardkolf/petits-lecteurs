@@ -1,12 +1,5 @@
-// CONTRAT — API du moteur (logique pure, sans interface ni stockage).
-// Les signatures font foi ; les corps sont répartis dans content.ts, rng.ts, scoring.ts, progress.ts, stats.ts, lives.ts.
-
+// API du moteur (logique pure, sans interface ni stockage) : parcours unique, générateur pseudo-aléatoire, hasard.
 export * from './types';
 
-export { getTracks, getTrack, getTrackOrDefault, getLevel, getNextLevelId, trackLabel } from './content';
+export { getTracks, getTrack, getTrackOrDefault, trackLabel } from './content';
 export { createRng } from './rng';
-export { countMisses, computeStars } from './scoring';
-export { computeLevelStates, hasCompleted } from './progress';
-export { computeLevelStats } from './stats';
-export { chanceOfFirstTry, aboveChance } from './chance';
-export { livesFor, randomPassRate } from './lives';

@@ -152,9 +152,6 @@
 }
 
 /* Fonds pastel propres à chaque jeu (HUB.md §2.1). */
-.hub-tile--dictation {
-  background: #eaf3fb;
-}
 
 .hub-tile--coloring {
   background: #fff1de;
@@ -164,21 +161,9 @@
   background: #e3f4ee;
 }
 
-.hub-tile--tictactoe {
-  background: #f3ecfb;
-}
 
-.hub-tile--hangman {
-  background: #fdeef3;
-}
 
-.hub-tile--guess-number {
-  background: #fff4d6;
-}
 
-.hub-tile--code-breaker {
-  background: #fde7ea;
-}
 
 .hub-tile--robot {
   background: #e8e6ff;

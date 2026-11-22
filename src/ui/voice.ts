@@ -1,4 +1,4 @@
-// Synthèse vocale partagée (dictée quotidienne ; la mécanique `spelling` pourra y migrer plus tard).
+// Synthèse vocale partagée (la lecture).
 // Accès paresseux à `globalThis.speechSynthesis` / `SpeechSynthesisUtterance` : jamais lus à l'import,
 // pour que les tests puissent les simuler. Aucune exception ne sort du module (comme sound.ts).
 import { isSoundEnabled } from './sound';

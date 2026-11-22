@@ -187,13 +187,12 @@ describe('activityForRoute', () => {
     expect(activityForRoute('hub')).toBe('hub');
   });
 
-  it('map et play → map', () => {
+  it('carte → map', () => {
     expect(activityForRoute('map')).toBe('map');
-    expect(activityForRoute('play')).toBe('map');
   });
 
   it('une route de jeu → le jeu lui-même', () => {
-    expect(activityForRoute('dictation')).toBe('dictation');
+    expect(activityForRoute('robot')).toBe('robot');
     expect(activityForRoute('coloring')).toBe('coloring');
   });
 

@@ -22,7 +22,7 @@ export interface SessionInfo extends TimeStatus {
    * mémoire », qui reste vrai bien après la fin douce et laisserait un retour Android relancer une partie.
    */
   softEndActive: boolean;
-  /** À appeler par LevelPlayer ou `useSoftEnd` dès que l'unité en cours est traitée (§8) : la fin douce est close. */
+  /** À appeler par `useSoftEnd` dès que l'unité en cours est traitée (§8) : la fin douce est close. */
   clearSoftEnd: () => void;
 }
 
@@ -87,11 +87,11 @@ export function SessionProvider({ route, children }: { route: Route; children: C
       console.error('updateSettings(lock) failed', err);
     }
     // Hors partie et hors jeu : direction l'écran de fin tout de suite. En partie ou en jeu, c'est
-    // LevelPlayer (ou `useSoftEnd`) qui gère la fin douce (unité en cours) puis navigue lui-même.
+    // `useSoftEnd` qui gère la fin douce (unité en cours) puis navigue lui-même.
     if (!soft) navigate({ name: 'locked' }, { replace: true });
   }
 
-  /** F1 : LevelPlayer et `useSoftEnd` appellent ceci juste avant de naviguer vers l'écran de fin — la fin douce est traitée. */
+  /** F1 : `useSoftEnd` appellent ceci juste avant de naviguer vers l'écran de fin — la fin douce est traitée. */
   function clearSoftEnd() {
     setSoftEndActive(false);
   }

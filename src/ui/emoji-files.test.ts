@@ -1,6 +1,6 @@
 // Garde-fou : chaque émoji de contenu affiché par l'app a son SVG embarqué dans public/emoji.
 // Sans ce fichier, <Emoji> afficherait une image introuvable (alt vide) : une case vide pour l'enfant.
-// Parcourt le code (hors commentaires) et le contenu des niveaux ; relancer scripts/fetch-emoji.mjs
+// Parcourt le code (hors commentaires) ; relancer scripts/fetch-emoji.mjs
 // après avoir ajouté un émoji à sa liste si ce test échoue.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
@@ -27,11 +27,11 @@ function stripComments(code: string): string {
 
 function usedEmojis(): Map<string, string> {
   const found = new Map<string, string>();
-  const files = [...walk(path.join(ROOT, 'src'), ['.ts', '.tsx']), ...walk(path.join(ROOT, 'content'), ['.json'])];
+  const files = walk(path.join(ROOT, 'src'), ['.ts', '.tsx']);
   for (const file of files) {
     // L'espace parent affiche quelques symboles typographiques (★, ✓) en texte : hors périmètre.
     if (file.includes(`${path.sep}parent${path.sep}`)) continue;
-    const text = file.endsWith('.json') ? readFileSync(file, 'utf-8') : stripComments(readFileSync(file, 'utf-8'));
+    const text = stripComments(readFileSync(file, 'utf-8'));
     for (const match of text.matchAll(EMOJI_RE)) {
       if (!found.has(match[0])) found.set(match[0], path.relative(ROOT, file));
     }

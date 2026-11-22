@@ -44,13 +44,7 @@
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
-.puzzle-play--guess-number {
-  background: #fff4d6;
-}
 
-.puzzle-play--code-breaker {
-  background: #fde7ea;
-}
 
 .puzzle-play--robot {
   background: #e8e6ff;

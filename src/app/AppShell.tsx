@@ -8,16 +8,11 @@ import { closeStaleGameRecords, closeStaleRuns, getProfile, getSettings, request
 import { visibleGameIds } from '../games';
 import { setSoundEnabled, unlockAudio } from '../ui/sound';
 import { ProfilePicker } from '../screens/ProfilePicker';
-import { SagaMap } from '../screens/SagaMap';
 import { ReadingMap } from '../screens/adventure/ReadingMap';
-import { LevelPlayer } from '../screens/LevelPlayer';
 import { LockScreen } from '../screens/LockScreen';
 import { ParentSpace } from '../parent/ParentSpace';
 import { Hub } from '../screens/Hub';
-import { DictationScreen } from '../games/dictation/DictationScreen';
 import { ColoringScreen } from '../games/coloring/ColoringScreen';
-import { TicTacToeScreen } from '../games/tictactoe/TicTacToeScreen';
-import { HangmanScreen } from '../games/hangman/HangmanScreen';
 import { ReadingScreen } from '../games/reading/ReadingScreen';
 import { PuzzleScreen } from '../games/puzzle/PuzzleScreen';
 
@@ -69,7 +64,7 @@ export function AppShell() {
  * Garde de route unique (évite deux navigations concurrentes), à l'intérieur de `SessionProvider`
  * pour lire `softEndActive` (F1). Si l'écran de fin est actif (`settings.lock`), on y reste bloqué
  * sauf espace parent ou fin douce RÉELLEMENT en cours (route de fin douce ET `softEndActive` :
- * LevelPlayer ou `useSoftEnd` termine l'unité en cours puis navigue lui-même, voir §8) — jamais
+ * `useSoftEnd` termine l'unité en cours puis navigue lui-même, voir §8) — jamais
  * seulement « un profil est en mémoire », qui reste vrai bien après la fin douce et laisserait un
  * retour Android relancer une partie ou un jeu (F1).
  * Sinon, sur un écran de l'enfant (hub, carte, partie, jeu) : pas de profil actif → retour aux
@@ -126,20 +121,10 @@ function renderRoute(route: Route, profile: Profile | null) {
     case 'map':
       // L'aventure est le parcours de lecture, posé sur la carte des mondes.
       return profile ? <ReadingMap /> : null;
-    case 'play':
-      return profile ? <LevelPlayer levelId={route.levelId} /> : null;
-    case 'dictation':
-      return profile ? <DictationScreen /> : null;
     case 'coloring':
       return profile ? <ColoringScreen /> : null;
-    case 'tictactoe':
-      return profile ? <TicTacToeScreen /> : null;
-    case 'hangman':
-      return profile ? <HangmanScreen /> : null;
     case 'reading':
-      return profile ? <ReadingScreen levelId={route.levelId} key={route.levelId ?? 'home'} /> : null;
-    case 'guess-number':
-    case 'code-breaker':
+      return profile ? <ReadingScreen levelId={route.levelId} key={route.levelId} /> : null;
     case 'robot':
     case 'memory':
     case 'order':

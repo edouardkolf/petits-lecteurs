@@ -31,11 +31,11 @@ export async function exportProgress(): Promise<ExportOutcome> {
   try {
     const bundle = await exportAll();
     const json = JSON.stringify(bundle, null, 2);
-    const file = new File([json], `petits-malins-${dayKey()}.json`, { type: 'application/json' });
+    const file = new File([json], `petits-lecteurs-${dayKey()}.json`, { type: 'application/json' });
 
     if (canShareFiles(navigator) && navigator.canShare({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], title: 'Sauvegarde Petits Malins' });
+        await navigator.share({ files: [file], title: 'Sauvegarde Petits Lecteurs' });
         return { status: 'shared' };
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') {

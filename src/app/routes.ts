@@ -4,15 +4,9 @@ export type Route =
   | { name: 'profiles' }
   | { name: 'hub' }
   | { name: 'map' }
-  | { name: 'play'; levelId: string }
-  | { name: 'dictation' }
   | { name: 'coloring' }
-  | { name: 'tictactoe' }
-  | { name: 'hangman' }
-  /** `levelId` : séance d'un niveau lancée depuis la carte d'aventure (Petits Lecteurs) ; absent = accueil du programme. */
-  | { name: 'reading'; levelId?: string }
-  | { name: 'guess-number' }
-  | { name: 'code-breaker' }
+  /** Séance d'un niveau de lecture, lancée depuis la carte d'aventure (`#/reading` sans niveau mène à la carte). */
+  | { name: 'reading'; levelId: string }
   | { name: 'robot' }
   | { name: 'memory' }
   | { name: 'order' }
@@ -22,7 +16,7 @@ export type Route =
   | { name: 'parent'; path: string[] };
 
 /** Jeux hors parcours : une route du même nom par jeu (registre : src/games/index.ts). */
-export const GAME_ROUTES = ['dictation', 'coloring', 'tictactoe', 'hangman', 'reading', 'guess-number', 'code-breaker', 'robot', 'memory', 'order', 'maze'] as const;
+export const GAME_ROUTES = ['coloring', 'reading', 'robot', 'memory', 'order', 'maze'] as const;
 export type GameRouteName = (typeof GAME_ROUTES)[number];
 
 export function isGameRoute(name: string): name is GameRouteName {
@@ -31,12 +25,12 @@ export function isGameRoute(name: string): name is GameRouteName {
 
 /** Écrans de l'enfant : un profil actif est exigé et le temps de jeu y est compté. */
 export function isChildRoute(name: Route['name']): boolean {
-  return name === 'hub' || name === 'map' || name === 'play' || isGameRoute(name);
+  return name === 'hub' || name === 'map' || isGameRoute(name);
 }
 
 /** Écrans où le verrou (minuteur, quota) laisse finir l'unité en cours : une fin douce (ARCHITECTURE §8). */
 export function isSoftEndRoute(name: Route['name']): boolean {
-  return name === 'play' || isGameRoute(name);
+  return isGameRoute(name);
 }
 
 export function parseHash(hash: string): Route {
@@ -47,22 +41,10 @@ export function parseHash(hash: string): Route {
       return { name: 'hub' };
     case 'map':
       return { name: 'map' };
-    case 'play':
-      return rest[0] ? { name: 'play', levelId: rest[0] } : { name: 'map' };
-    case 'dictation':
-      return { name: 'dictation' };
     case 'coloring':
       return { name: 'coloring' };
-    case 'tictactoe':
-      return { name: 'tictactoe' };
-    case 'hangman':
-      return { name: 'hangman' };
     case 'reading':
-      return rest[0] ? { name: 'reading', levelId: rest[0] } : { name: 'reading' };
-    case 'guess-number':
-      return { name: 'guess-number' };
-    case 'code-breaker':
-      return { name: 'code-breaker' };
+      return rest[0] ? { name: 'reading', levelId: rest[0] } : { name: 'map' };
     case 'robot':
       return { name: 'robot' };
     case 'memory':
@@ -88,22 +70,10 @@ export function toHash(route: Route): string {
       return '#/hub';
     case 'map':
       return '#/map';
-    case 'play':
-      return `#/play/${encodeURIComponent(route.levelId)}`;
-    case 'dictation':
-      return '#/dictation';
     case 'coloring':
       return '#/coloring';
-    case 'tictactoe':
-      return '#/tictactoe';
-    case 'hangman':
-      return '#/hangman';
     case 'reading':
-      return route.levelId ? `#/reading/${encodeURIComponent(route.levelId)}` : '#/reading';
-    case 'guess-number':
-      return '#/guess-number';
-    case 'code-breaker':
-      return '#/code-breaker';
+      return `#/reading/${encodeURIComponent(route.levelId)}`;
     case 'robot':
       return '#/robot';
     case 'memory':

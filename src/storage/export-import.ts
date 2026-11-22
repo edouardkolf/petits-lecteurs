@@ -84,7 +84,7 @@ export async function exportAll(): Promise<ExportBundle> {
 
 // ---------- Validation (aucune écriture tant que tout n'est pas vérifié) ----------
 
-const BAD_FORMAT = "Ce fichier n'est pas une sauvegarde Petits Malins.";
+const BAD_FORMAT = "Ce fichier n'est pas une sauvegarde Petits Lecteurs (ni Petits Malins).";
 const BAD_VERSION = "Cette sauvegarde vient d'une autre version de l'application.";
 const BAD_SHAPE = 'Ce fichier de sauvegarde est incomplet ou abîmé.';
 

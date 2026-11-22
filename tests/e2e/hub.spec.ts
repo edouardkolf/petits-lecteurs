@@ -28,8 +28,8 @@ async function enterPin(page: Page, pin: string): Promise<void> {
   }
 }
 
-/** Premier lancement : code parent 1234, puis un enfant (MS par défaut, ou CE1 si demandé). */
-async function onboardWithChild(page: Page, name: string, track: 'ms' | 'ce1' = 'ms'): Promise<void> {
+/** Premier lancement : code parent 1234, puis un enfant. */
+async function onboardWithChild(page: Page, name: string): Promise<void> {
   await page.goto('/');
   await expect(page.getByText('Commencer : espace parent')).toBeVisible();
   await page.getByText('Commencer : espace parent').click();
@@ -42,10 +42,6 @@ async function onboardWithChild(page: Page, name: string, track: 'ms' | 'ce1' = 
   await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
   await page.getByTestId('add-child').click();
   await page.locator('input[name=name]').fill(name);
-  if (track === 'ce1') {
-    await page.locator('.pa-track-option', { hasText: 'CE1' }).click();
-    await expect(page.locator('.pa-track-option', { hasText: 'CE1' })).toHaveAttribute('aria-pressed', 'true');
-  }
   await page.getByTestId('save-child').click();
 
   await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
@@ -62,24 +58,29 @@ async function longPressClock(page: Page, locator: ReturnType<Page['getByTestId'
   await page.mouse.up();
 }
 
-// ==================== 1. Hub d'une enfant MS : carte, coloriage, lecture, robot, memory, ranger, labyrinthe ====================
+// ==================== 1. Hub : la carte de l'aventure et les mini-jeux ====================
 
-test('hub MS : carte, coloriage, lecture, robot, memory, ranger et labyrinthe (pas de code secret), sans texte visible, sans cadenas', async ({ page }) => {
+test('hub : carte, coloriage, memory, ranger, labyrinthe et robot, sans texte visible, sans cadenas, en 3 colonnes', async ({ page }) => {
   await onboardWithChild(page, 'Alice');
   await chooseProfile(page, 'Alice');
 
   const hub = page.getByTestId('hub');
   await expect(hub).toBeVisible();
   await expect(hub.getByTestId('hub-tile-map')).toBeVisible();
-  await expect(hub.getByTestId('hub-tile-coloring')).toBeVisible();
-  await expect(hub.getByTestId('hub-tile-dictation')).toHaveCount(0);
-  await expect(hub.getByTestId('hub-tile-code-breaker')).toHaveCount(0);
-  for (const id of ['reading', 'robot', 'memory', 'order', 'maze']) await expect(hub.getByTestId(`hub-tile-${id}`)).toBeVisible();
-  await expect(hub.locator('.hub-tiles')).toHaveAttribute('data-count', '7');
-  // La tuile lecture vient juste après le coloriage (ordre du registre).
-  await expect(hub.locator('[data-testid^="hub-tile-"]').nth(2)).toHaveAttribute('data-testid', 'hub-tile-reading');
+  for (const id of ['coloring', 'memory', 'order', 'maze', 'robot']) await expect(hub.getByTestId(`hub-tile-${id}`)).toBeVisible();
+  // La lecture est l'aventure (tuile carte), jamais une tuile de jeu libre ; aucun jeu de Petits Malins.
+  for (const id of ['reading', 'dictation', 'tictactoe', 'hangman', 'guess-number', 'code-breaker']) {
+    await expect(hub.getByTestId(`hub-tile-${id}`)).toHaveCount(0);
+  }
+  await expect(hub.locator('.hub-tiles')).toHaveAttribute('data-count', '6');
   await expect(page.getByTestId('parent-access')).toHaveCount(0);
   await expect(hub).toHaveText(''); // aucun texte visible (règle 2, HUB.md §3)
+  const cols = await page
+    .locator('.hub-tiles')
+    .evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length);
+  expect(cols).toBe(3);
+  const scrolls = await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight);
+  expect(scrolls).toBe(false);
 
   // Carte → maison → hub.
   await openMap(page);
@@ -91,60 +92,33 @@ test('hub MS : carte, coloriage, lecture, robot, memory, ranger et labyrinthe (p
   await expect(profileCard(page, 'Alice')).toBeVisible();
 });
 
-// ==================== 2. Hub d'un enfant CE1 : carte + 6 jeux, grille de 3 colonnes ====================
-
-test('hub CE1 : carte, dictée, morpion, pendu et les trois jeux de logique, en 3 colonnes sans défiler', async ({
-  page,
-}) => {
-  await onboardWithChild(page, 'Timéo', 'ce1');
-  await chooseProfile(page, 'Timéo');
-
-  const hub = page.getByTestId('hub');
-  for (const id of ['map', 'dictation', 'tictactoe', 'hangman', 'guess-number', 'code-breaker', 'robot']) {
-    await expect(hub.getByTestId(`hub-tile-${id}`)).toBeVisible();
-  }
-  await expect(hub.getByTestId('hub-tile-coloring')).toHaveCount(0);
-  await expect(hub.locator('.hub-tiles')).toHaveAttribute('data-count', '7');
-  await expect(hub).toHaveText(''); // toujours aucun texte visible
-  const cols = await page
-    .locator('.hub-tiles')
-    .evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length);
-  expect(cols).toBe(3);
-  // 7 tuiles : la carte s'étend sur les 3 colonnes (pas de trou), JEUX-LOGIQUE.md §5.
-  const mapBox = await hub.getByTestId('hub-tile-map').boundingBox();
-  const gridBox = await page.locator('.hub-tiles').boundingBox();
-  expect(mapBox!.width).toBeGreaterThan(gridBox!.width * 0.9);
-  const scrolls = await page.evaluate(() => document.documentElement.scrollHeight > window.innerHeight);
-  expect(scrolls).toBe(false);
-});
-
 // ==================== 3. Historique : maison remonte sans empiler ====================
 
 test('historique : carte → maison → retour Android donne les profils ; jeu → retour donne le hub', async ({ page }) => {
-  await onboardWithChild(page, 'Timéo', 'ce1');
+  await onboardWithChild(page, 'Timéo');
   await enterMap(page, 'Timéo');
   await backToHub(page);
   await page.goBack();
   await expect(profileCard(page, 'Timéo')).toBeVisible();
 
   await chooseProfile(page, 'Timéo');
-  await page.getByTestId('hub-tile-dictation').click();
-  await expect(page).toHaveURL(/#\/dictation$/);
+  await page.getByTestId('hub-tile-memory').click();
+  await expect(page).toHaveURL(/#\/memory$/);
   await page.goBack();
   await expect(page.getByTestId('hub')).toBeVisible();
 });
 
-// ==================== 4. Route de jeu non visible : redirection au hub ====================
+// ==================== 4. Route de jeu non visible ou retirée : redirection au hub ====================
 
-test('#/dictation saisi à la main pour une enfant MS ramène au hub', async ({ page }) => {
+test('#/reading saisi à la main (sans niveau) mène à la carte d’aventure', async ({ page }) => {
   await onboardWithChild(page, 'Alice');
   await chooseProfile(page, 'Alice');
 
   await page.evaluate(() => {
-    window.location.hash = '#/dictation';
+    window.location.hash = '#/reading';
   });
-  await expect(page).toHaveURL(/#\/hub$/);
-  await expect(page.getByTestId('hub')).toBeVisible();
+  await expect(page.getByTestId('adventure-map')).toBeVisible();
+  await expect(page).toHaveURL(/#\/map$|#\/reading$/);
 });
 
 // ==================== 5. Verrou sur le hub, écran de fin, +5 minutes → hub ====================

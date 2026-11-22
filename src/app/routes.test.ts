@@ -58,12 +58,7 @@ describe('parseHash / toHash', () => {
     { name: 'profiles' },
     { name: 'hub' },
     { name: 'map' },
-    { name: 'play', levelId: 'ms-01' },
-    { name: 'dictation' },
     { name: 'coloring' },
-    { name: 'tictactoe' },
-    { name: 'hangman' },
-    { name: 'reading' },
     { name: 'reading', levelId: 'sound-a' },
     { name: 'locked' },
     { name: 'parent', path: ['children', 'p1'] },
@@ -72,36 +67,37 @@ describe('parseHash / toHash', () => {
     expect(parseHash(toHash(route))).toEqual(route);
   });
 
+  it('#/reading sans niveau mène à la carte ; #/play/<niveau> n\'existe plus', async () => {
+    const { parseHash } = await import('./routes');
+    expect(parseHash('#/reading')).toEqual({ name: 'map' });
+    // Un lien de Petits Malins n'a pas de sens ici : retour aux profils.
+    expect(parseHash('#/play/ms-01')).toEqual({ name: 'profiles' });
+  });
+
   it('un hash inconnu mène aux profils', async () => {
     const { parseHash } = await import('./routes');
     expect(parseHash('#/n-importe-quoi')).toEqual({ name: 'profiles' });
     expect(parseHash('')).toEqual({ name: 'profiles' });
   });
 
-  it('#/play sans id renvoie la carte', async () => {
-    const { parseHash } = await import('./routes');
-    expect(parseHash('#/play')).toEqual({ name: 'map' });
-  });
 });
 
 describe('prédicats', () => {
   it('isGameRoute', async () => {
     const { isGameRoute } = await import('./routes');
-    expect(isGameRoute('dictation')).toBe(true);
+    expect(isGameRoute('dictation')).toBe(false);
     expect(isGameRoute('coloring')).toBe(true);
-    expect(isGameRoute('tictactoe')).toBe(true);
-    expect(isGameRoute('hangman')).toBe(true);
+    expect(isGameRoute('robot')).toBe(true);
     expect(isGameRoute('reading')).toBe(true);
     expect(isGameRoute('map')).toBe(false);
     expect(isGameRoute('n-importe-quoi')).toBe(false);
   });
 
-  it('isChildRoute : hub, map, play et les jeux ; pas profiles, locked ni parent', async () => {
+  it('isChildRoute : hub, map et les jeux ; pas profiles, locked ni parent', async () => {
     const { isChildRoute } = await import('./routes');
     expect(isChildRoute('hub')).toBe(true);
     expect(isChildRoute('map')).toBe(true);
-    expect(isChildRoute('play')).toBe(true);
-    expect(isChildRoute('dictation')).toBe(true);
+    expect(isChildRoute('robot')).toBe(true);
     expect(isChildRoute('coloring')).toBe(true);
     expect(isChildRoute('reading')).toBe(true);
     expect(isChildRoute('profiles')).toBe(false);
@@ -109,10 +105,9 @@ describe('prédicats', () => {
     expect(isChildRoute('parent')).toBe(false);
   });
 
-  it('isSoftEndRoute : play et les jeux seulement', async () => {
+  it('isSoftEndRoute : les jeux seulement', async () => {
     const { isSoftEndRoute } = await import('./routes');
-    expect(isSoftEndRoute('play')).toBe(true);
-    expect(isSoftEndRoute('dictation')).toBe(true);
+    expect(isSoftEndRoute('memory')).toBe(true);
     expect(isSoftEndRoute('coloring')).toBe(true);
     expect(isSoftEndRoute('reading')).toBe(true);
     expect(isSoftEndRoute('hub')).toBe(false);

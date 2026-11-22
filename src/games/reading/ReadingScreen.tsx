@@ -1,7 +1,6 @@
-// Écran du programme « J'apprends à lire » (route `#/reading`, LECTURE.md §2 et §16). Trois états : accueil (le
-// parcours de niveaux), séance, fin. La progression n'est jamais stockée : elle est recalculée à partir des séances.
-// Avec `levelId` (route `#/reading/<niveau>`, Petits Lecteurs, LECTURE-APP.md §3) : pas d'accueil, la séance du
-// niveau démarre tout de suite et tout retour mène à la carte d'aventure.
+// Séance d'un niveau de lecture (route `#/reading/<niveau>`, LECTURE.md §2 et §16, LECTURE-APP.md §3) : la séance
+// démarre tout de suite, puis la fête de fin ; tout retour mène à la carte d'aventure (`#/reading` seul y redirige).
+// La progression n'est jamais stockée : elle est recalculée à partir des séances.
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { useProfile } from '../../app/context';
 import { returnTo } from '../../app/routes';
@@ -15,7 +14,6 @@ import { computeProgress, type ReadingSettings } from './progress';
 import { getLevel, isLevelPass, isPlayable, levelProgress, levelState, type LevelProgress, type ReadingLevel } from './levels';
 import { planLevel } from './session';
 import { ReadingEnd, type EndInfo } from './ReadingEnd';
-import { ReadingHome } from './ReadingHome';
 import { ReadingSession } from './ReadingSession';
 import type { ReadingAnswer, ReadingProgress, ReadingSessionPlan } from './types';
 import './reading.css';
@@ -37,19 +35,17 @@ interface Loaded {
   unlockAll: boolean;
 }
 
-type Phase = 'loading' | 'home' | 'session' | 'end' | 'error';
+type Phase = 'loading' | 'session' | 'end' | 'error';
 
 interface ReadingScreenProps {
   /** Niveau à jouer tout de suite (séance lancée depuis la carte d'aventure). */
-  levelId?: string;
+  levelId: string;
 }
 
-export function ReadingScreen({ levelId }: ReadingScreenProps = {}) {
+export function ReadingScreen({ levelId }: ReadingScreenProps) {
   const { profile } = useProfile();
-  const fromMap = levelId !== undefined;
   const [phase, setPhase] = useState<Phase>('loading');
   const [loaded, setLoaded] = useState<Loaded | null>(null);
-  const [voiceReady, setVoiceReady] = useState(true);
   const [session, setSession] = useState<ActiveSession | null>(null);
   const [end, setEnd] = useState<EndInfo | null>(null);
   const aliveRef = useRef(true);
@@ -82,8 +78,7 @@ export function ReadingScreen({ levelId }: ReadingScreenProps = {}) {
   async function reload() {
     const [next, voice] = await Promise.all([loadProgress(), checkVoice().catch(() => null)]);
     if (!aliveRef.current) return;
-    setVoiceReady(voice?.status === 'ready');
-    if (next && fromMap) {
+    if (next) {
       // Depuis la carte : niveau inconnu, verrouillé ou voix absente → retour à la carte (qui montre la cause).
       const level = getLevel(levelId);
       const state = level ? levelState(next.levels, level, { unlockAll: next.unlockAll }) : 'locked';
@@ -93,9 +88,6 @@ export function ReadingScreen({ levelId }: ReadingScreenProps = {}) {
         return;
       }
       start(level, state === 'done', next);
-    } else if (next) {
-      setLoaded(next);
-      setPhase('home');
     } else {
       setPhase((p) => (p === 'loading' ? 'error' : p));
     }
@@ -142,14 +134,8 @@ export function ReadingScreen({ levelId }: ReadingScreenProps = {}) {
     setPhase('end');
   }
 
-  function backHome() {
-    if (fromMap) {
-      returnTo('map');
-      return;
-    }
-    setEnd(null);
-    setPhase('home');
-    void reload();
+  function backToMap() {
+    returnTo('map');
   }
 
   if (!profile) return null;
@@ -161,21 +147,13 @@ export function ReadingScreen({ levelId }: ReadingScreenProps = {}) {
         <div class="screen rd-loading">
           <IconButton
             size={72}
-            onClick={() => returnTo(fromMap ? 'map' : 'hub')}
-            aria-label={fromMap ? 'Retour à la carte' : "Retour à l'accueil"}
-            data-testid={fromMap ? 'to-map' : 'to-hub'}
+            onClick={() => returnTo('map')}
+            aria-label="Retour à la carte"
+            data-testid="to-map"
           >
-            <Icon name={fromMap ? 'map' : 'home'} size={44} />
+            <Icon name="map" size={44} />
           </IconButton>
         </div>
-      )}
-      {phase === 'home' && loaded && (
-        <ReadingHome
-          progress={loaded.levels}
-          voiceReady={voiceReady}
-          unlockAll={loaded.unlockAll}
-          onStart={(level, review) => start(level, review)}
-        />
       )}
       {phase === 'session' && session && (
         <ReadingSession
@@ -183,10 +161,10 @@ export function ReadingScreen({ levelId }: ReadingScreenProps = {}) {
           review={session.review}
           profileId={profile.id}
           onFinish={onFinish}
-          exitTo={fromMap ? 'map' : 'hub'}
+          exitTo="map"
         />
       )}
-      {phase === 'end' && end && <ReadingEnd info={end} onContinue={backHome} />}
+      {phase === 'end' && end && <ReadingEnd info={end} onContinue={backToMap} />}
     </div>
   );
 }
