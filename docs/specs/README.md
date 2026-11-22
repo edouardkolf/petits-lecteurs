@@ -15,6 +15,7 @@ les trois specs le respectent, et en cas de désaccord entre deux specs, c'est l
 | Carte des mondes | [CARTE-MONDES.md](CARTE-MONDES.md) | lot du 10/11/2026 : refonte visuelle des quatre mondes, un module par monde, fin de chemin au château de nuages |
 | J'apprends à lire (MS) | [LECTURE.md](LECTURE.md) | lot du 10/11/2026 : programme de lecture en 5 étapes (huit jeux, voix du téléphone, maîtrise par item), accueil propre, store `readings`, stockage v5 et export v5, hub MS à 7 tuiles |
 | Petits Lecteurs (app de lecture) | [LECTURE-APP.md](LECTURE-APP.md) | lot du 22/11/2026 : deuxième app construite depuis le même code, maternelle seulement, aventure = parcours de lecture sur la carte des mondes, mini-jeux au hub, base `petits-lecteurs`, mode admin caché |
+| Pauses de révision (à construire) | [PAUSES-REVISION.md](PAUSES-REVISION.md) | décisions du 22/11/2026 : toutes les 5 min de mini-jeu, une courte révision (lettres maîtrisées, sinon écoute, prénom en bonus), réussite exigée avec repli, courbe d'oubli locale |
 
 ## 1. Pourquoi ce lot
 
