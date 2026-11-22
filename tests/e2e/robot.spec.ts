@@ -169,14 +169,14 @@ async function openFreeGame(page: Page, game: string): Promise<void> {
   await page.getByTestId(`hub-tile-${game}`).click();
   await expect(page).toHaveURL(new RegExp(`#/${game}$`));
   await expect(page.getByTestId('puzzle')).toHaveAttribute('data-phase', 'choose');
-  await expect(page.getByTestId('puzzle-preset-easy')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByTestId('puzzle-preset-medium')).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.getByTestId('puzzle-preset-hard')).toHaveAttribute('aria-pressed', 'false');
+  for (const preset of ['easy', 'medium', 'hard']) await expect(page.getByTestId(`puzzle-preset-${preset}`)).toBeVisible();
 }
 
-async function startFreeGame(page: Page): Promise<void> {
-  await page.getByTestId('puzzle-play').click();
+/** Un seul tap sur la carte de difficulté lance la partie. */
+async function startFreeGame(page: Page, preset: 'easy' | 'medium' | 'hard' = 'easy'): Promise<void> {
+  await page.getByTestId(`puzzle-preset-${preset}`).click();
   await expect(page.getByTestId('puzzle')).toHaveAttribute('data-phase', 'play');
+  await expect(page.getByTestId('puzzle')).toHaveAttribute('data-preset', preset);
   await expect(page.getByTestId('puzzle-solved')).toHaveAttribute('data-count', '0');
   await expect(round(page)).toBeVisible();
 }
@@ -233,10 +233,7 @@ test.describe('jeu libre robot', () => {
     await onboardWithChild(page, 'Noa');
     await chooseProfile(page, 'Noa');
     await openFreeGame(page, 'robot');
-    await page.getByTestId('puzzle-preset-medium').click();
-    await expect(page.getByTestId('puzzle-preset-medium')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByTestId('puzzle-preset-easy')).toHaveAttribute('aria-pressed', 'false');
-    await startFreeGame(page);
+    await startFreeGame(page, 'medium');
 
     const board = await readRobot(page);
     expect(board.mode).toBe('program');

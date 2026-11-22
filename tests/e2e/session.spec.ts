@@ -180,7 +180,7 @@ test('minuteur pendant une partie : la manche se termine puis écran de fin', as
   await onboardWithChild(page, 'Lina');
   await chooseProfile(page, 'Lina');
   await page.getByTestId('hub-tile-memory').click();
-  await page.getByTestId('puzzle-play').click();
+  await page.getByTestId('puzzle-preset-easy').click();
   await expect(page.getByTestId('puzzle')).toHaveAttribute('data-phase', 'play');
   const cards = page.locator('.memory-card');
   await expect(cards.first()).toBeVisible();

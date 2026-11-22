@@ -113,14 +113,14 @@ async function openFreeMemory(page: Page): Promise<void> {
   await page.getByTestId('hub-tile-memory').click();
   await expect(page).toHaveURL(/#\/memory$/);
   await expect(page.getByTestId('puzzle')).toHaveAttribute('data-phase', 'choose');
-  await expect(page.getByTestId('puzzle-preset-easy')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByTestId('puzzle-preset-medium')).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.getByTestId('puzzle-preset-hard')).toHaveAttribute('aria-pressed', 'false');
+  for (const preset of ['easy', 'medium', 'hard']) await expect(page.getByTestId(`puzzle-preset-${preset}`)).toBeVisible();
 }
 
-async function startFreeGame(page: Page): Promise<void> {
-  await page.getByTestId('puzzle-play').click();
+/** Un seul tap sur la carte de difficulté lance la partie. */
+async function startFreeGame(page: Page, preset: 'easy' | 'medium' | 'hard' = 'easy'): Promise<void> {
+  await page.getByTestId(`puzzle-preset-${preset}`).click();
   await expect(page.getByTestId('puzzle')).toHaveAttribute('data-phase', 'play');
+  await expect(page.getByTestId('puzzle')).toHaveAttribute('data-preset', preset);
   await expect(page.getByTestId('puzzle-solved')).toHaveAttribute('data-count', '0');
   await expect(stage(page)).toBeVisible();
 }
@@ -174,10 +174,7 @@ test.describe('jeu libre memory', () => {
     await onboardMs(page, 'Mila');
     await chooseProfile(page, 'Mila');
     await openFreeMemory(page);
-    await page.getByTestId('puzzle-preset-medium').click();
-    await expect(page.getByTestId('puzzle-preset-medium')).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByTestId('puzzle-preset-easy')).toHaveAttribute('aria-pressed', 'false');
-    await startFreeGame(page);
+    await startFreeGame(page, 'medium');
 
     const objects = await memoryObjects(page);
     expect(objects).toHaveLength(12);
