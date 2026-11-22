@@ -1,6 +1,10 @@
 # Spec — Hub et socle commun des jeux illimités
 
-Cadre : [README.md](README.md), qui fait foi. Specs sœurs : [DICTEE.md](DICTEE.md), [COLORIAGE.md](COLORIAGE.md).
+> **Petits Lecteurs.** Spec d'origine (Petits Malins) conservée : seuls le hub, la lecture, le coloriage et les mini-jeux de
+> maternelle existent dans ce dépôt ; les passages sur la dictée, le CE1, les niveaux de la carte de compétences, le morpion et
+> le pendu sont historiques (docs/ARCHITECTURE.md §11).
+
+Cadre : [README.md](README.md), qui fait foi. Specs sœurs : DICTEE.md (retirée), [COLORIAGE.md](COLORIAGE.md).
 
 ## 1. Résumé
 

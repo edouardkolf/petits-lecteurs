@@ -1,5 +1,9 @@
 # Coloriage magique (MS) — spécification
 
+> **Petits Lecteurs.** Spec d'origine (Petits Malins) conservée : seuls le hub, la lecture, le coloriage et les mini-jeux de
+> maternelle existent dans ce dépôt ; les passages sur la dictée, le CE1, les niveaux de la carte de compétences, le morpion et
+> le pendu sont historiques (docs/ARCHITECTURE.md §11).
+
 Cadre commun : [README.md](README.md), qui fait foi. Hub, routes, session et stockage v2 : [HUB.md](HUB.md).
 Code réutilisé : le constructeur (`src/mechanics/builder/`), le labo des couleurs (`src/mechanics/color-mix/`), `src/ui/`.
 

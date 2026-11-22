@@ -1,4 +1,9 @@
-# Specs — hub, dictée quotidienne, coloriage magique
+# Specs — Petits Lecteurs (hub, lecture, coloriage magique, carte des mondes)
+
+> **Dépôt Petits Lecteurs.** Les specs viennent de Petits Malins. Ont été retirées avec le code : la dictée quotidienne
+> (DICTEE.md), le morpion et le pendu (MORPION-PENDU.md) et tout ce qui concerne le CE1, la carte de compétences et ses
+> niveaux. Les specs conservées gardent leur texte d'origine : les passages sur ces éléments sont **historiques**
+> (voir docs/ARCHITECTURE.md §11 pour ce qui reste dans le code). La spec de l'app est LECTURE-APP.md.
 
 Ce dossier contient les spécifications du lot « jeux illimités hors parcours ». Ce fichier est le **cadre commun** :
 les trois specs le respectent, et en cas de désaccord entre deux specs, c'est lui qui tranche (ou on l'amende ici).
@@ -6,9 +11,7 @@ les trois specs le respectent, et en cas de désaccord entre deux specs, c'est l
 | Spec | Fichier | Couvre |
 |---|---|---|
 | Hub et socle commun | [HUB.md](HUB.md) | écran hub, navigation, routes, temps de jeu et fin douce, stockage v2 et export v2, registre des jeux, jeux visibles par enfant, place des statistiques côté parent |
-| Dictée quotidienne (CE1) | [DICTEE.md](DICTEE.md) | séries de mots, tirage, voix du téléphone, saisie, correction, enregistrements, statistiques |
 | Coloriage magique (MS) | [COLORIAGE.md](COLORIAGE.md) | dessins et zones, code magique, pots et récipient de mélange, progression, enregistrements, statistiques |
-| Morpion et pendu (CE1) | [MORPION-PENDU.md](MORPION-PENDU.md) | lot du 29/10/2026 : deux jeux libres de plus, hub à 4 tuiles, stockage v3 |
 | Carte des mondes | [CARTE-MONDES.md](CARTE-MONDES.md) | lot du 10/11/2026 : refonte visuelle des quatre mondes, un module par monde, fin de chemin au château de nuages |
 | J'apprends à lire (MS) | [LECTURE.md](LECTURE.md) | lot du 10/11/2026 : programme de lecture en 5 étapes (huit jeux, voix du téléphone, maîtrise par item), accueil propre, store `readings`, stockage v5 et export v5, hub MS à 7 tuiles |
 | Petits Lecteurs (app de lecture) | [LECTURE-APP.md](LECTURE-APP.md) | lot du 22/11/2026 : deuxième app construite depuis le même code, maternelle seulement, aventure = parcours de lecture sur la carte des mondes, mini-jeux au hub, base `petits-lecteurs`, mode admin caché |

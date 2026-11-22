@@ -1,6 +1,10 @@
 # Spec — Jeux de logique et de devinette (mécaniques réutilisables)
 
-Cadre : [README.md](README.md), [HUB.md](HUB.md), [MORPION-PENDU.md](MORPION-PENDU.md). Lot du 29/10/2026.
+> **Petits Lecteurs.** Spec d'origine (Petits Malins) conservée : seuls le hub, la lecture, le coloriage et les mini-jeux de
+> maternelle existent dans ce dépôt ; les passages sur la dictée, le CE1, les niveaux de la carte de compétences, le morpion et
+> le pendu sont historiques (docs/ARCHITECTURE.md §11).
+
+Cadre : [README.md](README.md), [HUB.md](HUB.md), MORPION-PENDU.md (retirée). Lot du 29/10/2026.
 
 ## 1. Résumé et décisions du PM
 

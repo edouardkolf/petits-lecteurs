@@ -1,6 +1,10 @@
 # Spec — « J'apprends à lire » : programme de lecture de zéro au CP
 
-Cadre : [README.md](README.md) (jeux hors parcours, arbitrages A1–A12), [HUB.md](HUB.md), [MORPION-PENDU.md](MORPION-PENDU.md)
+> **Petits Lecteurs.** Spec d'origine (Petits Malins) conservée : seuls le hub, la lecture, le coloriage et les mini-jeux de
+> maternelle existent dans ce dépôt ; les passages sur la dictée, le CE1, les niveaux de la carte de compétences, le morpion et
+> le pendu sont historiques (docs/ARCHITECTURE.md §11).
+
+Cadre : [README.md](README.md) (jeux hors parcours, arbitrages A1–A12), [HUB.md](HUB.md), MORPION-PENDU.md (retirée)
 (modèle d'un jeu avec son propre store). Lot du 10/11/2026, pour la petite (moyenne section, 4 ans et demi, non lectrice).
 Types : `src/games/reading/types.ts` (**CONTRAT**). Les souches posées par l'orchestrateur (L0) fixent toutes les signatures.
 

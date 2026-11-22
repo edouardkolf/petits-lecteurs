@@ -1,5 +1,9 @@
 # Carte : refonte des quatre mondes (novembre 2026)
 
+> **Petits Lecteurs.** Spec d'origine (Petits Malins) conservée : seuls le hub, la lecture, le coloriage et les mini-jeux de
+> maternelle existent dans ce dépôt ; les passages sur la dictée, le CE1, les niveaux de la carte de compétences, le morpion et
+> le pendu sont historiques (docs/ARCHITECTURE.md §11).
+
 Demande du PM : rendre chaque monde de la carte plus attrayant, avec la progression ; la montagne ne lui
 plaisait pas. Le dernier monde doit finir sur une **vraie fin de chemin**, pas sur une coupure. La règle
 « le même sentier de terre dans tous les mondes » est **supprimée** : chaque monde a le chemin qui lui va.

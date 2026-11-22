@@ -17,27 +17,26 @@ Avant de rendre public : le dépôt ne contient ni prénom, ni photo, ni secret.
 
 ## 2. Créer la branche `main`
 
-Le dépôt n'a encore qu'une branche de travail (`claude/accessible-projects-nd46nr`). La publication se déclenche sur `main`.
-
-1. Onglet **Code → Branches → New branch**. Nom : `main`, source : `claude/accessible-projects-nd46nr`.
-2. **Settings → General → Default branch** : choisir `main`.
+La publication se déclenche sur `main` (branche par défaut). Fusionner la branche de travail dans `main` (pull request).
 
 ## 3. Activer GitHub Pages
 
 1. **Settings → Pages → Build and deployment → Source : GitHub Actions**.
 2. Onglet **Actions → Deploy → Run workflow** (branche `main`). Ou n'importe quel push sur `main`.
 3. Attendre la coche verte (2 à 3 minutes). L'URL s'affiche dans le job `deploy` :
-   **https://edouardkolf.github.io/educative-app/**
+   **https://edouardkolf.github.io/petits-lecteurs/**
 
-Le workflow (`.github/workflows/deploy.yml`) lance les tests et la validation du contenu **avant** de publier.
-Un niveau JSON invalide bloque la publication : la version en ligne reste la précédente, qui fonctionne.
+Le workflow (`.github/workflows/deploy.yml`) lance les tests puis le build (`BASE_PATH=/petits-lecteurs/`) **avant**
+de publier. Un test ou un build en échec bloque la publication : la version en ligne reste la précédente, qui fonctionne.
+Petits Lecteurs est publié sous `/petits-lecteurs/`, hors de la portée de Petits Malins (`/educative-app/`) : les deux
+apps s'installent côte à côte sur le même téléphone.
 
 ## 4. Installer sur le téléphone Android
 
 1. Ouvrir l'URL dans **Chrome** (pas dans le navigateur intégré d'une autre app).
 2. Menu **⋮ → Installer l'application** (selon la version : *Ajouter à l'écran d'accueil → Installer*).
 3. Lancer l'app depuis l'icône : elle s'ouvre en plein écran, sans barre d'adresse.
-4. Premier lancement : bouton « Commencer : espace parent ». On y crée le code parent, puis on ajoute les deux enfants.
+4. Premier lancement : bouton « Commencer : espace parent ». On y crée le code parent, puis on ajoute les enfants.
 5. Dans l'espace parent, vérifier **« Stockage protégé ✓ »**. Si ce n'est pas le cas, relancer l'app depuis l'icône installée.
 6. Test hors ligne : mode avion, fermer puis rouvrir l'app. Elle doit fonctionner normalement.
 
@@ -57,13 +56,13 @@ Géré par Android, pas par l'app :
   à l'écran des profils qui déclenche la mise à jour.
 - **Sauvegarde** : les données vivent dans Chrome sur ce téléphone. *Espace parent → Exporter la progression* avant
   de changer de téléphone ou d'effacer les données de Chrome. *Importer une sauvegarde* restaure le fichier sur le même téléphone ou sur un nouveau.
-- **Ajouter un niveau** : voir `docs/CONTENU.md`. On crée un fichier JSON, on l'ajoute au parcours, on pousse sur `main`.
+- **Modifier l'app** : voir `docs/ARCHITECTURE.md` ; on pousse sur `main`, la publication est automatique.
 
 ## Pour développer en local (optionnel)
 
 ```bash
 npm install
 npm run dev          # http://localhost:5173
-npm test             # tests unitaires + validation du contenu
+npm test             # tests unitaires
 npm run test:e2e     # parcours complet dans un Chrome mobile simulé
 ```

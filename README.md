@@ -1,42 +1,55 @@
-# Petits Malins
+# Petits Lecteurs
 
-Jeux éducatifs pour la maternelle et le CE1, sous forme de PWA : installable sur Android, plein écran, hors ligne,
-sans compte et sans serveur. Les données restent sur le téléphone.
+Apprendre à lire en maternelle, en jouant. PWA installable sur Android (plein écran, hors ligne, sans compte et sans
+serveur) : les données restent sur le téléphone.
 
-Le même code construit une deuxième app, **Petits Lecteurs** : la lecture seule, pour la maternelle. Son aventure est
-le parcours de lecture posé sur la carte des mondes, son hub propose les mini-jeux de maternelle, et l'espace parent
-est le même ([docs/specs/LECTURE-APP.md](docs/specs/LECTURE-APP.md)).
+- **Pour l'enfant** : un hub sans texte. La tuile « carte » mène à l'**aventure de lecture** : 104 niveaux posés sur la
+  carte des mondes (forêt, mer, montagne, nuages), de l'écoute des syllabes aux premiers mots, dits par la voix du
+  téléphone. Le hub propose aussi cinq mini-jeux libres : coloriage magique, memory, ranger, labyrinthe, robot.
+- **Pour le parent** : espace protégé par code, une fiche par enfant (étape de départ en lecture, jeux visibles, palier
+  du coloriage), minuteur de session et quota quotidien avec fin douce, écran de verrouillage, statistiques de lecture
+  (niveaux gagnés, items acquis, confusions, temps de jeu), export et import JSON.
 
-- **Pour l'enfant** : un hub sans texte, qui mène à la carte à étoiles de sa classe et à un jeu libre, illimité.
-  - Moyenne section : six mécaniques (compléter une suite, compter, trouver l'intrus, mélanger des couleurs, trier par famille, construire une figure géométrique), aucun texte à lire.
-    Jeu libre : le **coloriage magique** (les figures du constructeur à peindre avec trois couleurs primaires et un petit récipient de mélange, un code à décoder qui se complique au fil des dessins).
-  - CE1 : comparer des nombres (<, =, >), additions, soustractions, tables de multiplication (jusqu'à 4 × 4), orthographe des mots invariables (une série par monde), lecture attentive (Lis et montre), suites logiques (motifs, puis compter de 2 en 2, de 10 en 10, à rebours…).
-    Jeu libre : la **dictée quotidienne** (5 mots de la série choisie et 5 des séries précédentes, dictés par la voix du téléphone dans une phrase, écrits au clavier intégré, corrigés tout de suite).
-- **Pour le parent** : espace protégé par code, statistiques par enfant, par niveau et par jeu (temps par activité, mots fragiles, recettes de couleurs), jeux visibles et palier du coloriage, minuteur et quota quotidien, export et import JSON.
-
-## Documentation
-
-| Document | Pour quoi faire |
-|---|---|
-| [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md) | Publier sur GitHub Pages et installer sur Android |
-| [docs/CONTENU.md](docs/CONTENU.md) | Ajouter ou modifier un niveau (du JSON uniquement) |
-| [docs/PROGRESSION-MS.md](docs/PROGRESSION-MS.md) | La progression pédagogique de moyenne section |
-| [docs/PROGRESSION-CE1.md](docs/PROGRESSION-CE1.md) | La progression pédagogique de CE1 |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack, structure, modèle de données, définitions des statistiques |
-| [docs/specs/](docs/specs/README.md) | Specs du hub, de la dictée quotidienne et du coloriage magique (cadre commun et arbitrages) |
+Cette app est extraite de **Petits Malins** (prototype figé) : une app par thème ou niveau, chacune dans son dépôt. La
+base commune (espace parent, stockage, ui, plomberie) est dans `src/socle/` ([README](src/socle/README.md)). Une sauvegarde
+exportée de Petits Malins s'importe dans Petits Lecteurs.
 
 ## Commandes
 
 ```bash
 npm install
 npm run dev               # serveur de développement
-npm test                  # tests unitaires + validation du contenu
-npm run build             # build de production (dist/)
-npm run test:e2e          # parcours complet dans un Chrome mobile simulé (les deux apps)
-
-npm run dev:lecture       # Petits Lecteurs : serveur de développement
-npm run build:lecture     # Petits Lecteurs : build de production (dist-lecture/)
+npm test                  # tests unitaires (Vitest)
+npm run build             # build de production (dist/) : catalogue, types, vite build
+npm run preview           # sert dist/
+npm run test:e2e          # parcours complets dans un Chrome mobile simulé (Playwright)
 ```
+
+Variables : `BASE_PATH` fixe le chemin de base du build (le workflow de déploiement y met `/<nom du dépôt>/`).
+
+## Publication (GitHub Pages)
+
+L'app est publiée à **https://edouardkolf.github.io/petits-lecteurs/** à chaque push sur `main`
+(`.github/workflows/deploy.yml` : tests, build avec `BASE_PATH=/petits-lecteurs/`, déploiement).
+
+**Réglage à faire une seule fois** (propriétaire du dépôt) : GitHub → Settings → Pages → Source : **« GitHub Actions »**.
+
+Le site est publié hors du chemin `/educative-app/` de Petits Malins : les deux apps s'installent côte à côte sur Android
+(manifeste avec `id: petits-lecteurs`, portée propre). Détails : [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md).
+
+## Installer sur Android
+
+1. Ouvrir l'URL ci-dessus dans **Chrome**.
+2. Menu ⋮ → **Installer l'application** (ou « Ajouter à l'écran d'accueil »).
+3. Lancer l'app depuis l'icône ; au premier lancement, « Commencer : espace parent » crée le code parent puis les enfants.
+
+## Documentation
+
+| Document | Pour quoi faire |
+|---|---|
+| [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md) | Publier sur GitHub Pages et installer sur Android |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack, structure (dont le socle), données locales, statistiques, ce qui a été retiré |
+| [docs/specs/](docs/specs/README.md) | Specs : l'app ([LECTURE-APP.md](docs/specs/LECTURE-APP.md)), le programme de lecture, le hub, le coloriage, la carte des mondes |
 
 ## Crédits / licences
 

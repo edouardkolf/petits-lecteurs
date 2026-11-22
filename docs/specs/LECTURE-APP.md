@@ -1,6 +1,6 @@
 # Spec — Petits Lecteurs : l'app de lecture pour la maternelle
 
-Lot du 22/11/2026. Cadre : [README.md](README.md), [HUB.md](HUB.md), [LECTURE.md](LECTURE.md) (le programme de
+Lot du 22/11/2026, mis à jour à l'extraction en dépôt autonome (plus de variantes). Cadre : [README.md](README.md), [HUB.md](HUB.md), [LECTURE.md](LECTURE.md) (le programme de
 lecture, inchangé), [CARTE-MONDES.md](CARTE-MONDES.md) (le décor de la carte, réutilisé).
 
 ## 1. Décisions du PM
@@ -12,24 +12,27 @@ lecture, inchangé), [CARTE-MONDES.md](CARTE-MONDES.md) (le décor de la carte, 
 - « Un hub avec les mini-jeux, et l'aventure se concentre uniquement sur les exercices de lecture. »
 - « Un mode admin pour moi, qui me permet de voir tous les niveaux débloqués. »
 
-## 2. Une base de code, deux apps
+## 2. Un dépôt, une app
 
-La variante est fixée au build (`src/app/flavor.ts`, variable `VITE_APP_FLAVOR`, fichier `.env.lecture`) :
+Petits Lecteurs est l'unique app de ce dépôt, extrait de Petits Malins (prototype figé). Stratégie du PM : **une app par
+thème ou niveau, chacune dans son dépôt**. Il n'y a plus de variantes de build : pas de `flavor.ts`, pas de `--mode
+lecture`, une seule commande par usage.
 
-| | Petits Malins | Petits Lecteurs |
-|---|---|---|
-| Commandes | `npm run dev`, `npm run build` → `dist/` | `npm run dev:lecture`, `npm run build:lecture` → `dist-lecture/` |
-| Parcours proposés | tous (MS, CE1) | `ms` seulement, affiché « Maternelle » au parent |
-| Aventure (tuile carte du hub) | carte des niveaux de compétences | **carte des niveaux de lecture** (§3) |
-| Mini-jeux du hub | ceux du parcours | coloriage, memory, ranger, labyrinthe, robot |
-| Base IndexedDB | `petits-malins` | `petits-lecteurs` |
-| Publication (GitHub Pages) | `/<repo>/` | `/<repo>/lecture/` |
+| | Petits Lecteurs |
+|---|---|
+| Commandes | `npm run dev`, `npm run build` → `dist/`, `npm test`, `npm run test:e2e` |
+| Parcours proposé | `ms` seulement, affiché « Maternelle » au parent (constante, `src/engine/content.ts`) |
+| Aventure (tuile carte du hub) | **carte des niveaux de lecture** (§3) |
+| Mini-jeux du hub | coloriage, memory, ranger, labyrinthe, robot |
+| Base IndexedDB | `petits-lecteurs` (version 5, ne jamais renommer) |
+| Publication (GitHub Pages) | `https://edouardkolf.github.io/petits-lecteurs/` (`BASE_PATH=/<repo>/`) |
+| Manifeste | nom « Petits Lecteurs », `id: petits-lecteurs`, portée propre : s'installe à côté de Petits Malins (`/educative-app/`) |
 
-- Deux bases distinctes : les deux apps peuvent être servies depuis la même origine sans mélanger leurs données. Le
-  format d'export est le même : un export de Petits Malins s'importe dans Petits Lecteurs (les parties hors lecture
-  sont gardées, simplement pas affichées).
-- Le service worker de Petits Malins ne sert jamais sa page à la place de `lecture/` (`navigateFallbackDenylist`).
-- Mêmes icônes et même charte pour l'instant.
+- Le format d'export est celui de Petits Malins (v5) : un export de Petits Malins s'importe dans Petits Lecteurs (les
+  parties hors lecture sont gardées, simplement pas affichées ; un parcours `ce1` est résolu comme `ms`).
+- La base commune (parent, stockage, ui, plomberie de l'app) est sous `src/socle/` (règle : `src/socle/README.md`).
+- Mêmes icônes et même charte que Petits Malins pour l'instant.
+- **Réglage à faire une fois** par le propriétaire : GitHub → Settings → Pages → Source : « GitHub Actions ».
 
 ## 3. L'aventure
 
@@ -46,31 +49,35 @@ La variante est fixée au build (`src/app/flavor.ts`, variable `VITE_APP_FLAVOR`
 
 ## 4. Espace parent
 
-Identique, avec trois adaptations d'affichage : pas de choix de parcours (un seul), « Maternelle » comme libellé du
-parcours, et pas de bloc « Carte du parcours » ni de compteurs de parties de niveaux dans les statistiques (Petits
-Lecteurs n'a pas de carte de compétences). Le bloc « J'apprends à lire » (niveau en cours, items, confusions, banc
-d'écoute) reste la source des statistiques de lecture.
+Même logique que Petits Malins (code, fiches enfant, minuteur et quota, fin douce, écran de verrouillage, export et
+import). Adaptations : pas de choix de parcours (un seul, « Maternelle »), et **la page Statistiques d'un enfant ne
+montre que la lecture** (`ReadingStats`) : niveaux gagnés sur 104 avec barre et détail par piste (J'écoute, Les lettres,
+J'assemble, Je lis), séances terminées et dernière séance, niveau en cours, items acquis, confusions, « à
+accompagner », banc d'écoute, une aide de lecture des chiffres, et un petit bloc « Temps de jeu » (Lecture / Mini-jeux,
+aujourd'hui et 7 jours). Plus de résumé global, de tableau « Temps par activité », de blocs par mini-jeu ni de carte
+de compétences. Le temps du jour reste sur la carte du tableau de bord ; le suivi du temps est inchangé.
 
 ## 5. Mode admin
 
 - `AppSettings.adminUnlockAll` (absent = désactivé, propre au téléphone, jamais exporté).
 - Caché : onglet Réglages de l'espace parent, **7 tapes sur le nom de l'app** en bas de l'onglet font apparaître le
   bloc « Mode admin ». Il reste visible tant qu'il est actif.
-- Effet : tous les niveaux sont ouverts pour tous les enfants du téléphone, dans les deux apps — carte de lecture
-  (état `open`, contour pointillé), accueil du programme de lecture, carte de compétences et lancement d'un niveau
-  (`computeLevelStates(…, { unlockAll })`). Une clé s'affiche en haut de la carte de lecture tant qu'il est actif.
+- Effet : tous les niveaux sont ouverts pour tous les enfants du téléphone, — carte de lecture
+  (état `open`, contour pointillé) et lancement d'un niveau (`levelState(…, { unlockAll })`). Une clé s'affiche en haut de la carte de lecture tant qu'il est actif.
 - Les séances jouées en mode admin sont enregistrées comme les autres : tester avec un profil dédié.
 
 ## 6. Tests
 
-- Unitaires : variantes et registre (`games/index.test.ts`), route `#/reading/<niveau>` et ancre `map`
-  (`routes.test.ts`), `unlockAll` (`engine/progress.test.ts`, `reading/levels.test.ts`).
-- E2E : projet Playwright `lecture` (`tests/e2e/lecture/`, build `--mode lecture` sur son propre port) : hub et base
-  propres, niveau joué depuis la carte, espace parent, mode admin, voix absente.
+- Unitaires : registre des jeux (`games/index.test.ts`), route `#/reading/<niveau>` (et `#/reading` → carte) et ancre
+  `map` (`socle/app/routes.test.ts`), `unlockAll` (`reading/levels.test.ts`), statistiques de lecture et temps de jeu
+  (`reading/stats.test.ts`).
+- E2E (un seul projet Playwright, `tests/e2e/`) : `lecture.spec.ts` (hub, niveau joué depuis la carte, espace parent,
+  statistiques de lecture seule, mode admin, voix absente), `reading.spec.ts` (programme de lecture), `hub.spec.ts`,
+  `parent*.spec.ts`, `session.spec.ts`, `coloring.spec.ts`, `maternelle-games.spec.ts` (memory), `robot.spec.ts`…
 
 ## 7. Questions ouvertes
 
 1. Nom, icône et couleurs de l'app (provisoire : « Petits Lecteurs », charte de Petits Malins).
-2. Mini-jeux : ceux de maternelle existants, sans lien avec la lecture. Des mini-jeux de lecture (memory des lettres,
+2. Mini-jeux : ceux de maternelle repris de Petits Malins, sans lien avec la lecture. Des mini-jeux de lecture (memory des lettres,
    coloriage par son) renforceraient la proposition.
 3. Fin du chemin : le 104e niveau tombe dans le 2e monde de la mer (trésor), pas au château de nuages.

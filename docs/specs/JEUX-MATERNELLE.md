@@ -1,5 +1,9 @@
 # Spec — Jeux de maternelle : memory, ranger, labyrinthe
 
+> **Petits Lecteurs.** Spec d'origine (Petits Malins) conservée : seuls le hub, la lecture, le coloriage et les mini-jeux de
+> maternelle existent dans ce dépôt ; les passages sur la dictée, le CE1, les niveaux de la carte de compétences, le morpion et
+> le pendu sont historiques (docs/ARCHITECTURE.md §11).
+
 Cadre : [README.md](README.md), [JEUX-LOGIQUE.md](JEUX-LOGIQUE.md) (contrat des mécaniques à plusieurs coups, §2 — il
 s'applique tel quel ici), [HUB.md](HUB.md). Lot du 29/10/2026, pour la petite (moyenne section, 4 ans, non lectrice).
 
