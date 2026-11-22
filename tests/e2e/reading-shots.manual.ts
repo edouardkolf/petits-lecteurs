@@ -58,6 +58,7 @@ const GAME_FILES: Record<string, string> = {
   'same-end': '07-game-same-end',
   'letter-sound': '08-game-letter-sound',
   'first-sound': '09-game-first-sound',
+  'word-start': '09b-game-word-start',
   'syllable-machine': '10-game-syllable-machine',
   'mystery-word': '11-game-mystery-word',
   'letter-twins': '12-game-letter-twins',

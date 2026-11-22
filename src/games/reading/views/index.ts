@@ -1,4 +1,4 @@
-// Registre des huit vues de jeu (LECTURE.md §4). Chaque vue reçoit `ReadingViewProps` et ne fait qu'afficher.
+// Registre des vues de jeu (LECTURE.md §4). Chaque vue reçoit `ReadingViewProps` et ne fait qu'afficher.
 import type { ComponentType } from "preact";
 import type { ReadingGameId, ReadingViewProps } from "../types";
 import { FirstSoundView } from "./FirstSoundView";
@@ -9,6 +9,7 @@ import { SameEndView } from "./SameEndView";
 import { SameStartView } from "./SameStartView";
 import { SyllableDrumView } from "./SyllableDrumView";
 import { SyllableMachineView } from "./SyllableMachineView";
+import { WordStartView } from "./WordStartView";
 import "./views.css";
 
 export const READING_VIEWS: Record<
@@ -20,6 +21,7 @@ export const READING_VIEWS: Record<
   "same-end": SameEndView,
   "letter-sound": LetterSoundView,
   "first-sound": FirstSoundView,
+  "word-start": WordStartView,
   "syllable-machine": SyllableMachineView,
   "mystery-word": MysteryWordView,
   "letter-twins": LetterTwinsView,

@@ -367,6 +367,35 @@ test('étape de départ 3 : niveaux de 8 questions, « commence pareil » puis �
   expect(records.every((r) => r.stage === 3 && r.status === 'completed')).toBe(true);
 });
 
+test('étape de départ 2 : « la lettre qui chante » puis le niveau 4 « quel mot commence par »', async ({ page }) => {
+  test.slow();
+  await installFakeVoice(page, 'fr');
+  await onboardMs(page, 'Alice', 2);
+  await chooseProfile(page, 'Alice');
+  await openReading(page);
+  expect(await playCurrent(page, 'letter-sound', 5)).toBe('sound-a');
+  await expect(page.getByTestId('reading-level-4')).toHaveAttribute('data-level', 'first-a');
+  await expect(page.getByTestId('reading-level-4')).toHaveAttribute('data-game', 'word-start');
+  // Niveau 4 : 2 images au choix, la bonne se touche par data-answer ; une image fausse se grise.
+  await expect(currentLevel(page)).toHaveAttribute('data-level', 'first-a');
+  await startCurrentLevel(page);
+  const question = page.getByTestId('reading-question');
+  await expect(question).toHaveAttribute('data-game', 'word-start');
+  await expect(question).toHaveAttribute('data-item', 'g:a');
+  await expect(question.locator('[data-choice]')).toHaveCount(2);
+  await expect(page.getByTestId('reading-model')).toBeVisible();
+  const played = await playFullSession(page, { missFirst: 1 });
+  expect(played.length).toBeGreaterThanOrEqual(5);
+  for (const q of played) {
+    expect(q.game).toBe('word-start');
+    expect(q.item).toBe('g:a');
+  }
+  await finishEnd(page);
+  const record = (await readReadings(page)).find((r) => r.levelId === 'first-a');
+  expect(record?.status).toBe('completed');
+  expect(record?.answers.every((a) => a.game === 'word-start' && a.itemId === 'g:a')).toBe(true);
+});
+
 test('étape de départ 4 : la machine à syllabes a son niveau à elle', async ({ page }) => {
   test.slow();
   await installFakeVoice(page, 'fr');

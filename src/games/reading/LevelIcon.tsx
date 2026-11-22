@@ -26,10 +26,11 @@ function Drum() {
 export function LevelIcon({ level }: { level: ReadingLevel }) {
   switch (level.game) {
     case 'letter-sound':
-    case 'first-sound': {
+    case 'first-sound':
+    case 'word-start': {
       const id = level.item.slice(2);
       const glyph = getGrapheme(id)?.upper ?? id.toUpperCase();
-      const emoji = level.game === 'first-sound' ? keywordPicture(id)?.emoji : undefined;
+      const emoji = level.game !== 'letter-sound' ? keywordPicture(id)?.emoji : undefined;
       return (
         <span class={`rd-glyph${glyph.length > 1 ? ' rd-glyph--wide' : ''}${emoji ? ' rd-glyph--pic' : ''}`}>
           <span class="rd-glyph__text">{glyph}</span>

@@ -6,13 +6,14 @@ import type { SpeechStep } from '../../socle/ui/voice';
 export type ReadingStage = 1 | 2 | 3 | 4 | 5;
 export const READING_STAGES: readonly ReadingStage[] = [1, 2, 3, 4, 5];
 
-/** Les huit jeux (LECTURE.md §4). */
+/** Les neuf jeux (LECTURE.md §4). */
 export const READING_GAMES = [
   'syllable-drum', // taper une fois par syllabe
   'same-start', // qui commence pareil ?
   'same-end', // qui finit pareil ? (rime)
   'letter-sound', // la lettre qui chante : son → lettre
   'first-sound', // par quoi ça commence ? image → lettre
+  'word-start', // trouve le mot qui commence par… : son → image (première lettre seule connue)
   'syllable-machine', // fusion : syllabe entendue → syllabe écrite
   'mystery-word', // mot écrit → image
   'letter-twins', // capitale → minuscule
@@ -155,6 +156,8 @@ export interface ReadingQuestion {
   speakChoices: boolean;
   /** Dit après une bonne réponse (ex. « la, comme lama »), ou vide. */
   praise: readonly SpeechStep[];
+  /** « La lettre qui chante » : image du mot dit dans la félicitation, montrée brièvement une fois la question résolue. */
+  praisePicture?: PictureId;
   /** L'item est présenté pour la première fois dans cette séance. */
   isNew: boolean;
 }
@@ -197,7 +200,7 @@ export interface ReadingAnswer {
 
 // ---------- Vues de jeu ----------
 
-/** Props communes aux huit vues (src/games/reading/views/). Une vue ne parle pas, ne sonne pas, n'écrit rien. */
+/** Props communes aux vues (src/games/reading/views/). Une vue ne parle pas, ne sonne pas, n'écrit rien. */
 export interface ReadingViewProps {
   question: ReadingQuestion;
   /** Choix faux déjà tentés (grisés, non tapables). */
