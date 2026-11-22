@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { ReadingRecord } from '../../socle/storage/readings';
-import { alertsFrom, confusionsFrom, itemLabel, summarizeReading } from './stats';
+import type { UsageDay } from '../../socle/storage/types';
+import { LEVELS } from './levels';
+import { alertsFrom, confusionsFrom, itemLabel, summarizeAdventure, summarizeReading, summarizeReadingTime } from './stats';
 import type { ReadingAnswer } from './types';
 
 const NOW = Date.UTC(2026, 10, 10, 12);
@@ -171,5 +173,114 @@ describe('summarizeReading (avec progression et contenu)', () => {
 
   it('startStage fait avancer l’étape en cours', () => {
     expect(summarizeReading([], { startStage: 3 }, NOW).stage).toBe(3);
+  });
+});
+
+/** Séance terminée du niveau `levelId` : `right` bonnes réponses sur `planned` (barre du niveau : voir passMark). */
+function session(levelId: string, right: number, planned: number, endedAt: number): ReadingRecord {
+  return {
+    id: `s-${levelId}-${endedAt}`,
+    profileId: 'p',
+    startedAt: endedAt - 1000,
+    endedAt,
+    status: 'completed',
+    endReason: null,
+    activeMs: 1000,
+    stage: 1,
+    levelId,
+    planned,
+    newItemId: null,
+    demos: [],
+    review: false,
+    answers: Array.from({ length: planned }, (_, i) => ans({ correct: i < right })),
+  } as ReadingRecord;
+}
+
+describe('avancée dans l’aventure (summarizeAdventure)', () => {
+  it('rien de joué : 0 niveau gagné sur tous les niveaux, quatre pistes, pas de dernière séance', () => {
+    const a = summarizeAdventure([], undefined);
+    expect(a.levelsPassed).toBe(0);
+    expect(a.levelTotal).toBe(LEVELS.length);
+    expect(a.tracks.map((t) => t.track)).toEqual(['ear', 'letters', 'blend', 'read']);
+    expect(a.tracks.map((t) => t.label)).toEqual(["J'écoute", 'Les lettres', "J'assemble", 'Je lis']);
+    expect(a.tracks.reduce((sum, t) => sum + t.total, 0)).toBe(LEVELS.length);
+    expect(a.tracks.every((t) => t.passed === 0)).toBe(true);
+    expect(a.sessionsCompleted).toBe(0);
+    expect(a.lastSessionAt).toBeNull();
+  });
+
+  it('un niveau gagné (4 sur 5) compte dans sa piste ; un niveau raté (3 sur 5) non', () => {
+    const first = LEVELS[0]!;
+    const second = LEVELS[1]!;
+    const a = summarizeAdventure([session(first.id, 4, 5, NOW - 2 * DAY), session(second.id, 3, 5, NOW - DAY)], undefined);
+    expect(a.levelsPassed).toBe(1);
+    const track = a.tracks.find((t) => t.track === first.track)!;
+    expect(track.passed).toBe(1);
+    expect(a.sessionsCompleted).toBe(2);
+    expect(a.lastSessionAt).toBe(NOW - DAY);
+  });
+
+  it('les séances abandonnées ne comptent ni comme gagnées ni comme terminées', () => {
+    const rec = { ...session(LEVELS[0]!.id, 5, 5, NOW), status: 'abandoned' } as ReadingRecord;
+    const a = summarizeAdventure([rec], undefined);
+    expect(a.levelsPassed).toBe(0);
+    expect(a.sessionsCompleted).toBe(0);
+    expect(a.lastSessionAt).toBeNull();
+  });
+
+  it('« étape de départ » tient pour gagnés les niveaux des étapes d’avant, et summarizeReading les expose', () => {
+    const before = LEVELS.filter((l) => l.stage < 3).length;
+    expect(summarizeAdventure([], { startStage: 3 }).levelsPassed).toBe(before);
+    expect(summarizeReading([], { startStage: 3 }, NOW).adventure.levelsPassed).toBe(before);
+  });
+});
+
+describe('temps de jeu (summarizeReadingTime)', () => {
+  const TODAY = '2026-11-10';
+  const MINI = ['coloring', 'memory', 'order', 'maze', 'robot'];
+  const day = (d: string, active: number, activity?: Record<string, number>): UsageDay => ({
+    profileId: 'p',
+    day: d,
+    activeSeconds: active,
+    extraMinutes: 0,
+    ...(activity ? { activitySeconds: activity } : {}),
+  });
+
+  it('lecture = carte + séances ; mini-jeux = somme des mini-jeux ; le hub n’est pas montré', () => {
+    const t = summarizeReadingTime(
+      [day(TODAY, 1000, { hub: 100, map: 300, reading: 200, coloring: 150, memory: 50, dictation: 200 })],
+      TODAY,
+      MINI,
+    );
+    expect(t.reading).toEqual({ today: 500, week: 500 });
+    // La dictée (Petits Malins) n'est pas un mini-jeu de l'app.
+    expect(t.games).toEqual({ today: 200, week: 200 });
+  });
+
+  it('aujourd’hui et 7 derniers jours séparés ; les jours plus anciens sont ignorés', () => {
+    const t = summarizeReadingTime(
+      [
+        day(TODAY, 100, { reading: 100 }),
+        day('2026-11-06', 60, { robot: 60 }),
+        day('2026-11-03', 999, { reading: 999 }), // 7 jours avant : hors fenêtre (aujourd'hui + 6)
+      ],
+      TODAY,
+      MINI,
+    );
+    expect(t.reading).toEqual({ today: 100, week: 100 });
+    expect(t.games).toEqual({ today: 0, week: 60 });
+  });
+
+  it('le temps d’avant la ventilation par activité (activitySeconds absent) va à la lecture (carte)', () => {
+    const t = summarizeReadingTime([day(TODAY, 240)], TODAY, MINI);
+    expect(t.reading).toEqual({ today: 240, week: 240 });
+    expect(t.games).toEqual({ today: 0, week: 0 });
+  });
+
+  it('rien d’enregistré : tout à zéro', () => {
+    expect(summarizeReadingTime([], TODAY, MINI)).toEqual({
+      reading: { today: 0, week: 0 },
+      games: { today: 0, week: 0 },
+    });
   });
 });

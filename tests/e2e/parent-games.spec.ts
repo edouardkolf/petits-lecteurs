@@ -138,9 +138,9 @@ test('bascules de jeux dans la fiche enfant : un jeu en moins, puis la carte seu
   for (const id of MINI_GAMES) await expect(hub.getByTestId(`hub-tile-${id}`)).toBeVisible();
 });
 
-// ==================== 2. Temps par activité : 60 s simulées sur la carte ====================
+// ==================== 2. Temps de jeu : 60 s simulées sur la carte ====================
 
-test('temps par activité : 60 s simulées sur la carte apparaissent dans « Aujourd’hui »', async ({ page }) => {
+test('temps de jeu : 60 s simulées sur la carte apparaissent dans « Lecture », pas dans « Mini-jeux »', async ({ page }) => {
   test.slow();
   await page.clock.install();
   await createParentCode(page);
@@ -162,7 +162,12 @@ test('temps par activité : 60 s simulées sur la carte apparaissent dans « Auj
   await enterPin(page, PARENT_PIN);
   await page.getByRole('button', { name: 'Statistiques' }).click();
 
-  await expect(page.getByTestId('activity-map-today')).toHaveText('1 min 00 s');
+  await expect(page.getByTestId('reading-time')).toBeVisible();
+  await expect(page.getByTestId('reading-time-reading-today')).toHaveText('1 min 00 s');
+  await expect(page.getByTestId('reading-time-reading-week')).toHaveText('1 min 00 s');
+  await expect(page.getByTestId('reading-time-games-today')).toHaveText('0 s');
+  await expect(page.getByTestId('reading-time-games-week')).toHaveText('0 s');
+  await expect(page.getByTestId('activity-time')).toHaveCount(0);
 });
 
 // ==================== 3. Export puis import : les tuiles (bascules de jeux) sont conservées ====================

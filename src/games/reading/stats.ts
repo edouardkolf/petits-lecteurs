@@ -3,7 +3,11 @@
 // elles se testent sans la progression ni le contenu.
 import type { ReadingRecord } from '../../socle/storage/readings';
 import { getGrapheme, gatedItems, stageItems } from './curriculum';
+import { summarizeActivityTime } from '../../socle/parent/stats';
+import type { ActivityTotals } from '../../socle/parent/stats';
+import type { UsageDay } from '../../socle/storage/types';
 import { LEVELS, levelProgress } from './levels';
+import type { LevelTrack } from './levels';
 import { computeProgress } from './progress';
 import type { ReadingSettings } from './progress';
 import { READING_STAGES } from './types';
@@ -37,6 +41,75 @@ export interface GuessAlert {
   chance: number;
 }
 
+/** Pistes de niveaux, dans l'ordre du parcours, avec le libellé que lit le parent. */
+export const TRACK_LABELS: Readonly<Record<LevelTrack, string>> = {
+  ear: "J'écoute",
+  letters: 'Les lettres',
+  blend: "J'assemble",
+  read: 'Je lis',
+};
+export const TRACK_ORDER: readonly LevelTrack[] = ['ear', 'letters', 'blend', 'read'];
+
+export interface TrackProgress {
+  track: LevelTrack;
+  label: string;
+  /** Niveaux gagnés (ou tenus pour acquis par « étape de départ ») de la piste. */
+  passed: number;
+  total: number;
+}
+
+/** Avancée dans l'aventure (les niveaux de la carte) : niveaux gagnés, par piste, et dernière séance. */
+export interface AdventureSummary {
+  levelsPassed: number;
+  levelTotal: number;
+  tracks: TrackProgress[];
+  /** Séances terminées (gagnées ou non). */
+  sessionsCompleted: number;
+  /** Fin de la dernière séance terminée (ms), ou null. */
+  lastSessionAt: number | null;
+}
+
+export function summarizeAdventure(records: readonly ReadingRecord[], settings: ReadingSettings | undefined): AdventureSummary {
+  const progress = levelProgress(records, settings);
+  const tracks = TRACK_ORDER.map((track) => {
+    const levels = LEVELS.filter((l) => l.track === track);
+    return { track, label: TRACK_LABELS[track], passed: levels.filter((l) => progress.passed.has(l.id)).length, total: levels.length };
+  });
+  let sessionsCompleted = 0;
+  let lastSessionAt: number | null = null;
+  for (const record of records) {
+    if (record.status !== 'completed') continue;
+    sessionsCompleted += 1;
+    const at = record.endedAt ?? record.startedAt;
+    if (lastSessionAt === null || at > lastSessionAt) lastSessionAt = at;
+  }
+  return { levelsPassed: progress.passed.size, levelTotal: LEVELS.length, tracks, sessionsCompleted, lastSessionAt };
+}
+
+/** Temps de jeu (secondes) : la lecture (la carte d'aventure et les séances) et les mini-jeux du hub. */
+export interface ReadingTimeSummary {
+  reading: { today: number; week: number };
+  games: { today: number; week: number };
+}
+
+/**
+ * Temps du jour et des 7 derniers jours, à partir de `UsageDay.activitySeconds`. « Lecture » = activités `map` (la
+ * carte d'aventure, y compris le temps d'avant la ventilation par activité) et `reading` ; « Mini-jeux » = la somme de
+ * `miniGameIds`. Le temps passé sur le hub n'est pas montré.
+ */
+export function summarizeReadingTime(
+  days: readonly UsageDay[],
+  today: string,
+  miniGameIds: readonly string[],
+): ReadingTimeSummary {
+  const { today: t, week: w } = summarizeActivityTime(days, today);
+  const sum = (totals: ActivityTotals, ids: readonly string[]) => ids.reduce((acc, id) => acc + (totals[id] ?? 0), 0);
+  return {
+    reading: { today: sum(t, ['map', 'reading']), week: sum(w, ['map', 'reading']) },
+    games: { today: sum(t, miniGameIds), week: sum(w, miniGameIds) },
+  };
+}
+
 export interface ReadingStatsSummary {
   stage: ReadingStage;
   /** Tout le parcours de niveaux est fait. */
@@ -47,6 +120,7 @@ export interface ReadingStatsSummary {
   levelTotal: number;
   /** Niveaux gagnés. */
   levelsPassed: number;
+  adventure: AdventureSummary;
   sessionsCompleted: number;
   acquired: number;
   gatedTotal: number;
@@ -207,6 +281,7 @@ export function summarizeReading(
     levelIndex: levels.current?.index ?? null,
     levelTotal: LEVELS.length,
     levelsPassed: levels.passed.size,
+    adventure: summarizeAdventure(records, settings),
     sessionsCompleted: progress.sessionsCompleted,
     acquired,
     gatedTotal,

@@ -23,8 +23,7 @@ réutilisera le socle : injecter la liste des jeux, des parcours et des blocs de
 
 - `parent/ChildForm.tsx` : `games` (registre `GAMES`, disponibilité), `games/reading/ReadingSettings`,
   `games/coloring/ColoringSettings`, `engine` (parcours) ;
-- `parent/ChildStats.tsx` : `games` (registre), `games/reading/ReadingStats`, `games/coloring/ColoringStats`,
-  `games/puzzle/PuzzleStats`, `engine` ;
+- `parent/ChildStats.tsx` : `games/reading/ReadingStats` (la page ne montre que la lecture), `engine` ;
 - `parent/Dashboard.tsx` : `games` (jeux visibles) et `engine` (libellé du parcours) ;
 - `parent/Settings.tsx` : `app/appInfo.ts` (nom de l'app affiché) ;
 - `storage/readings.ts` : types et constantes de `games/reading/types` ; `storage/colorings.ts` : `engine/types`

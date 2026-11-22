@@ -1,33 +1,5 @@
-// Résumé global (tous niveaux confondus) affiché en tête des statistiques d'un enfant.
-// Calcul direct à partir des parties : pas besoin de moteur, donc testable ici sans dépendance.
-import type { GameRecordBase, Run, UsageDay } from '../storage';
-
-export interface RunsSummary {
-  /** Parties lancées, tous niveaux confondus. */
-  totalRuns: number;
-  /** Manches réussies du premier coup / manches jouées ; null si aucune manche. */
-  firstTryRate: number | null;
-  /** Temps de jeu cumulé (somme des durées de manches), en ms. */
-  playTimeMs: number;
-}
-
-export function summarizeRuns(runs: Run[]): RunsSummary {
-  let roundsPlayed = 0;
-  let firstTry = 0;
-  let playTimeMs = 0;
-  for (const run of runs) {
-    for (const round of run.rounds) {
-      roundsPlayed += 1;
-      if (round.firstTry) firstTry += 1;
-      playTimeMs += round.durationMs;
-    }
-  }
-  return {
-    totalRuns: runs.length,
-    firstTryRate: roundsPlayed > 0 ? firstTry / roundsPlayed : null,
-    playTimeMs,
-  };
-}
+// Temps de jeu par activité (UsageDay.activitySeconds), pour les statistiques d'un enfant. Pur, testé sous Vitest.
+import type { UsageDay } from '../storage';
 
 /** Jour local "YYYY-MM-DD" au format de `dayKey` (storage/index.ts), recalculé ici pour rester pur et sans IndexedDB. */
 function localDayKey(ms: number): string {
@@ -83,56 +55,4 @@ export function summarizeActivityTime(days: readonly UsageDay[], today: string):
   }
 
   return { today: accumulate([today]), week: accumulate(weekKeys) };
-}
-
-/** Total toutes activités confondues (= somme des `activeSeconds` de la période, cf. §5.5). */
-export function totalActivitySeconds(totals: ActivityTotals): number {
-  return Object.values(totals).reduce((sum, seconds) => sum + seconds, 0);
-}
-
-export interface GameRecordsSummary {
-  /** Enregistrements du jeu, tous statuts, y compris en cours. */
-  total: number;
-  /** `status = 'completed'`. */
-  completed: number;
-  /** `endReason` vaut `quit` ou `closed`. */
-  abandoned: number;
-  /** `endReason = 'time-up'` ; ce ne sont pas des abandons. */
-  interrupted: number;
-  /** Somme des `activeMs`. */
-  activeMs: number;
-  /** Jours locaux distincts, parmi aujourd'hui et les 6 précédents, où au moins une partie a commencé. */
-  daysPlayedInWeek: number;
-  /** `startedAt` le plus récent ; null si aucune partie. */
-  lastPlayedAt: number | null;
-}
-
-/** Indicateurs communs d'un jeu (docs/specs/HUB.md §5.5), à partir de ses enregistrements et de l'instant courant. */
-export function summarizeGameRecords(records: readonly GameRecordBase[], now: number): GameRecordsSummary {
-  const today = localDayKey(now);
-  const weekKeys = new Set(Array.from({ length: 7 }, (_, i) => shiftDayKey(today, -i)));
-  let completed = 0;
-  let abandoned = 0;
-  let interrupted = 0;
-  let activeMs = 0;
-  let lastPlayedAt: number | null = null;
-  const daysPlayed = new Set<string>();
-  for (const record of records) {
-    if (record.status === 'completed') completed += 1;
-    if (record.endReason === 'quit' || record.endReason === 'closed') abandoned += 1;
-    if (record.endReason === 'time-up') interrupted += 1;
-    activeMs += record.activeMs;
-    if (lastPlayedAt === null || record.startedAt > lastPlayedAt) lastPlayedAt = record.startedAt;
-    const day = localDayKey(record.startedAt);
-    if (weekKeys.has(day)) daysPlayed.add(day);
-  }
-  return {
-    total: records.length,
-    completed,
-    abandoned,
-    interrupted,
-    activeMs,
-    daysPlayedInWeek: daysPlayed.size,
-    lastPlayedAt,
-  };
 }

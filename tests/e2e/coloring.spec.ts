@@ -282,7 +282,7 @@ test('360 × 640 : aucun défilement, dessin ≥ 300 px, codes ≥ 28 px, fioles
 
 // ==================== 6. Espace parent : dessin terminé compté, palier forcé ====================
 
-test('parent : un dessin terminé compté ; le palier forcé dans la fiche enfant s’applique au dessin suivant', async ({
+test('parent : un dessin terminé ; le palier forcé dans la fiche enfant s’applique au dessin suivant', async ({
   page,
 }) => {
   test.slow();
@@ -294,8 +294,10 @@ test('parent : un dessin terminé compté ; le palier forcé dans la fiche enfan
   await page.getByTestId('to-hub').click();
   await page.getByTestId('hub-to-profiles').click();
   await openParentFromProfiles(page);
+  // Les statistiques parent ne montrent que la lecture : aucun bloc du coloriage.
   await page.getByRole('button', { name: 'Statistiques' }).click();
-  await expect(page.getByTestId('coloring-stats-completed')).toHaveText('1');
+  await expect(page.getByTestId('reading-stats')).toBeVisible();
+  await expect(page.getByTestId('coloring-stats')).toHaveCount(0);
 
   // Palier forcé : « Formes » (palier 3), dans la fiche de l'enfant.
   await page.getByRole('button', { name: 'Retour aux enfants' }).click(); // sous-page : pas d'onglets

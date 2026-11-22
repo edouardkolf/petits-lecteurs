@@ -36,3 +36,10 @@
 .rp-bench__btn[aria-pressed='true'] { border-color: var(--pa-focus); background: color-mix(in srgb, var(--pa-focus) 16%, var(--pa-surface)); }
 .rp-bench__all { min-height: 44px; padding: 6px 14px; }
 .rp-select { width: 100%; min-height: 48px; font: inherit; font-size: 16px; }
+.rp-levels__count { margin: 0; font-size: 18px; }
+.rp-bar { height: 14px; border-radius: 7px; background: var(--pa-border); overflow: hidden; margin: 6px 0 10px; }
+.rp-bar__fill { display: block; height: 100%; background: var(--pa-success); border-radius: 7px; }
+.rp-tracks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; list-style: none; margin: 0 0 8px; padding: 0; }
+.rp-track { display: flex; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 1px solid var(--pa-border); border-radius: 10px; font-size: 15px; }
+.rp-track__label { font-weight: 600; }
+.rp-track__count { font-variant-numeric: tabular-nums; color: var(--pa-muted); }

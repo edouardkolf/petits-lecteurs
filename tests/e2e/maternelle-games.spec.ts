@@ -1,4 +1,4 @@
-// Jeux de maternelle du hub (docs/specs/JEUX-MATERNELLE.md) : memory (jeu libre), statistiques parent du memory.
+// Jeux de maternelle du hub (docs/specs/JEUX-MATERNELLE.md) : memory (jeu libre).
 // Aides de navigation communes : tests/e2e/nav.ts.
 //
 // Les vues exposent leur manche en DOM : `.play-round[data-answer]` (memory : « cleared » ; ranger : rangs/valeurs
@@ -206,29 +206,4 @@ test.describe('jeu libre memory', () => {
     await expectNewRound(page, handle);
     await backToHub(page);
   });
-});
-
-// ==================== 2. Statistiques parent du memory ====================
-
-test('après une partie de memory libre, la fiche statistiques montre le bloc puzzle-stats du memory', async ({ page }) => {
-  test.slow();
-  await onboardMs(page, 'Ana');
-  await chooseProfile(page, 'Ana');
-  await openFreeMemory(page);
-  await startFreeGame(page);
-  const handle = await viewHandle(page);
-  await solveMemoryRound(page);
-  await expect(page.getByTestId('puzzle-solved')).toHaveAttribute('data-count', '1');
-  await expectNewRound(page, handle);
-  await backToProfiles(page);
-
-  await openChildStats(page, 'Ana');
-  const section = page.getByTestId('game-stats-memory');
-  await expect(section).toBeVisible();
-  const stats = section.getByTestId('puzzle-stats');
-  await expect(stats).toBeVisible();
-  await expect(stats.getByTestId('puzzle-stats-best')).toHaveText('1 étoile');
-  await expect(stats.getByTestId('puzzle-preset-easy')).toHaveText('1');
-  await expect(stats.getByTestId('puzzle-preset-medium')).toHaveText('0');
-  await expect(stats.getByTestId('puzzle-preset-hard')).toHaveText('0');
 });

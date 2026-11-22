@@ -107,6 +107,57 @@ test('aventure : niveau 1 joué depuis la carte → retour sur la carte, niveau 
   await expect(page.getByTestId('hub')).toBeVisible();
 });
 
+test('statistiques parent : uniquement la lecture (niveaux gagnés, pistes, temps), pas de tableau par activité', async ({ page }) => {
+  test.slow();
+  await installFakeVoice(page, 'fr');
+  await onboardMs(page, 'Alice');
+  await chooseProfile(page, 'Alice');
+  await openAdventure(page);
+  await page.getByTestId('reading-level-1').click({ force: true });
+  await expect(page.getByTestId('reading-session')).toBeVisible();
+  await playFullSession(page);
+  await page.getByTestId('reading-end-continue').click();
+  await expect(page.getByTestId('adventure-map')).toBeVisible();
+  await page.getByTestId('to-hub').click();
+  await page.getByTestId('hub-to-profiles').click();
+
+  await openParentDashboard(page);
+  await page.getByRole('button', { name: 'Statistiques' }).click();
+  await expect(page.getByRole('heading', { name: 'Alice' })).toBeVisible();
+
+  // Un niveau gagné sur 104, par piste et au total.
+  const levels = page.getByTestId('reading-stats-levels');
+  await expect(levels).toBeVisible();
+  await expect(levels).toHaveAttribute('data-passed', '1');
+  await expect(levels).toHaveAttribute('data-total', '104');
+  await expect(page.getByTestId('reading-stats-levels-count')).toHaveText('1 niveau gagné sur 104');
+  await expect(page.getByTestId('reading-stats-track-ear')).toHaveAttribute('data-passed', '1');
+  for (const track of ['ear', 'letters', 'blend', 'read']) {
+    await expect(page.getByTestId(`reading-stats-track-${track}`)).toBeVisible();
+  }
+  await expect(page.getByTestId('reading-stats-sessions')).toHaveText('1');
+  await expect(page.getByTestId('reading-stats-last')).not.toContainText('—');
+  await expect(page.getByTestId('reading-stats-level')).toHaveText('2 sur 104');
+
+  // Le temps de jeu : un seul petit bloc (lecture / mini-jeux), plus de tableau par activité.
+  await expect(page.getByTestId('reading-time')).toBeVisible();
+  for (const cell of ['reading-today', 'reading-week', 'games-today', 'games-week']) {
+    await expect(page.getByTestId(`reading-time-${cell}`)).toBeVisible();
+  }
+  await expect(page.getByTestId('reading-time-games-today')).toHaveText('0 s');
+  await expect(page.getByTestId('activity-time')).toHaveCount(0);
+
+  // Rien d'autre que la lecture : ni résumé global, ni mini-jeu, ni carte de compétences.
+  await expect(page.getByTestId('reading-help')).toBeVisible();
+  for (const id of ['coloring', 'memory', 'order', 'maze', 'robot']) {
+    await expect(page.getByTestId(`game-stats-${id}`)).toHaveCount(0);
+  }
+  await expect(page.locator('[data-testid^="level-stats-"]')).toHaveCount(0);
+  await expect(page.getByTestId('skill-stats')).toHaveCount(0);
+  await expect(page.getByText('Parties lancées')).toHaveCount(0);
+  await expect(page.getByText('Temps par activité')).toHaveCount(0);
+});
+
 test('espace parent : pas de choix de parcours, l’aventure a son étape de départ, pas de bascule lecture', async ({ page }) => {
   await installFakeVoice(page, 'fr');
   await onboardMs(page, 'Alice', 2);
