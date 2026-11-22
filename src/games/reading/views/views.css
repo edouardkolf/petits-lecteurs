@@ -444,7 +444,43 @@
   flex: none;
   display: flex;
   align-items: center;
-  gap: calc(var(--gap) * 1.5);
+  gap: var(--gap);
+}
+.rv-drum-foot .rv-dot {
+  width: calc(var(--u) * 8);
+  height: calc(var(--u) * 8);
+  min-width: 28px;
+  min-height: 28px;
+}
+.rv-drum-foot .rv-dots {
+  gap: calc(var(--gap) * 0.6);
+}
+/* « Effacer » : retire la dernière frappe. Même gabarit que la coche, mais discret (neutre, pas de choix). */
+.rv-drum-undo {
+  flex: none;
+  width: max(72px, calc(var(--u) * 21));
+  height: max(72px, calc(var(--u) * 21));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 5px solid #fff;
+  background: #c9b79a;
+  color: #fff;
+  box-shadow: var(--shadow);
+  animation: rv-pop 380ms ease-out;
+  transition: opacity 200ms ease, transform 120ms ease;
+}
+.rv-drum-undo:active {
+  transform: scale(0.94);
+}
+.rv-drum-undo--hidden {
+  visibility: hidden;
+  animation: none;
+}
+.rv-undo-art {
+  width: 58%;
+  height: 58%;
 }
 .rv-drum-ok {
   flex: none;

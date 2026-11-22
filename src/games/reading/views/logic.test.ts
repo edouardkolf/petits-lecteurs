@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { ReadingQuestion } from "../types";
 import {
+  acceptTap,
   addTap,
   choiceFlags,
   DRUM_MAX_TAPS,
+  DRUM_DEBOUNCE_MS,
   drumPulseTimes,
   mysteryHintTimeline,
+  removeTap,
   wordFontUnits,
   type ChoiceStateProps,
 } from "./logic";
@@ -105,5 +108,34 @@ describe("mot mystère", () => {
   it("un mot long tient en largeur", () => {
     expect(wordFontUnits(6) * 0.72 * 6).toBeLessThanOrEqual(80.01);
     expect(wordFontUnits(2)).toBe(26);
+  });
+});
+
+describe("tambour : anti double tap et effacer", () => {
+  it("la première frappe est toujours acceptée ; une frappe à moins de 150 ms de la précédente est ignorée", () => {
+    expect(DRUM_DEBOUNCE_MS).toBe(150);
+    expect(acceptTap(1000, null)).toBe(true);
+    expect(acceptTap(1100, 1000)).toBe(false);
+    expect(acceptTap(1149, 1000)).toBe(false);
+    expect(acceptTap(1150, 1000)).toBe(true);
+    expect(acceptTap(1800, 1000)).toBe(true);
+  });
+
+  it("une rafale de trois frappes rapprochées ne compte qu'une fois", () => {
+    let last: number | null = null;
+    let taps = 0;
+    for (const at of [0, 60, 120, 400, 450]) {
+      if (acceptTap(at, last)) {
+        last = at;
+        taps = addTap(taps);
+      }
+    }
+    expect(taps).toBe(2);
+  });
+
+  it("effacer retire la dernière frappe, jamais sous zéro", () => {
+    expect(removeTap(3)).toBe(2);
+    expect(removeTap(1)).toBe(0);
+    expect(removeTap(0)).toBe(0);
   });
 });

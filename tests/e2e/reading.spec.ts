@@ -16,6 +16,7 @@ import {
   readReadings,
   spokenTexts,
   startCurrentLevel,
+  tapDrum,
 } from './reading-helpers';
 
 let jsErrors: string[] = [];
@@ -135,6 +136,50 @@ test('niveau 1 (tambour seul, 5 questions) gagné → le niveau 2 s’ouvre sur 
   await expect(page.getByTestId('reading-session')).toBeVisible();
   await page.getByTestId('to-map').click();
   await expect(page.getByTestId('adventure-map')).toBeVisible();
+});
+
+// ==================== 1b. Tambour : effacer et anti double tap ====================
+
+test('tambour : « effacer » retire la dernière frappe, un double tap involontaire ne compte qu’une fois', async ({ page }) => {
+  await installFakeVoice(page, 'fr');
+  await onboardMs(page, 'Alice');
+  await chooseProfile(page, 'Alice');
+  await openReading(page);
+  await startCurrentLevel(page);
+  const question = page.getByTestId('reading-question');
+  await expect(question).toHaveAttribute('data-ready', 'true', { timeout: 10_000 });
+  const drum = question.locator('[data-choice="drum"]');
+  const undo = question.getByTestId('drum-undo');
+  const taps = question.locator('[data-taps]');
+  const dots = question.locator('.rv-dot--on');
+
+  // « Effacer » n'est pas un choix de réponse et reste caché tant qu'il n'y a pas de frappe.
+  await expect(undo).toBeHidden();
+  await expect(undo).not.toHaveAttribute('data-choice', /.*/);
+  await tapDrum(page, drum, 1);
+  await expect(undo).toBeVisible();
+  const box = await undo.boundingBox();
+  expect(box!.width).toBeGreaterThanOrEqual(72);
+  expect(box!.height).toBeGreaterThanOrEqual(72);
+
+  // Deux touchers à quelques millisecondes d'écart : un seul compte.
+  await drum.evaluate((el) => {
+    (el as HTMLElement).click();
+    (el as HTMLElement).click();
+  });
+  await expect(taps).toHaveAttribute('data-taps', '2');
+  await expect(dots).toHaveCount(2);
+
+  // Chaque toucher d'« effacer » retire un point, sans valider ni répondre.
+  await undo.click();
+  await expect(taps).toHaveAttribute('data-taps', '1');
+  await expect(dots).toHaveCount(1);
+  await undo.click();
+  await expect(taps).toHaveAttribute('data-taps', '0');
+  await expect(dots).toHaveCount(0);
+  await expect(undo).toBeHidden();
+  await expect(question).not.toHaveAttribute('data-solved', 'true');
+  await expect(page.getByTestId('reading-dots').locator('.rd-dot[data-state="done"]')).toHaveCount(0);
 });
 
 // ==================== 2. Niveau raté : on le rejoue ====================

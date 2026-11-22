@@ -69,6 +69,19 @@ export function addTap(taps: number): number {
   return Math.min(taps + 1, DRUM_MAX_TAPS);
 }
 
+/** Une frappe qui arrive moins de 150 ms après la précédente (double tap involontaire) est ignorée. */
+export const DRUM_DEBOUNCE_MS = 150;
+
+/** Cette frappe est-elle acceptée ? `lastAt` : instant de la dernière frappe acceptée (null : aucune). */
+export function acceptTap(now: number, lastAt: number | null, debounceMs: number = DRUM_DEBOUNCE_MS): boolean {
+  return lastAt === null || now - lastAt >= debounceMs;
+}
+
+/** « Effacer » : retire la dernière frappe (jamais sous zéro). */
+export function removeTap(taps: number): number {
+  return Math.max(0, taps - 1);
+}
+
 /** Instants (ms) des pulsations de relance : le tambour pulse `answer` fois en rythme. */
 export function drumPulseTimes(
   answer: string,
