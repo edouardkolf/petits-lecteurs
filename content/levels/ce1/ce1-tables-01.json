@@ -1,0 +1,25 @@
+{
+  "$schema": "../../level.schema.json",
+  "id": "ce1-tables-01",
+  "title": "Table de 2",
+  "skill": "multiplication",
+  "objective": "Apprendre 2 × 2 à 2 × 5 ; le quadrillage de points n'apparaît qu'après une erreur.",
+  "mechanic": "calc",
+  "rounds": 4,
+  "tutorial": true,
+  "params": {
+    "operation": "mul",
+    "a": {
+      "min": 2,
+      "max": 2
+    },
+    "b": {
+      "min": 2,
+      "max": 5
+    },
+    "unknown": "result",
+    "answer": "choices",
+    "choices": 3,
+    "showArray": "after-error"
+  }
+}

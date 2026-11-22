@@ -1,0 +1,27 @@
+{
+  "$schema": "../../level.schema.json",
+  "id": "ce1-sous-07",
+  "title": "Deux chiffres − deux chiffres, avec retenue",
+  "skill": "subtraction",
+  "objective": "Calculer et taper la différence de deux nombres à deux chiffres avec une retenue (62 − 27).",
+  "mechanic": "calc",
+  "rounds": 8,
+  "params": {
+    "operation": "sub",
+    "a": {
+      "min": 40,
+      "max": 95
+    },
+    "b": {
+      "min": 12,
+      "max": 38
+    },
+    "carry": "with",
+    "unknown": "result",
+    "answer": "keypad"
+  },
+  "stars": {
+    "maxMissesFor3": 1,
+    "maxMissesFor2": 2
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "../../level.schema.json",
+  "id": "ce1-sous-02",
+  "title": "Deux chiffres − un chiffre, avec retenue",
+  "skill": "subtraction",
+  "objective": "Retirer un nombre à un chiffre en passant la dizaine inférieure (43 − 7).",
+  "mechanic": "calc",
+  "rounds": 6,
+  "params": {
+    "operation": "sub",
+    "a": {
+      "min": 21,
+      "max": 91
+    },
+    "b": {
+      "min": 2,
+      "max": 9
+    },
+    "carry": "with",
+    "unknown": "result",
+    "answer": "choices",
+    "choices": 4
+  }
+}

@@ -1,0 +1,392 @@
+# Guide du contenu pédagogique
+
+## Principe
+
+Un niveau = un fichier JSON. Un parcours = l'ordre des niveaux sur la carte de l'application.
+
+## Ajouter un niveau
+
+1. Créer un fichier `content/levels/<parcours>/<id>.json` avec les paramètres du niveau.
+2. Ajouter l'`id` du niveau au tableau `levels` dans `content/tracks/<parcours>.json`.
+3. Valider en local : `npm run validate:content`.
+4. Pousser vers `main` : la CI valide automatiquement, puis publie.
+
+## Champs communs
+
+| Champ | Rôle | Exemple |
+|---|---|---|
+| `$schema` | Chemin vers le schéma (à copier tel quel) | `"../../level.schema.json"` |
+| `id` | Identifiant unique (lettres, chiffres, tirets) | `"ms-suite-01"` |
+| `title` | Titre lisible par le parent | `"Suite de 2 couleurs"` |
+| `skill` | Compétence cible | MS : `"patterns"`, `"counting"`, `"visual-discrimination"`, `"categorization"`, `"color-mixing"`, `"shapes"` — CE1 : `"comparison"`, `"addition"`, `"subtraction"`, `"multiplication"`, `"spelling"`, `"reading"` |
+| `objective` | Objectif pédagogique en une phrase | `"Continuer une suite AB…"` |
+| `mechanic` | Type de mécanique | `"sequence"`, `"count"`, `"odd-one-out"`, `"color-mix"`, `"sort"`, `"builder"`, `"compare"`, `"calc"`, `"spelling"`, `"read"` |
+| `rounds` | Nombre de manches | 4 (avec tutoriel) ou 5+ |
+| `tutorial` | Affiche la main animée (optionnel) | `true` ou absent |
+| `stars` | Seuils d'étoiles (optionnel) | Défaut : 0 raté → 3 ⭐, 1 raté → 2 ⭐ |
+| `lives` | Vies de la partie, 1 à 5 (optionnel) | Défaut : calculé selon choix et manches (2 à 4), voir ARCHITECTURE §9 |
+| `audio` | Réservé aux consignes audio V2 | Absent en V1 |
+| `params` | Paramètres de difficulté (méca-spécifiques) | Voir ci-dessous |
+
+## Paramètres par mécanique
+
+### Sequence (algorithmes & suites)
+
+Continuer un motif répété. Exemple complet (extrait de ms-suite-01.json) :
+
+```json
+{
+  "mechanic": "sequence",
+  "params": {
+    "pattern": "AB",
+    "vary": "color",
+    "colors": ["red", "blue", "yellow"],
+    "shapes": ["circle"],
+    "length": 5,
+    "blank": "end",
+    "choices": 2
+  }
+}
+```
+
+**Champs** :
+- `pattern` : Motif répété (AB, AAB, ABB, ABC, etc.) — sauf `vary` = `"number"`
+- `vary` : Ce qui distingue les éléments (`"color"`, `"shape"`, `"both"`, `"object"`, `"number"`)
+- `colors` : Liste des couleurs disponibles (requis si `vary` ≠ `"object"`)
+- `shapes` : Liste des formes disponibles (requis si `vary` ≠ `"object"`)
+- `objects` : Liste d'objets illustrés du catalogue (requis, et utilisé uniquement, si `vary` = `"object"`) — au moins autant d'objets que de lettres distinctes du motif
+- `length` : Nombre total de cases
+- `blank` : `"end"` (continuer) ou `"middle"` (combler un trou)
+- `choices` : Nombre de propositions (2–4)
+
+`vary` = `"number"` (CE1) affiche une suite de nombres au lieu d'un motif : pas de `pattern`, `colors`,
+`shapes` ni `objects`, mais deux champs à eux :
+- `start` : plage du premier nombre, ex. `{ "min": 0, "max": 10 }` (la suite est décalée si elle passerait sous 0 ou au-delà de 999) ;
+- `steps` : pas possibles, un tiré par manche. `2` = de 2 en 2, `-10` = à rebours de 10 en 10, `[2, 1]` = +2, +1, +2, +1…
+
+Exemple (extrait de ce1-suite-09.json) :
+
+```json
+{
+  "mechanic": "sequence",
+  "params": {
+    "vary": "number",
+    "start": { "min": 0, "max": 30 },
+    "steps": [2, 3, 5, 10],
+    "length": 7,
+    "blank": "middle",
+    "choices": 4
+  }
+}
+```
+
+`vary` = `"object"` remplace formes/couleurs par des émojis du catalogue (`src/ui/objects.ts`), par exemple des
+animaux ou des plantes, pour varier les thèmes. Exemple (extrait de ms-suite-nature-01.json) :
+
+```json
+{
+  "mechanic": "sequence",
+  "params": {
+    "pattern": "AB",
+    "vary": "object",
+    "objects": ["dog", "cat", "rabbit", "fish", "bird", "ladybug"],
+    "length": 6,
+    "blank": "end",
+    "choices": 3
+  }
+}
+```
+
+### Count (dénombrement)
+
+Compter des objets et taper le bon nombre. Exemple (extrait de ms-compte-01.json) :
+
+```json
+{
+  "mechanic": "count",
+  "params": {
+    "min": 1,
+    "max": 3,
+    "objects": ["apple", "strawberry", "ball"],
+    "layout": "line",
+    "choices": 3,
+    "answers": "digits+dots"
+  }
+}
+```
+
+**Champs** :
+- `min` / `max` : Plage de nombres possibles
+- `objects` : Objets à compter (un type par manche)
+- `layout` : `"line"` (alignés), `"scatter"` (éparpillés), `"dice"` (constellations)
+- `choices` : Nombre de propositions (2–4)
+- `answers` : `"digits"` (chiffres), `"dots"` (points), `"digits+dots"` (chiffres + points)
+
+### Odd-one-out (trouver l'intrus)
+
+Repérer l'élément qui ne correspond pas. Exemple (extrait de ms-intrus-01.json) :
+
+```json
+{
+  "mechanic": "odd-one-out",
+  "params": {
+    "items": 3,
+    "differBy": "color",
+    "colors": ["red", "blue", "yellow", "green"],
+    "shapes": ["circle", "square", "star"],
+    "distract": false
+  }
+}
+```
+
+**Champs** :
+- `items` : Nombre d'éléments affichés (3–6)
+- `differBy` : `"color"`, `"shape"`, `"category"`
+- `colors` : Couleurs possibles (optionnel si `differBy` = `"category"`)
+- `shapes` : Formes possibles (optionnel si `differBy` = `"category"`)
+- `categories` : Catégories possibles (optionnel si `differBy` ≠ `"category"`)
+- `distract` : `true` → ajoute une difficulté (éléments varient sur une autre dimension)
+
+### Color-mix (le laboratoire des couleurs)
+
+Verser deux fioles primaires (rouge, jaune, bleu) dans le chaudron pour obtenir la couleur cible affichée en haut de
+l'écran. Une couleur cible primaire (rouge/jaune/bleu) s'obtient en versant deux fois la même fiole. Exemple
+complet (extrait de ms-couleurs-01.json) :
+
+```json
+{
+  "mechanic": "color-mix",
+  "params": {
+    "targets": ["orange", "green", "purple"]
+  }
+}
+```
+
+**Champs** :
+- `targets` : couleurs cibles proposées (au moins 1), tirées au hasard manche après manche, jamais deux fois de
+  suite quand le réservoir le permet, et toutes couvertes dès que `rounds` ≥ `targets.length`.
+
+Le choix envoyé au moteur (`onChoose`) est la couleur RÉSULTANTE du mélange, pas la fiole tapée : rouge+jaune →
+orange, bleu+jaune → vert, rouge+bleu → violet, une même fiole versée deux fois → la même couleur pure. `round.answer`
+est la couleur cible. La vue affiche un objet géant selon la couleur obtenue (🍎 rouge, 🍌 jaune, 🫐 bleu, 🥕 orange,
+🐸 vert, 🍇 violet), même en cas d'erreur (un mélange raté reste une découverte, pas une punition).
+
+### Sort (le trieur magique)
+
+Ranger un objet géant dans le bon panier parmi 2 ou 3 familles, affichées avec un émoji géant (ex. 🚜 la ferme, 🌊 la
+mer, ☁️ le ciel). Glisser-déposer l'objet vers le panier OU taper directement le panier (les deux marchent — `sort`
+et `builder` sont les deux seules mécaniques qui acceptent le glisser-déposer). Exemple complet (extrait de
+ms-tri-01.json) :
+
+```json
+{
+  "mechanic": "sort",
+  "params": {
+    "groups": [
+      { "id": "farm", "symbol": "🚜", "objects": ["cow", "pig", "sheep", "chicken", "horse"] },
+      { "id": "sea", "symbol": "🌊", "objects": ["crab", "octopus", "whale", "dolphin", "tropical-fish"] }
+    ]
+  }
+}
+```
+
+**Champs** :
+- `groups` : 2 à 3 paniers, **dans l'ordre d'affichage fixe** (mêmes positions à chaque manche du niveau, pour que
+  l'enfant apprenne où est chaque famille) : `id` (repris comme `round.answer`), `symbol` (émoji du panier),
+  `objects` (au moins 2 objets illustrés du catalogue appartenant à cette famille).
+
+Chaque manche tire un groupe puis un objet dans son réservoir (sans répéter un objet tant que le réservoir du groupe
+n'est pas épuisé), en équilibrant les groupes et sans jamais plus de deux manches consécutives sur le même groupe.
+`round.answer` est l'`id` du groupe propriétaire de l'objet. Une dépose ratée fait rebondir l'objet (son doux, jamais
+punitif) ; relâcher l'objet hors de tout panier le fait glisser au centre, sans manche jouée.
+
+### Builder (le constructeur)
+
+Reconstituer une figure (maison, voiture, robot…) en posant chaque pièce (carré, triangle, rectangle, cercle) sur
+l'emplacement qui lui correspond (même forme, même taille), au centre de l'écran, silhouette grise en creux. Les
+pièces à poser sont dans un plateau en bas, mélangées, avec parfois des pièces en trop qui ne vont sur aucun
+emplacement. Glisser-déposer une pièce vers son emplacement OU la sélectionner d'un tap puis taper l'emplacement
+(les deux marchent, comme `sort`). Les figures sont dessinées en dur dans `src/mechanics/builder/figures.ts` (pas de
+rotation : chaque pièce garde toujours son orientation). Exemple complet (extrait de ms-formes-02.json) :
+
+```json
+{
+  "mechanic": "builder",
+  "params": {
+    "figures": ["car", "rocket", "fish"],
+    "distractors": 1
+  }
+}
+```
+
+**Champs** :
+- `figures` : figures à construire (voir `FigureId` dans `src/engine/types.ts` pour la liste : house, tree, boat,
+  car, rocket, fish, robot, snowman, castle), tirées en cycle sans répétition tant que le réservoir n'est pas
+  épuisé.
+- `distractors` : nombre de pièces en trop dans le plateau, qui ne correspondent (forme + taille) à aucun
+  emplacement de la figure (0 à 2).
+
+`round.answer` vaut toujours `"done"` : la manche n'est réussie que lorsque tous les emplacements sont remplis
+correctement. Une pose ratée (pièce déposée sur un emplacement qui ne lui correspond pas) fait rebondir la pièce
+vers le plateau (son doux, jamais punitif, elle reste disponible) et compte comme un raté de la manche. Une figure a
+plusieurs emplacements : une seule pose ratée suffit donc à faire perdre le « premier coup » de toute la manche (à
+prendre en compte dans les seuils d'étoiles, voir docs/PROGRESSION-MS.md).
+
+### Compare (plus grand, plus petit — CE1)
+
+Deux quantités écrites côte à côte ; l'enfant tape `<`, `=` ou `>` (les trois boutons sont toujours affichés).
+Exemple (extrait de ce1-compare-03.json) :
+
+```json
+{
+  "mechanic": "compare",
+  "params": { "min": 10, "max": 99, "form": "numbers", "equalRate": 0.15, "maxGap": 3 }
+}
+```
+
+**Champs** :
+- `min` / `max` : plage des nombres (ou des résultats des sommes), 0 à 999
+- `form` : `"numbers"` (47 ? 52), `"sum-vs-number"` (8 + 5 ? 12), `"sums"` (8 + 5 ? 6 + 7)
+- `equalRate` : part approximative de manches à égalité (0 à 0,5)
+- `maxGap` (optionnel) : écart maximal quand les côtés diffèrent — un petit écart oblige à regarder les unités
+
+### Calc (addition, soustraction, tables — CE1)
+
+Une opération en gros chiffres, l'inconnue pulse. Exemple (extrait de ce1-add-03.json) :
+
+```json
+{
+  "mechanic": "calc",
+  "params": { "operation": "add", "a": { "min": 2, "max": 9 }, "b": { "min": 2, "max": 9 }, "carry": "with", "unknown": "result", "answer": "keypad" }
+}
+```
+
+**Champs** :
+- `operation` : `"add"`, `"sub"` (seules les paires a ≥ b sont tirées), `"mul"`
+- `a` / `b` : plages des deux termes (ou facteurs)
+- `carry` (optionnel) : `"with"` / `"without"` / `"any"` — retenue en addition, emprunt en soustraction
+- `unknown` : `"result"` (7 + 5 = ?) ou `"operand"` (7 + ? = 12)
+- `answer` : `"choices"` (reconnaître parmi `choices` = 3–4 propositions plausibles) ou `"keypad"` (produire le nombre sur un pavé, puis valider)
+- `showArray` (mul) : quadrillage de points a × b en appui, seulement quand on cherche le résultat — `true` d'emblée,
+  `"after-error"` seulement après une mauvaise réponse
+- `maxProduct` (mul, optionnel) : produit maximal — 16 donne jusqu'à 4 × 4 et 3 × 5, sans 4 × 5
+
+Le hasard : 1 chance sur `choices` en mode choix, quasi nulle au pavé — les statistiques le corrigent.
+
+### Spelling (mots invariables — CE1)
+
+Les 20 mots invariables (séries 1 à 4) sont décrits dans `src/mechanics/spelling/words.ts` (orthographe, variantes fautives classées par proximité,
+lettres à trou, phrases d'exemple). Un bouton 🔊 lit le mot (et la phrase) avec la synthèse vocale du téléphone,
+s'il en a une. Exemple (extrait de ce1-mots-s1-3.json) :
+
+```json
+{
+  "mechanic": "spelling",
+  "params": { "words": ["afin", "alors", "apres", "assez", "aujourdhui"], "mode": "pick", "sentence": true, "choices": 4, "closeness": 2 }
+}
+```
+
+**Champs** :
+- `words` : identifiants sans accent — série 1 : afin, alors, apres, assez, aujourdhui ; série 2 : aupres, aussi, aussitot, autant, autour ; série 3 : autrefois, autrement, avant, avec, beaucoup ; série 4 : bien, bientot, car, ceci, cela. Un nouveau mot s'ajoute dans `words.ts`, `WORD_IDS` (`src/engine/types.ts`) et l'énumération `wordId` du schéma.
+- `mode` : `"pick"` (la bonne orthographe parmi des variantes fautives), `"gap"` (les lettres manquantes, ex. au▢itôt → ss),
+  `"tiles"` (reconstituer le mot avec des étiquettes-lettres, puis valider — disponible, mais non utilisé dans le parcours CE1 : l'écriture se travaille en dictée)
+- `sentence` : affiche une phrase d'exemple avec le mot en trou
+- `choices` (pick, gap) : 2 à 4 propositions ; `extraTiles` (tiles) : 0 à 4 étiquettes pièges
+- `closeness` (pick, optionnel) : proximité des variantes fautives — 1 grossières (otant), 2 moyennes (autent),
+  3 subtiles, à un accent ou une lettre près (aprés). Absent : tous niveaux mélangés
+
+### Read (Lis et montre — CE1)
+
+Lire une ou deux phrases (« Les lapins ne sont pas sur la chaise. ») et taper l'image qui correspond parmi 3 ou 4.
+Les images sont symétriques (à 3 images un seul trait varie, à 4 deux traits sont croisés) : impossible de
+trouver la bonne sans lire. Les phrases sont générées à partir de `src/mechanics/read/catalog.ts`
+(sujets, paires de mots qui se ressemblent, supports). Exemple (extrait de ce1-lire-05.json) :
+
+```json
+{
+  "mechanic": "read",
+  "params": { "traps": ["negation", "number", "position"], "relations": ["on", "under", "beside"], "sentences": 1, "choices": 3 }
+}
+```
+
+**Champs** :
+- `traps` : ce que changent les images fausses — `"noun"` (un mot qui ressemble : lapin / sapin), `"number"` (le lapin / les lapins),
+  `"position"` (sur / sous…), `"negation"` (environ une phrase sur deux est négative, une image montre l'affirmation)
+- `relations` : positions utilisées — `"on"` sur, `"under"` sous, `"beside"` à côté de, `"in-front"` devant (selon le support : table sur/sous/à côté, chaise et lit sur/à côté,
+  boîte sur/à côté/devant, arbre à côté/devant — voir `ANCHOR_RELATIONS`)
+- `sentences` : 1 ou 2 phrases ; `choices` : 3 ou 4 images. La négation se joue à 3 images et exige aussi `"number"` ;
+  deux phrases se jouent à 4 images. `npm run validate:content` refuse une combinaison irréalisable.
+
+## Valeurs autorisées
+
+Consulter le fichier `content/level.schema.json`, section `definitions`.
+
+**Couleurs** : red, blue, yellow, green, purple, orange
+**Formes** : circle, square, triangle, star, heart, diamond
+**Catégories** : fruit, animal, vehicle, toy, plant
+**Objets** : apple, banana, pear, strawberry, cherries, grapes, dog, cat, rabbit, fish, bird, ladybug, car, bus, bike, boat, train, tractor, ball, teddy, balloon, kite, yoyo, drum, sunflower, tulip, cactus, tree, fir, clover
+
+## Vérifier le contenu en local
+
+```bash
+npm run validate:content
+```
+
+En cas d'erreur, le message affiche le nom du fichier fautif. Corriger le JSON et relancer.
+
+**Astuce VS Code** : Le champ `$schema` active l'autocomplétion et la validation en temps réel.
+
+## Progression
+
+Voir `docs/PROGRESSION-MS.md` (moyenne section) et `docs/PROGRESSION-CE1.md` (CE1). Le parcours d'un enfant se choisit dans l'espace parent, fiche de l'enfant.
+
+## Contenu des jeux libres (hors parcours)
+
+Les jeux libres du hub ne sont pas des niveaux : leur contenu est en TypeScript, et `npm run validate:content`
+le vérifie aussi (`content.test` et `catalog.test`). Un contenu invalide fait échouer le build, comme un niveau.
+
+### Dictée quotidienne : ajouter une série
+
+Les mots sont dans `src/games/dictation/words.ts` (les 20 mots du parcours viennent de
+`src/mechanics/spelling/words.ts`, les autres de `EXTRA_WORDS`), les séries dans `src/games/dictation/series.ts`.
+
+1. Écrire les mots dans `EXTRA_WORDS` : orthographe exacte en minuscules, et au moins 3 phrases par mot, avec `___`
+   une seule fois à la place du mot (14 mots au plus, ni chiffre, ni parenthèse, ni guillemet, point final). Les
+   phrases ne sont jamais affichées : la voix les dit, elles doivent donc rendre le mot non ambigu à l'oral.
+2. Ajouter `{ id: 'sN', number: N, words }` à `DICTATION_SERIES` : 4 à 6 mots, qu'aucune autre série n'utilise.
+3. Lancer `npm run validate:content` : identifiants, caractères tapables au clavier, phrases, homophones, séries.
+4. Faire une dictée de la série sur le téléphone, puis ajouter une prononciation forcée (`say`, dans `OVERRIDES`) là
+   où la voix se trompe.
+
+Les **homophones** (ver, vers, verre, vert) sont des mots distincts, reliés par la même clé `homophones` : chaque
+phrase d'un membre ne doit contenir que lui. Détails : `docs/specs/DICTEE.md` §4.
+
+### Coloriage magique : ajouter un dessin
+
+Un dessin est un fichier `src/games/coloring/catalog/<id>.ts`, écrit avec les aides de `catalog/build.ts` (`rect`,
+`circle`, `ellipse`, `poly`, `zone`, `blank`, `ink`) dans un repère 100 × 100, puis ajouté à `DRAWINGS` dans
+`catalog/index.ts`. Chaque case déclare le niveau de détail où elle apparaît, sa palette (la première couleur est la
+couleur naturelle) et l'ancre de son code. `npm run validate:content` dit quelle règle casse : ancre dans sa case,
+écart entre deux codes, nombre de cases par niveau, palettes, pièces fidèles aux figures du constructeur.
+
+**Ne jamais renommer l'id d'une case publiée** : un dessin en cours ne serait plus reprenable. Détails :
+`docs/specs/COLORIAGE.md` §4.
+
+### Lecture : ajouter une image, un mot à lire, corriger une voix
+
+Tout est dans `src/games/reading/` ; `npm run validate:content` passe aussi `content.test.ts` (images, familles,
+mots déchiffrables, syllabes). Détails : `docs/specs/LECTURE.md` §3 et §6.
+
+- **Ajouter une image** : ajouter l'émoji dans le bloc « src/games/reading/pictures.ts » de `scripts/fetch-emoji.mjs`,
+  lancer le script (il télécharge le SVG Noto dans `public/emoji/`), puis ajouter l'entrée à `PICTURES` : `word` sans
+  article, `article`, `syllables` ORALES (celles qu'on tape au tambour, 1 à 3), `firstSound` (graphème du premier son,
+  `null` s'il n'est pas au programme : jamais `s` pour un mot en « ch », ni `o` pour « ou/on/oi »), `rhyme` (même clé
+  pour les mots qui riment). `src/ui/emoji-files.test.ts` vérifie que le fichier existe. Mot connu d'une enfant de 4 ans,
+  image sans ambiguïté.
+- **Ajouter un mot à lire** (jeu « mot mystère », étape 5) : une entrée de `READ_WORDS` en capitales, avec ses
+  `syllables` écrites et une `picture` existante. Le mot doit être déchiffrable avec les graphèmes n° 1 à 23, sans
+  lettre muette ni double consonne ; le test le refuse sinon.
+- **Corriger un texte de voix** : les sons des lettres sont dans `speech.ts` (« meu », « leu »…), les syllabes mal lues
+  dans la table `SYLLABLE_SPEECH`, les consignes dans `gameInstruction` et les `prompt` de `session.ts`. Repérer d'abord
+  le son qui sonne faux avec le **banc d'écoute** (espace parent, statistiques de l'enfant, « Banc d'écoute de la voix »),
+  qui dit tout ce que la voix peut prononcer en isolé, sur le téléphone de l'enfant.

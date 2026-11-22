@@ -1,0 +1,23 @@
+{
+  "$schema": "../../level.schema.json",
+  "id": "ce1-add-03",
+  "title": "Deux chiffres + un chiffre, au pavé",
+  "skill": "addition",
+  "objective": "Calculer et taper le résultat d'un nombre à deux chiffres plus un nombre à un chiffre, avec ou sans retenue.",
+  "mechanic": "calc",
+  "rounds": 6,
+  "params": {
+    "operation": "add",
+    "a": {
+      "min": 12,
+      "max": 89
+    },
+    "b": {
+      "min": 2,
+      "max": 9
+    },
+    "carry": "any",
+    "unknown": "result",
+    "answer": "keypad"
+  }
+}

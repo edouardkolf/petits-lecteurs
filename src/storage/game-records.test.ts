@@ -1,0 +1,245 @@
+import 'fake-indexeddb/auto';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { getDB } from './db';
+import { resetStorageForTests } from './test-helpers';
+import {
+  closeStaleGameRecords,
+  completePuzzle,
+  finishGameRecord,
+  isGameRecordBase,
+  listGameRecords,
+  saveProfile,
+  startGameRecord,
+  startPuzzle,
+  updateGameRecord,
+  updateSettings,
+} from './index';
+import type { ReadingAnswer } from '../games/reading/types';
+import type { ColoringRecord } from './colorings';
+
+beforeEach(async () => {
+  await resetStorageForTests();
+});
+
+function coloringInit(): Omit<ColoringRecord, 'id' | 'profileId' | 'startedAt' | 'endedAt' | 'status' | 'endReason' | 'activeMs'> {
+  return {
+    drawingId: 'house',
+    tier: 1,
+    detail: 1,
+    variantSeed: 1,
+    zones: [{ id: 'z1', target: 'red' }],
+    legend: null,
+    attempts: [],
+    paintedAtStart: [],
+    missesAtStart: {},
+  };
+}
+
+describe('startGameRecord / updateGameRecord / finishGameRecord (socle générique)', () => {
+  it('crée une partie in_progress avec id, startedAt, activeMs=0', async () => {
+    const record = await startGameRecord('colorings', 'p1', coloringInit());
+    expect(record.id).toBeTruthy();
+    expect(record.profileId).toBe('p1');
+    expect(record.status).toBe('in_progress');
+    expect(record.endReason).toBeNull();
+    expect(record.endedAt).toBeNull();
+    expect(record.activeMs).toBe(0);
+    expect(record.drawingId).toBe('house');
+  });
+
+  it('updateGameRecord modifie une partie in_progress et conserve les champs de base', async () => {
+    const record = await startGameRecord('colorings', 'p1', coloringInit());
+    const updated = await updateGameRecord('colorings', record.id, (r) => ({ ...r, activeMs: 500 }));
+    expect(updated?.activeMs).toBe(500);
+    expect(updated?.id).toBe(record.id);
+    expect(updated?.status).toBe('in_progress');
+  });
+
+  it('updateGameRecord ne fait rien sur une partie déjà close (F6)', async () => {
+    const record = await startGameRecord('colorings', 'p1', coloringInit());
+    await finishGameRecord('colorings', record.id, { status: 'completed' });
+    const result = await updateGameRecord('colorings', record.id, (r) => ({ ...r, activeMs: 999 }));
+    expect(result?.status).toBe('completed');
+    expect(result?.activeMs).toBe(0);
+  });
+
+  it('updateGameRecord sur un id inconnu renvoie undefined sans lever', async () => {
+    expect(await updateGameRecord('colorings', 'inconnu', (r) => r)).toBeUndefined();
+  });
+
+  it('finishGameRecord clôt avec status/endReason et applique un dernier update', async () => {
+    const record = await startGameRecord('colorings', 'p1', coloringInit());
+    await finishGameRecord('colorings', record.id, { status: 'abandoned', endReason: 'quit' }, (r) => ({
+      ...r,
+      activeMs: 42,
+    }));
+    const [stored] = await listGameRecords('colorings', 'p1');
+    expect(stored?.status).toBe('abandoned');
+    expect(stored?.endReason).toBe('quit');
+    expect(stored?.activeMs).toBe(42);
+    expect(stored?.endedAt).toBeGreaterThan(0);
+  });
+
+  it('finishGameRecord ne rouvre jamais une partie déjà close', async () => {
+    const record = await startGameRecord('colorings', 'p1', coloringInit());
+    await finishGameRecord('colorings', record.id, { status: 'completed' });
+    await finishGameRecord('colorings', record.id, { status: 'abandoned', endReason: 'quit' });
+    const [stored] = await listGameRecords('colorings', 'p1');
+    expect(stored?.status).toBe('completed');
+  });
+
+  it('listGameRecords trie par startedAt croissant et isole les profils', async () => {
+    const a = await startGameRecord('colorings', 'p1', coloringInit());
+    await new Promise((resolve) => setTimeout(resolve, 2));
+    const b = await startGameRecord('colorings', 'p1', coloringInit());
+    await startGameRecord('colorings', 'p2', coloringInit());
+
+    const records = await listGameRecords('colorings', 'p1');
+    expect(records.map((r) => r.id)).toEqual([a.id, b.id]);
+  });
+});
+
+describe('isGameRecordBase', () => {
+  it('accepte un enregistrement de base valide', () => {
+    expect(
+      isGameRecordBase({
+        id: 'a',
+        profileId: 'p1',
+        startedAt: 1,
+        endedAt: null,
+        status: 'in_progress',
+        endReason: null,
+        activeMs: 0,
+      }),
+    ).toBe(true);
+  });
+
+  it('refuse un id vide, un statut inconnu, ou activeMs négatif', () => {
+    const base = {
+      id: 'a',
+      profileId: 'p1',
+      startedAt: 1,
+      endedAt: null,
+      status: 'in_progress',
+      endReason: null,
+      activeMs: 0,
+    };
+    expect(isGameRecordBase({ ...base, id: '' })).toBe(false);
+    expect(isGameRecordBase({ ...base, status: 'nope' })).toBe(false);
+    expect(isGameRecordBase({ ...base, activeMs: -1 })).toBe(false);
+    expect(isGameRecordBase({ ...base, endReason: 'out-of-lives' })).toBe(false);
+    expect(isGameRecordBase(null)).toBe(false);
+    expect(isGameRecordBase('x')).toBe(false);
+  });
+});
+
+describe('closeStaleGameRecords', () => {
+  it('clôt une dictée finie en completed, et un coloriage inachevé en abandoned/closed', async () => {
+    await saveProfile({ name: 'Léo', avatar: '🦊', trackId: 'ce1', limits: { sessionMinutes: null, dailyMinutes: null } });
+
+    const finished = await startGameRecord('dictations', 'p1', {
+      seriesId: 's1',
+      seed: 1,
+      words: [{ wordId: 'chat', seriesId: 's1', sentenceIndex: 0 }],
+      items: [
+        {
+          index: 0,
+          wordId: 'chat',
+          expected: 'chat',
+          typed: 'chat',
+          firstTry: true,
+          copyDone: true,
+          copyMistakes: 0,
+          wordReplays: 0,
+          sentenceReplays: 0,
+          answerMs: 100,
+          durationMs: 100,
+        },
+      ],
+    });
+
+    const unfinished = await startGameRecord('colorings', 'p1', coloringInit());
+
+    const count = await closeStaleGameRecords();
+    expect(count).toBe(2);
+
+    const [dictation] = await listGameRecords('dictations', 'p1');
+    expect(dictation?.id).toBe(finished.id);
+    expect(dictation?.status).toBe('completed');
+    expect(dictation?.endReason).toBeNull();
+
+    const [coloring] = await listGameRecords('colorings', 'p1');
+    expect(coloring?.id).toBe(unfinished.id);
+    expect(coloring?.status).toBe('abandoned');
+    expect(coloring?.endReason).toBe('closed');
+  });
+
+  it('marque time-up si le verrou de CE profil a été posé après le début de la partie', async () => {
+    const record = await startGameRecord('colorings', 'p1', coloringInit());
+    await updateSettings({ lock: { reason: 'session', profileId: 'p1', lockedAt: record.startedAt + 10 } });
+
+    await closeStaleGameRecords();
+
+    const [stored] = await listGameRecords('colorings', 'p1');
+    expect(stored?.status).toBe('abandoned');
+    expect(stored?.endReason).toBe('time-up');
+  });
+
+  it('morpion et pendu : grille ou mot avec une issue → completed ; sinon abandoned/closed', async () => {
+    await startGameRecord('tictactoes', 'p1', { mode: 'solo', xStarts: true, moves: [0, 3, 1, 4, 2], outcome: 'x' });
+    await startGameRecord('tictactoes', 'p1', { mode: 'duo', xStarts: true, moves: [4], outcome: null });
+    await startGameRecord('hangmans', 'p1', {
+      wordId: 'lion', word: 'lion', guesses: ['l', 'i', 'o', 'n'], mistakes: 0, maxMistakes: 8, outcome: 'found',
+    });
+    await startGameRecord('hangmans', 'p1', {
+      wordId: 'pomme', word: 'pomme', guesses: ['a'], mistakes: 1, maxMistakes: 8, outcome: null,
+    });
+
+    expect(await closeStaleGameRecords()).toBe(4);
+
+    const grids = await listGameRecords('tictactoes', 'p1');
+    expect(grids.map((g) => [g.status, g.endReason]).sort()).toEqual([['abandoned', 'closed'], ['completed', null]]);
+    const words = await listGameRecords('hangmans', 'p1');
+    expect(words.map((w) => [w.status, w.endReason]).sort()).toEqual([['abandoned', 'closed'], ['completed', null]]);
+  });
+
+  it('lecture : toutes les questions prévues répondues (hors reposées) → completed ; sinon abandoned/closed', async () => {
+    const answer: ReadingAnswer = {
+      itemId: 'g:a', game: 'letter-sound', target: 'a', correct: true, chosen: null,
+      choiceCount: 2, replays: 0, hinted: false, retry: false, ms: 1500, at: 1,
+    };
+    const base = { stage: 2 as const, newItemId: null, demos: [], review: false };
+    await startGameRecord('readings', 'p1', { ...base, planned: 2, answers: [answer, { ...answer, at: 2 }] });
+    await startGameRecord('readings', 'p1', { ...base, planned: 2, answers: [answer, { ...answer, retry: true }] });
+
+    expect(await closeStaleGameRecords()).toBe(2);
+
+    const sessions = await listGameRecords('readings', 'p1');
+    expect(sessions.map((s) => [s.status, s.endReason]).sort()).toEqual([['abandoned', 'closed'], ['completed', null]]);
+  });
+
+  it('puzzles : manche résolue → completed ; sinon abandoned/closed', async () => {
+    const solved = await startPuzzle('p1', { game: 'guess-number', preset: 'easy' });
+    await completePuzzle(solved.id, 100);
+    // Rouvre la partie comme un onglet fermé juste après la résolution.
+    const raw = await getDB();
+    await raw.put('puzzles', { ...(await raw.get('puzzles', solved.id))!, status: 'in_progress', endedAt: null });
+    await startPuzzle('p1', { game: 'robot', preset: 'hard' });
+
+    expect(await closeStaleGameRecords()).toBe(2);
+
+    const all = await listGameRecords('puzzles', 'p1');
+    expect(all.map((r) => [r.status, r.endReason]).sort()).toEqual([['abandoned', 'closed'], ['completed', null]]);
+  });
+
+  it('ne touche pas aux parties déjà closes', async () => {
+    const record = await startGameRecord('colorings', 'p1', coloringInit());
+    await finishGameRecord('colorings', record.id, { status: 'completed' });
+
+    const count = await closeStaleGameRecords();
+
+    expect(count).toBe(0);
+    const [stored] = await listGameRecords('colorings', 'p1');
+    expect(stored?.status).toBe('completed');
+  });
+});

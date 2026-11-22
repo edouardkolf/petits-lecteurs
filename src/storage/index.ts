@@ -1,0 +1,50 @@
+// CONTRAT — API de stockage. Les signatures font foi ; l'agent « stockage » remplace les corps.
+// Implémentation : IndexedDB via la bibliothèque `idb`, base "petits-malins".
+// Le code est réparti dans les fichiers voisins (db, profiles, runs, overrides, usage, settings,
+// export-import) et réexporté ici : cette API reste la seule frontière que les autres modules utilisent.
+
+export * from './types';
+
+// ---------- Utilitaires ----------
+
+/** Jour local "YYYY-MM-DD" (pas UTC : minuit = minuit à la maison). Défini dans `day.ts`. */
+export { dayKey } from './day';
+
+/** Connexion IndexedDB mise en cache : la fermer et l'oublier. Utilisé par les tests entre deux cas. */
+export { __resetForTests } from './db';
+
+// ---------- Réglages de l'app (code parent, son, session, écran de fin) ----------
+export { requestPersistence, isPersisted, getSettings, updateSettings } from './settings';
+
+// ---------- Profils ----------
+export { listProfiles, getProfile, saveProfile, deleteProfile } from './profiles';
+
+// ---------- Parties ----------
+export { startRun, recordRound, completeRun, abandonRun, closeStaleRuns, listRuns } from './runs';
+
+// ---------- Réglages manuels de niveaux ----------
+export { listOverrides, setOverride } from './overrides';
+
+// ---------- Temps de jeu ----------
+export { getUsage, addActiveSeconds, grantExtraMinutes, listUsage } from './usage';
+
+// ---------- Parties de jeu (dictée, coloriage) : socle commun, puis un module par jeu ----------
+export {
+  GAME_STORES,
+  startGameRecord,
+  updateGameRecord,
+  finishGameRecord,
+  listGameRecords,
+  closeStaleGameRecords,
+  isGameRecordBase,
+} from './game-records';
+export type { GameRecordByStore, GameOutcome } from './game-records';
+export * from './dictations';
+export * from './colorings';
+export * from './tictactoes';
+export * from './hangmans';
+export * from './puzzles';
+export * from './readings';
+
+// ---------- Export / import ----------
+export { exportAll, importAll } from './export-import';

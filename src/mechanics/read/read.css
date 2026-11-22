@@ -1,0 +1,192 @@
+/* Vue « Lis et montre » — classes préfixées rd-. Seule mécanique CE1 avec du texte enfant : la phrase à lire. */
+
+.rd-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100%;
+  width: 100%;
+  /* Le conteneur parent (.play-round) grandit avec son contenu (min-height sur .screen, pas de
+     hauteur fixe) : sans plafond explicite ici, une phrase longue pousserait toute la page plus
+     bas que l'écran au lieu de rétrécir les cartes. Ce plafond en dvh force le rétrécissement. */
+  max-height: calc(100dvh - 100px);
+  gap: clamp(10px, 2.5vh, 28px);
+  padding: 16px;
+  box-sizing: border-box;
+  /* La grille de cartes (flex:1, voir .rd-choices) prend toute la place restante sous le texte :
+     ça suffit dans presque tous les cas. Le scroll n'est qu'un dernier recours (texte très long
+     sur un très petit écran) plutôt que de couper une carte au bord de l'écran. */
+  overflow-y: auto;
+}
+
+.rd-text {
+  flex: 0 0 auto;
+  margin: 0;
+  font-family: var(--font-body); /* Andika : lettres dessinées pour l'apprentissage de la lecture */
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--ink, #3d2c1e);
+  max-width: 34ch;
+}
+
+/* Prend tout l'espace restant sous le texte (flex:1) : chaque carte se dimensionne sur cet espace
+   (grille 1fr × 1fr), jamais l'inverse — donc jamais de dépassement d'écran. Le SVG de la scène
+   (preserveAspectRatio="xMidYMid meet") s'ajuste ensuite sans jamais être coupé ni déformé. */
+.rd-choices {
+  flex: 1 1 auto;
+  min-height: 96px; /* en dessous, mieux vaut faire défiler la page que des cartes illisibles */
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 12px;
+}
+
+/* 3 propositions → 2 en haut + 1 en bas, centrée, même gabarit que les deux autres. */
+.rd-choices--three .rd-choice:nth-child(3) {
+  grid-column: 1 / 3;
+  justify-self: center;
+  width: calc(50% - 6px);
+}
+
+.rd-choice {
+  width: 100%;
+  height: 100%;
+  max-width: 170px;
+  max-height: 170px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius, 20px);
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  /* Fondu d'apparition : opaque seulement une fois "ready", pas tapable avant (voir :disabled). */
+  opacity: 0;
+  transform: scale(0.96);
+  transition:
+    opacity 500ms ease,
+    transform 500ms ease;
+}
+
+.rd-choice--ready {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.rd-choice:disabled {
+  cursor: default;
+}
+
+.rd-choice:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.rd-choice--wrong {
+  opacity: 0.35;
+}
+
+.rd-choice--shake {
+  animation: rd-shake 320ms ease;
+}
+
+.rd-choice--bounce {
+  animation: rd-bounce 500ms ease;
+}
+
+.rd-scene-frame {
+  width: 100%;
+  height: 100%;
+}
+
+/* Deux phrases : les deux mini-scènes s'empilent (chacune reste large, donc lisible) plutôt que
+   côte à côte (qui les aurait réduites de moitié en largeur, sans rien gagner en hauteur). */
+.rd-scene-frame--split {
+  display: flex;
+  flex-direction: column;
+}
+
+.rd-scene-half {
+  flex: 1 1 50%;
+  min-height: 0;
+  position: relative;
+}
+
+/* Fin trait séparant les deux mini-scènes quand une manche a deux phrases. */
+.rd-scene-half + .rd-scene-half {
+  border-top: 1px solid rgba(61, 44, 30, 0.15);
+}
+
+.rd-scene {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.rd-ground {
+  stroke: rgba(61, 44, 30, 0.18);
+  stroke-width: 1;
+}
+
+.rd-emoji {
+  pointer-events: none;
+}
+
+@keyframes rd-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes rd-bounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.12);
+  }
+  55% {
+    transform: scale(0.97);
+  }
+  80% {
+    transform: scale(1.04);
+  }
+}
+
+/* Réussite : la bonne carte grossit légèrement avec un halo. */
+.rd-choice--bounce {
+  box-shadow: 0 0 0 6px rgba(255, 179, 71, 0.55), 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Le délai avant apparition reste (lecture d'abord), mais le fondu lui-même devient immédiat. */
+  .rd-choice {
+    transition: none;
+  }
+  .rd-choice--shake,
+  .rd-choice--bounce {
+    animation: none;
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "../../level.schema.json",
+  "id": "ce1-compare-03",
+  "title": "Nombres et additions très proches",
+  "skill": "comparison",
+  "objective": "Comparer des nombres ou un nombre et une addition dont les valeurs sont très proches : il faut regarder les unités et calculer juste.",
+  "mechanic": "compare",
+  "rounds": 6,
+  "params": {
+    "min": 10,
+    "max": 99,
+    "form": [
+      "numbers",
+      "sum-vs-number"
+    ],
+    "equalRate": 0.15,
+    "maxGap": 5
+  }
+}

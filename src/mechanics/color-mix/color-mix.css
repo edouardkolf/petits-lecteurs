@@ -1,0 +1,284 @@
+/* Vue « color-mix » (laboratoire des couleurs) — classes préfixées cmx-, aucun texte. */
+
+.cmx-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  width: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+  gap: 8px;
+}
+
+/* ---------- Zone cible (haut) : la couleur à obtenir, puis l'objet révélé ---------- */
+
+.cmx-target {
+  flex: 0 0 auto;
+  height: 124px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* La goutte à obtenir, posée dans une bulle blanche : « fais cette couleur-là ». */
+.cmx-target__bubble {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  box-shadow: 0 6px 0 #eadfca, var(--shadow, 0 8px 20px rgba(61, 44, 30, 0.16));
+}
+
+.cmx-target__drop {
+  display: block;
+  width: 72px;
+  height: 84px;
+  margin-top: -6px;
+  transform-origin: 50% 70%;
+  animation: cmx-pulse 1.6s ease-in-out infinite;
+}
+
+.cmx-target__object {
+  font-size: 88px;
+  line-height: 1;
+}
+
+.cmx-target__object--pop {
+  animation: cmx-pop 550ms ease;
+}
+
+/* ---------- Laboratoire (bas) : fioles + Erlenmeyer ---------- */
+
+.cmx-lab {
+  flex: 1;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cmx-flasks {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cmx-flask {
+  width: 88px;
+  height: 88px;
+  padding: 8px;
+  border: none;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 5px 0 #eadfca, 0 6px 14px rgba(61, 44, 30, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    opacity 200ms ease,
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.cmx-flask__glass {
+  display: block;
+  width: 64px;
+  height: 75px;
+}
+
+.cmx-flask__liquid {
+  transition: transform 380ms ease-in;
+}
+
+/* Appui : la fiole s'enfonce comme une vraie touche. */
+.cmx-flask:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #eadfca, 0 2px 6px rgba(61, 44, 30, 0.12);
+}
+
+.cmx-flask--poured {
+  opacity: 0.55;
+}
+
+.cmx-flask:disabled {
+  cursor: default;
+}
+
+.cmx-cauldron {
+  position: relative;
+  width: 168px;
+  height: 200px;
+  flex: 0 0 auto;
+}
+
+.cmx-erlen {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Le liquide monte et descend d'un bloc ; sa couleur se fond d'une teinte à l'autre. */
+.cmx-liquid {
+  transition: transform 420ms cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+.cmx-liquid__body {
+  transition: fill 450ms ease;
+}
+
+/* Surface qui ondule doucement (une vague de 60 unités glisse en boucle). */
+.cmx-liquid__wave {
+  animation: cmx-wave 1.8s linear infinite;
+}
+
+.cmx-splash {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cmx-splash 520ms ease-out 400ms;
+}
+
+.cmx-bubbles circle {
+  fill: rgba(255, 255, 255, 0.75);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cmx-bubble-rise 900ms ease-in infinite;
+}
+
+.cmx-bubbles circle:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.cmx-bubbles circle:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.cmx-bubbles circle:nth-child(4) {
+  animation-delay: 0.6s;
+}
+
+/* La goutte versée tombe dans le col de l'Erlenmeyer. */
+.cmx-drop {
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  width: 26px;
+  height: 30px;
+  margin-left: -13px;
+  z-index: 2;
+  animation: cmx-drop-fall 460ms ease-in forwards;
+}
+
+@keyframes cmx-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08) translateY(-2px);
+  }
+}
+
+@keyframes cmx-pop {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes cmx-wave {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(60px);
+  }
+}
+
+@keyframes cmx-splash {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+@keyframes cmx-bubble-rise {
+  0% {
+    transform: translateY(0) scale(0.6);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-46px) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes cmx-drop-fall {
+  0% {
+    transform: translateY(0) scale(0.7);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(96px) scale(1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cmx-target__drop,
+  .cmx-target__object--pop,
+  .cmx-liquid__wave,
+  .cmx-bubbles circle,
+  .cmx-splash,
+  .cmx-drop {
+    animation: none;
+  }
+}
+
+/* Petits écrans (360 × 640) : tout rétrécit ensemble pour tenir sans défilement. */
+@media (max-height: 700px) {
+  .cmx-target {
+    height: 100px;
+  }
+  .cmx-target__bubble {
+    width: 92px;
+    height: 92px;
+  }
+  .cmx-target__drop {
+    width: 58px;
+    height: 68px;
+  }
+  .cmx-cauldron {
+    width: 140px;
+    height: 168px;
+  }
+}
