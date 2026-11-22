@@ -1,5 +1,5 @@
 // Écran générique des jeux libres du hub (docs/specs/JEUX-LOGIQUE.md §4, JEUX-MATERNELLE.md) : memory, ranger, labyrinthe,
-// robot. Phase `choose` (difficulté à 1, 2 ou 3 étoiles, ★ présélectionné), puis `play` : une manche = une
+// robot. Phase `choose` (« trois portes » : un tap sur la difficulté 1, 2 ou 3 étoiles lance la partie), puis `play` : une manche = une
 // partie, jouée par la vue de la mécanique avec le même contrat à plusieurs coups que les anciens niveaux de compétences.
 // La partie est créée au premier tap de l'enfant (A9), jamais à l'affichage.
 import { useEffect, useRef, useState } from 'preact/hooks';
@@ -11,19 +11,23 @@ import { getMechanic } from '../../mechanics';
 import {
   abandonPuzzle,
   completePuzzle,
+  listPuzzles,
   PUZZLE_PRESETS,
   recordPuzzleMiss,
   startPuzzle,
   type PuzzlePreset,
 } from '../../socle/storage/puzzles';
 import type { GameEndReason } from '../../socle/storage/types';
+import { Emoji } from '../../socle/ui/Emoji';
 import { GameIcon } from '../../socle/ui/icons/GameIcon';
 import { Icon } from '../../socle/ui/icons/Icon';
 import { IconButton } from '../../socle/ui/IconButton';
 import { playError, playSuccess, playTap } from '../../socle/ui/sound';
 import { useActiveClock } from '../useActiveClock';
 import { useSoftEnd } from '../useSoftEnd';
+import { PresetPreview } from './PresetPreview';
 import { PUZZLE_PRESET_PARAMS, type HubPuzzleId } from './presets';
+import { lastPresetPlayed } from './previewGeometry';
 import './puzzle.css';
 
 export interface PuzzleScreenProps {
@@ -55,6 +59,7 @@ export function PuzzleScreen({ game }: PuzzleScreenProps) {
   const [solved, setSolved] = useState(false);
   const [started, setStarted] = useState(false);
   const [solvedCount, setSolvedCount] = useState(0);
+  const [lastPreset, setLastPreset] = useState<PuzzlePreset | null>(null);
 
   const presetRef = useRef<PuzzlePreset>('easy');
   const roundRef = useRef<Round<unknown> | null>(null);
@@ -73,8 +78,20 @@ export function PuzzleScreen({ game }: PuzzleScreenProps) {
     },
   });
 
+  /** Dernière difficulté jouée à ce jeu (parties déjà écrites : on attend la file d'écriture). */
+  function refreshLastPreset() {
+    if (!profile) return;
+    void writeQueueRef.current
+      .then(() => listPuzzles(profile.id, game))
+      .then((records) => {
+        if (!unmountedRef.current) setLastPreset(lastPresetPlayed(records, game));
+      })
+      .catch((err) => console.error('puzzle history failed', err));
+  }
+
   useEffect(() => {
     unmountedRef.current = false;
+    refreshLastPreset();
     const timers = timersRef.current;
     return () => {
       unmountedRef.current = true;
@@ -152,6 +169,7 @@ export function PuzzleScreen({ game }: PuzzleScreenProps) {
     setSolved(false);
     setStarted(false);
     setPhase('choose');
+    refreshLastPreset();
   }
 
   function onChoose(choice: ChoiceId) {
@@ -198,36 +216,35 @@ export function PuzzleScreen({ game }: PuzzleScreenProps) {
       <div class="screen screen--puzzle" data-testid="puzzle" data-game={game} data-phase="choose" data-preset={preset}>
         <div class="puzzle-topbar">{homeButton}</div>
         <div class="puzzle-choose">
-          <button
-            type="button"
-            class={`puzzle-play puzzle-play--${game}`}
-            data-testid="puzzle-play"
-            aria-label="Jouer"
-            onClick={() => {
-              playTap();
-              startRound();
-            }}
-          >
-            <GameIcon id={game} size={150} />
-          </button>
-          <div class="puzzle-presets" role="group" aria-label="Difficulté">
-            {PUZZLE_PRESETS.map((p) => (
-              <button
-                key={p}
-                type="button"
-                class={`puzzle-preset${preset === p ? ' puzzle-preset--on' : ''}`}
-                aria-pressed={preset === p}
-                aria-label={`${STAR_COUNT[p]} étoile${STAR_COUNT[p] > 1 ? 's' : ''}`}
-                data-testid={`puzzle-preset-${p}`}
-                onClick={() => {
-                  playTap();
-                  presetRef.current = p;
-                  setPreset(p);
-                }}
-              >
-                <Stars count={STAR_COUNT[p]} size={26} />
-              </button>
-            ))}
+          <div class="puzzle-choose__icon" aria-hidden="true">
+            <GameIcon id={game} size={72} />
+          </div>
+          <div class="puzzle-doors" role="group" aria-label="Difficulté">
+            {PUZZLE_PRESETS.map((p) => {
+              const last = lastPreset === p;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  class={`puzzle-door puzzle-door--${p}${last ? ' puzzle-door--last' : ''}`}
+                  aria-label={`Jouer, ${STAR_COUNT[p]} étoile${STAR_COUNT[p] > 1 ? 's' : ''}`}
+                  data-testid={`puzzle-preset-${p}`}
+                  data-last={last ? 'true' : 'false'}
+                  onClick={() => {
+                    playTap();
+                    presetRef.current = p;
+                    setPreset(p);
+                    startRound();
+                  }}
+                >
+                  <span class="puzzle-door__preview">
+                    <PresetPreview game={game} preset={p} />
+                  </span>
+                  <Stars count={STAR_COUNT[p]} size={32} column />
+                  {last && <Emoji class="puzzle-door__pin" char={profile.avatar} />}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -273,9 +290,9 @@ export function PuzzleScreen({ game }: PuzzleScreenProps) {
   );
 }
 
-function Stars({ count, size }: { count: number; size: number }) {
+function Stars({ count, size, column }: { count: number; size: number; column?: boolean }) {
   return (
-    <span class="puzzle-stars" aria-hidden="true">
+    <span class={column ? 'puzzle-stars puzzle-stars--col' : 'puzzle-stars'} aria-hidden="true">
       {Array.from({ length: count }, (_, i) => (
         <Icon key={i} name="star" size={size} />
       ))}
