@@ -11,6 +11,7 @@ import { LongPressButton } from '../socle/ui/LongPressButton';
 import { Icon } from '../socle/ui/icons/Icon';
 import { WorldBackdrop } from './map/WorldBackdrop';
 import { Emoji } from '../socle/ui/Emoji';
+import { Onboarding } from './onboarding/Onboarding';
 
 const DISC_COLORS = ['#FFB347', '#7FC8A9', '#6EC6FF', '#FF8FA3', '#C9A0FF', '#FFD166'];
 
@@ -82,18 +83,9 @@ export function ProfilePicker() {
     return <div class="screen screen--loading" />;
   }
 
+  // Aucun enfant : parcours de premier lancement (démo, code parent, fiche enfant, voix, passage du téléphone).
   if (profiles.length === 0) {
-    return (
-      <div class="screen screen--welcome">
-        <div class="welcome-illustration" aria-hidden="true">
-          <Emoji char="🦊" />
-          <Emoji char="✨" />
-        </div>
-        <button type="button" class="welcome-button" onClick={openParent}>
-          Commencer : espace parent
-        </button>
-      </div>
-    );
+    return <Onboarding />;
   }
 
   return (

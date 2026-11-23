@@ -118,8 +118,8 @@ export function ReadingStats({ profile, records, usageDays }: GameStatsProps<Rea
             ) : (
               <>
                 <p class="rp-alert" role="status">
-                  <span class="rp-alert__title">Pause difficile.</span> Ces pauses se sont arrêtées au 3e échec : elle avait
-                  peut-être oublié ces lettres, ou n'était pas disponible. Une séance à ses côtés peut aider.
+                  <span class="rp-alert__title">Pause difficile.</span> Ces pauses se sont arrêtées au 3e échec : votre enfant
+                  avait peut-être oublié ces lettres, ou n'était pas disponible. Une séance à côté de votre enfant peut aider.
                 </p>
                 <ul class="rp-hard" data-testid="reading-stats-pause-hard">
                   {pauses.hardAt.map((at) => (
@@ -155,8 +155,8 @@ export function ReadingStats({ profile, records, usageDays }: GameStatsProps<Rea
 
           {summary.alerts.map((a) => (
             <p class="rp-alert" key={a.game} data-testid={`reading-stats-alert-${a.game}`}>
-              <span class="rp-alert__title">À accompagner : {a.label}.</span> Elle semble répondre au hasard à ce jeu :
-              restez à côté d'elle pour une séance.
+              <span class="rp-alert__title">À accompagner : {a.label}.</span> Les réponses à ce jeu semblent données au hasard :
+              restez à côté de votre enfant pour une séance.
             </p>
           ))}
 
@@ -237,8 +237,8 @@ export function ReadingStats({ profile, records, usageDays }: GameStatsProps<Rea
           </li>
           <li>
             <strong>À accompagner</strong> : sur un jeu, l'enfant répond à peu près comme au hasard (au moins 12
-            réponses ces 14 derniers jours). Restez à côté de lui pour une séance : ce n'est pas un échec, il a juste
-            besoin d'aide pour entrer dans le jeu.
+            réponses ces 14 derniers jours). Restez à côté de votre enfant pour une séance : ce n'est pas un échec, un peu
+            d'aide suffit pour entrer dans le jeu.
           </li>
           <li>
             <strong>Pauses de lecture</strong> : toutes les quelques minutes de jeu libre, 2 à 3 questions sur des lettres
