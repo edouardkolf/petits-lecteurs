@@ -80,3 +80,20 @@ export function remainingRatio(profile: Profile, usage: UsageDay, session: Sessi
   }
   return ratios.length === 0 ? null : Math.min(...ratios);
 }
+
+/**
+ * Session à utiliser à la fin d'une synchro de route. Si la mémoire contient déjà la session de CET enfant
+ * (`inMemory`), elle est plus récente que le stockage relu pendant la synchro (des tics de 5 s ont pu
+ * s'y ajouter entre-temps) : on la garde, et `restartClock` est faux — la synchro ne doit alors ni
+ * remplacer ses secondes par un instantané périmé, ni remettre à zéro le point de départ du prochain
+ * relevé (ce qui ferait perdre le temps écoulé pendant la synchro). Sinon on reprend/ouvre depuis le stockage.
+ */
+export function sessionAfterSync(
+  inMemory: SessionState | null,
+  stored: Record<string, SessionState>,
+  profileId: string,
+  now: number,
+): { session: SessionState; restartClock: boolean } {
+  if (inMemory && inMemory.profileId === profileId) return { session: inMemory, restartClock: false };
+  return { session: resumeOrCreateSession(stored, profileId, now), restartClock: true };
+}

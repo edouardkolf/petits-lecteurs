@@ -6,7 +6,7 @@ import { useContext, useEffect, useRef, useState } from 'preact/hooks';
 import type { Route } from './routes';
 import { isChildRoute, isSoftEndRoute, navigate } from './routes';
 import { useProfile } from './context';
-import { activityForRoute, computeTime, remainingRatio as computeRemainingRatio, resumeOrCreateSession } from './session';
+import { activityForRoute, computeTime, remainingRatio as computeRemainingRatio, sessionAfterSync } from './session';
 import type { ActivityId, TimeStatus } from './session';
 import { accumulatePause, isPauseDue, pauseIntervalMs } from '../../games/pause/trigger';
 import { addActiveSeconds, dayKey, getSettings, getUsage, updateSettings } from '../storage';
@@ -237,9 +237,12 @@ export function SessionProvider({ route, children }: { route: Route; children: C
       const now = Date.now();
       // F3 : une session PAR enfant (settings.sessions[profileId]) — passer par le profil de la
       // fratrie n'écrase jamais la session en cours de cet enfant.
-      const session = resumeOrCreateSession(settings.sessions, profile.id, now);
+      // Si la session de cet enfant est déjà en mémoire (changement de route), on la garde et on ne
+      // remet pas `lastTickRef` à `now` : le relevé du début de synchro l'a déjà posé, et le temps
+      // écoulé pendant la synchro (stockage lent) doit être compté au prochain relevé, pas perdu.
+      const { session, restartClock } = sessionAfterSync(sessionRef.current, settings.sessions, profile.id, now);
       sessionRef.current = session;
-      lastTickRef.current = now;
+      if (restartClock) lastTickRef.current = now;
       lockedRef.current = false;
       const nextSessions = { ...settings.sessions, [profile.id]: session };
       sessionsRef.current = nextSessions;
