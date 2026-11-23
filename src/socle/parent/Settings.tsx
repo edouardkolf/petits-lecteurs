@@ -77,6 +77,18 @@ export function ParentSettings() {
     }
   }
 
+  async function toggleAdminPauseTest() {
+    if (!settings) return;
+    const next = !settings.adminPauseTest;
+    setSettings({ ...settings, adminPauseTest: next });
+    try {
+      const updated = await updateSettings({ adminPauseTest: next });
+      setSettings(updated);
+    } catch (err) {
+      setLoadError(describeError(err));
+    }
+  }
+
   function tapAppName() {
     revealTapsRef.current += 1;
     if (revealTapsRef.current >= ADMIN_REVEAL_TAPS) setAdminRevealed(true);
@@ -282,6 +294,26 @@ export function ParentSettings() {
             >
               <span className="pa-toggle__knob" aria-hidden="true" />
               <span className="pa-toggle__text">{settings.adminUnlockAll ? 'Activé' : 'Désactivé'}</span>
+            </button>
+          </div>
+          <div className="pa-section__head" data-testid="admin-pause-block">
+            <div className="pa-section__grow">
+              <h3 className="pa-field__label">Pauses toutes les 30 s (test)</h3>
+              <p className="pa-muted">
+                Pour tester les pauses de lecture sans attendre : une pause toutes les 30 secondes de mini-jeu, pour tous
+                les enfants de ce téléphone (celles dont les pauses sont activées).
+              </p>
+            </div>
+            <button
+              type="button"
+              className="pa-toggle"
+              aria-pressed={settings.adminPauseTest === true}
+              aria-label="Pauses toutes les 30 secondes"
+              data-testid="toggle-admin-pause-test"
+              onClick={toggleAdminPauseTest}
+            >
+              <span className="pa-toggle__knob" aria-hidden="true" />
+              <span className="pa-toggle__text">{settings.adminPauseTest ? 'Activé' : 'Désactivé'}</span>
             </button>
           </div>
           <div className="pa-sandbox" data-testid="sandbox-block">

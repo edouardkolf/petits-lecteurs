@@ -43,3 +43,6 @@
 .rp-track { display: flex; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 1px solid var(--pa-border); border-radius: 10px; font-size: 15px; }
 .rp-track__label { font-weight: 600; }
 .rp-track__count { font-variant-numeric: tabular-nums; color: var(--pa-muted); }
+
+/* Pauses de lecture : liste des signaux « pause difficile ». */
+.rp-hard { margin: 8px 0 0; padding-left: 20px; }
