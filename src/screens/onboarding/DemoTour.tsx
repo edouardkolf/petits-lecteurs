@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
 import { MapScene, PauseScene, QuestionScene, StatsScene } from './DemoScenes';
+import { currentStepKey, endSteps, pushStep, stepsEnding } from './stepHistory';
 import { MethodPage } from './MethodPage';
 import '../../socle/parent/parent.css';
 import './onboarding.css';
@@ -27,15 +28,15 @@ const SLIDES: readonly Slide[] = [
     size: { w: 300, h: 330 },
   },
   {
-    title: 'Des mini-jeux et des pauses de lecture',
-    text: "Toutes les 5 minutes de jeu, une courte pause de lecture ; le jeu reprend là où il en était. C'est voulu, ce n'est pas un bug.",
-    Scene: PauseScene,
+    title: 'Un niveau à la fois',
+    text: 'Chaque niveau se débloque quand le précédent est réussi : votre enfant avance à son rythme, sans brûler les étapes.',
+    Scene: MapScene,
     size: { w: 300, h: 330 },
   },
   {
-    title: 'Un niveau gagné est un niveau maîtrisé',
-    text: "Le niveau suivant ne s'ouvre qu'une fois le précédent réussi. Les pauses reviennent sur les lettres apprises pour qu'elles restent en mémoire.",
-    Scene: MapScene,
+    title: "Un peu, souvent : c'est comme ça qu'on retient",
+    text: "On ne remplit pas la tête d'un enfant d'un coup. Pendant ses jeux, de courtes pauses lui font revoir ce qu'il a déjà appris : c'est la régularité qui fait la maîtrise.",
+    Scene: PauseScene,
     size: { w: 300, h: 330 },
   },
   {
@@ -45,6 +46,13 @@ const SLIDES: readonly Slide[] = [
     size: { w: 300, h: 410 },
   },
 ];
+
+/** Écran de la démo (0 à 3) porté par l'entrée d'historique courante ; 0 sur l'entrée de départ. */
+function stepIndexFromHistory(): number {
+  const m = /^demo:(\d+)$/.exec(currentStepKey() ?? '');
+  const n = m ? Number(m[1]) - 1 : 0;
+  return Math.max(0, Math.min(SLIDES.length - 1, n));
+}
 
 /** Cadre de la scène : taille fixe de conception, réduite (ou agrandie un peu) pour remplir la place disponible. */
 function Preview(props: { size: Slide['size']; children: ComponentChildren }) {
@@ -83,12 +91,42 @@ interface DemoTourProps {
 }
 
 export function DemoTour({ mode, onDone }: DemoTourProps) {
-  const [index, setIndex] = useState(0);
-  const [method, setMethod] = useState(false);
+  const [index, setIndex] = useState(stepIndexFromHistory);
+  const [method, setMethod] = useState(() => currentStepKey() === 'method');
   const slide = SLIDES[index] ?? SLIDES[0]!;
   const last = index === SLIDES.length - 1;
 
-  if (method) return <MethodPage onBack={() => setMethod(false)} />;
+  // Retour Android (ou geste de retour) : un cran en arrière dans la démo, la méthode comprise.
+  useEffect(() => {
+    const onPop = () => {
+      if (stepsEnding()) return;
+      if (currentStepKey() === 'method') {
+        setMethod(true);
+        return;
+      }
+      setMethod(false);
+      setIndex(stepIndexFromHistory());
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  // Démo rouverte depuis l'espace parent : on revient d'abord à l'entrée de départ, sans entrées d'étapes derrière.
+  const done = () => (mode === 'replay' ? endSteps(onDone) : onDone());
+  const next = () => {
+    if (last) {
+      done();
+      return;
+    }
+    pushStep(`demo:${index + 2}`);
+    setIndex(index + 1);
+  };
+  const openMethod = () => {
+    pushStep('method');
+    setMethod(true);
+  };
+
+  if (method) return <MethodPage onBack={() => history.back()} />;
 
   return (
     <div class="pa-space od-demo" data-testid="onboarding-demo" data-step={index + 1}>
@@ -105,7 +143,7 @@ export function DemoTour({ mode, onDone }: DemoTourProps) {
 
       <div class="od-demo__foot">
         {index === 0 && (
-          <button type="button" class="pa-link od-demo__method" data-testid="onboarding-method-link" onClick={() => setMethod(true)}>
+          <button type="button" class="pa-link od-demo__method" data-testid="onboarding-method-link" onClick={openMethod}>
             Notre méthode
           </button>
         )}
@@ -115,14 +153,14 @@ export function DemoTour({ mode, onDone }: DemoTourProps) {
           ))}
         </div>
         <div class="od-actions">
-          <button type="button" class="pa-button pa-button--ghost" data-testid="onboarding-skip" onClick={onDone}>
+          <button type="button" class="pa-button pa-button--ghost" data-testid="onboarding-skip" onClick={done}>
             Passer
           </button>
           <button
             type="button"
             class="pa-button pa-button--primary"
             data-testid="onboarding-next"
-            onClick={() => (last ? onDone() : setIndex(index + 1))}
+            onClick={next}
           >
             {last && mode === 'replay' ? 'Terminer' : 'Suivant'}
           </button>

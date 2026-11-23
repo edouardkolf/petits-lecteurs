@@ -153,10 +153,10 @@ const GAME_CARDS: ReadonlyArray<{ face: string; open: boolean }> = [
   { face: '🌳', open: false },
 ];
 
-/** Scène 2 : un mini-jeu (cartes à retrouver) ; la pause de lecture passe par-dessus, puis le jeu reprend tel quel. */
+/** Scène « pauses » : un mini-jeu (cartes à retrouver) ; la pause de lecture passe par-dessus, puis le jeu reprend tel quel. */
 export function PauseScene() {
   // 0 : jeu ; 1 : annonce de la pause ; 2 : question ; 3 : réussi ; 4 : fête ; retour au jeu, cartes inchangées.
-  const step = useScript([2200, 1500, 1700, 1800, 1500], 2);
+  const step = useScript([1800, 1500, 1700, 1800, 1500], 2);
   const inPause = step >= 1;
   const quiz = step === 2 || step === 3;
   return (
@@ -214,15 +214,21 @@ const MAP_NODES: ReadonlyArray<{ x: number; y: number }> = [
   { x: 210, y: 220 },
   { x: 96, y: 160 },
   { x: 204, y: 100 },
-  { x: 120, y: 44 },
+  { x: 120, y: 58 },
 ];
 
-/** Scène 3 : la carte d'aventure. Les niveaux se gagnent un à un ; l'avatar avance sur le niveau suivant. */
+/**
+ * Scène « Un niveau à la fois » : la carte d'aventure. Niveau gagné, le suivant s'ouvre (cadenas → ouvert) et
+ * l'avatar le rejoint. Deux temps par niveau : k pair = niveau k/2 en cours ; k impair = il vient d'être gagné,
+ * le suivant est encore verrouillé (l'avatar s'y rend) ; le pas suivant le débloque.
+ */
 export function MapScene() {
-  // Étape i : le niveau i est en cours (les précédents sont gagnés) ; dernière étape : un instant de fête, puis reboucle.
-  const step = useScript([1500, 1500, 1500, 1500], 2);
+  const step = useScript([1300, 1000, 1300, 1000, 1300, 1000, 1300, 1000, 1500], 2);
+  const doneCount = Math.ceil(step / 2);
+  const currentIndex = step % 2 === 0 ? step / 2 : -1;
+  const justOpened = step % 2 === 0 && step > 0 ? step / 2 : -1;
   const points = MAP_NODES.map((p) => `${p.x},${p.y}`).join(' ');
-  const here = MAP_NODES[Math.min(step, MAP_NODES.length - 1)] ?? MAP_NODES[0]!;
+  const here = MAP_NODES[Math.min(doneCount, MAP_NODES.length - 1)] ?? MAP_NODES[0]!;
   return (
     <div class="od-screen od-mapscene" data-demo-step={step}>
       <WorldBackdrop world="forest" veil="soft" />
@@ -233,10 +239,10 @@ export function MapScene() {
       {MAP_NODES.map((p, i) => {
         const level = LEVELS[i];
         if (!level) return null;
-        const state = i < step ? 'done' : i === step ? 'current' : 'locked';
+        const state = i < doneCount ? 'done' : i === currentIndex ? 'current' : 'locked';
         const colors = TRACK_COLORS[level.track];
         return (
-          <div key={level.id} class="adv-node od-node" style={{ left: `${p.x}px`, top: `${p.y}px`, '--medal': '60px' }} data-state={state}>
+          <div key={level.id} class={`adv-node od-node${i === justOpened ? ' od-node--opened' : ''}`} style={{ left: `${p.x}px`, top: `${p.y}px`, '--medal': '60px' }} data-state={state}>
             <span
               class="rd-medal"
               data-state={state}

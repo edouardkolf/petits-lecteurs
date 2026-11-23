@@ -188,6 +188,20 @@
   transition: transform 300ms ease;
 }
 
+.od-node--opened .rd-medal {
+  animation: od-unlock 700ms ease-out;
+}
+
+@keyframes od-unlock {
+  0% { transform: scale(0.8) rotate(-8deg); }
+  60% { transform: scale(1.18) rotate(4deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .od-node--opened .rd-medal { animation: none; }
+}
+
 .od-avatar {
   position: absolute;
   z-index: 3;

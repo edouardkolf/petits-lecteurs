@@ -17,32 +17,35 @@ export function MethodPage(props: { onBack: () => void }) {
         <h2>Les sons avant les lettres</h2>
         <p>
           Avant de lire, l'enfant apprend à écouter : compter les syllabes d'un mot, repérer le son du début ou de la
-          fin, trouver les mots qui riment. Les lettres arrivent ensuite, une à la fois, associées à leur son.
+          fin, trouver les mots qui riment. Les jeux d'écoute et les lettres alternent, une lettre à la fois, associée à son
+          son.
         </p>
       </section>
 
       <section class="od-method__section">
         <h2>Du plus simple au plus difficile</h2>
         <p>
-          L'aventure suit quatre pistes : j'écoute (sons et syllabes), les lettres, j'assemble (syllabes) puis je lis
-          (mots entiers). Chaque niveau est un seul jeu, court. Le niveau suivant ne s'ouvre que lorsque le précédent
-          est réussi : un niveau gagné est un niveau maîtrisé.
+          L'aventure mêle quatre pistes : j'écoute (sons et syllabes), les lettres, j'assemble (syllabes) et, vers la fin,
+          je lis (mots entiers). Chaque niveau est un seul jeu, court : il est réussi avec 4 bonnes réponses du premier
+          coup sur 5 (6 sur 8 pour les niveaux plus longs). Le niveau suivant ne s'ouvre que lorsque le précédent est
+          réussi.
         </p>
       </section>
 
       <section class="od-method__section">
         <h2>La voix guide, sans lecture</h2>
         <p>
-          Toutes les consignes sont dites à voix haute : votre enfant n'a pas besoin de savoir lire pour jouer. Les
-          textes écrits s'adressent aux parents.
+          Toutes les consignes sont dites à voix haute : votre enfant n'a pas besoin de savoir lire pour comprendre
+          ce qu'on lui demande. Les textes écrits s'adressent aux parents.
         </p>
       </section>
 
       <section class="od-method__section">
         <h2>Réviser pour retenir</h2>
         <p>
-          Pendant les mini-jeux, de courtes pauses de lecture reviennent sur les lettres déjà apprises, pour qu'elles
-          restent en mémoire. Le jeu reprend ensuite là où il en était.
+          Pendant les mini-jeux, de courtes pauses de lecture reviennent sur des lettres déjà rencontrées, pour aider à les
+          retenir. Par défaut, une pause arrive après 5 minutes de jeu (3 ou 10 au choix du parent), puis le jeu reprend là
+          où il en était.
         </p>
       </section>
 

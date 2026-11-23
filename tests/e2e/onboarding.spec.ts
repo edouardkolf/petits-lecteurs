@@ -36,17 +36,28 @@ test('parcours complet : démo, code, enfant, voix, passage du téléphone, accu
   await expect(page.getByTestId('onboarding-method-link')).toBeVisible();
   await expect(page.locator('[data-demo-question="first-sound"]')).toBeVisible();
 
-  // Écran 2 : les pauses de lecture, expliquées comme voulues.
+  // Écran 2 : les niveaux, un à la fois (carte, cadenas qui s'ouvre).
   await page.getByTestId('onboarding-next').click();
   await expect(demo).toHaveAttribute('data-step', '2');
-  await expect(demo).toContainText('Toutes les 5 minutes de jeu, une courte pause de lecture ; le jeu reprend là où il en était.');
+  await expect(page.getByTestId('onboarding-title')).toHaveText('Un niveau à la fois');
+  await expect(demo).toContainText(
+    'Chaque niveau se débloque quand le précédent est réussi : votre enfant avance à son rythme, sans brûler les étapes.',
+  );
   await expect(page.getByTestId('onboarding-method-link')).toHaveCount(0);
-  await expect(page.getByTestId('demo-pause')).toBeVisible({ timeout: 6000 });
+  await expect(page.locator('.od-mapscene .rd-medal[data-state="current"]')).toHaveCount(1);
+  await expect(page.locator('.od-mapscene .rd-medal[data-state="locked"]').first()).toBeVisible();
 
-  // Écran 3 : la carte, avatar sur le niveau en cours.
+  // Écran 3 : un peu, souvent : le mini-jeu, puis la pause de lecture qui revient sur ce qui est appris.
   await page.getByTestId('onboarding-next').click();
   await expect(demo).toHaveAttribute('data-step', '3');
-  await expect(page.locator('.od-mapscene .rd-medal[data-state="current"]')).toHaveCount(1);
+  await expect(page.getByTestId('onboarding-title')).toHaveText("Un peu, souvent : c'est comme ça qu'on retient");
+  await expect(demo).toContainText(
+    "On ne remplit pas la tête d'un enfant d'un coup. Pendant ses jeux, de courtes pauses lui font revoir ce qu'il a déjà appris : c'est la régularité qui fait la maîtrise.",
+  );
+  await expect(demo).not.toContainText("Ce n'est pas un bug");
+  await expect(page.locator('.od-pausescene[data-demo-step="0"] .od-game')).toBeVisible();
+  await expect(page.locator('.od-pausescene[data-demo-step="1"] .rp-announce')).toBeVisible({ timeout: 6000 });
+  await expect(page.getByTestId('demo-pause')).toBeVisible();
 
   // Écran 4 : les statistiques d'exemple.
   await page.getByTestId('onboarding-next').click();
@@ -95,6 +106,53 @@ test('« Passer » saute la démo et mène directement au code parent', async ({
   await expect(page.getByTestId('onboarding-demo')).toHaveAttribute('data-step', '2');
   await page.getByTestId('onboarding-skip').click();
   await expect(page.getByText('Créer le code parent')).toBeVisible();
+});
+
+test('retour Android (historique) : revient d\'un cran dans le parcours au lieu de le quitter', async ({ page }) => {
+  await ensureFakeVoice(page);
+  await page.goto('/');
+  const demo = page.getByTestId('onboarding-demo');
+  await page.getByTestId('onboarding-next').click();
+  await page.getByTestId('onboarding-next').click();
+  await expect(demo).toHaveAttribute('data-step', '3');
+
+  await page.goBack();
+  await expect(demo).toHaveAttribute('data-step', '2');
+  await page.goBack();
+  await expect(demo).toHaveAttribute('data-step', '1');
+
+  // La méthode est une étape : le retour revient à la démo, pas hors du parcours.
+  await page.getByTestId('onboarding-method-link').click();
+  await expect(page.getByTestId('onboarding-method')).toBeVisible();
+  await page.goBack();
+  await expect(demo).toHaveAttribute('data-step', '1');
+
+  // Du code parent, le retour revient au dernier écran de la démo.
+  for (let i = 0; i < 4; i += 1) await page.getByTestId('onboarding-next').click();
+  await expect(page.getByText('Créer le code parent')).toBeVisible();
+  await page.goBack();
+  await expect(demo).toHaveAttribute('data-step', '4');
+
+  // Fin de parcours : le retour depuis l'accueil de l'enfant ne rouvre pas la démo.
+  await page.getByTestId('onboarding-next').click();
+  await createPin(page);
+  await fillChild(page, 'Léa');
+  await page.getByTestId('onboarding-voice-play').click();
+  await page.getByTestId('onboarding-voice-yes').click();
+  await expect(page.getByTestId('onboarding-handoff')).toBeVisible();
+  // Du passage du téléphone, le retour revient au test de la voix ; de là, il ne rouvre pas la fiche enfant (déjà créée).
+  await page.goBack();
+  await expect(page.getByTestId('onboarding-voice')).toBeVisible();
+  await page.goBack();
+  await expect(page.getByTestId('onboarding-voice')).toBeVisible();
+  await expect(page.locator('input[name=name]')).toHaveCount(0);
+  await page.getByTestId('onboarding-voice-play').click();
+  await page.getByTestId('onboarding-voice-yes').click();
+  await page.getByTestId('onboarding-go').click();
+  await expect(page.getByTestId('hub')).toBeVisible();
+  await page.goBack();
+  await expect(page.getByTestId('onboarding-demo')).toHaveCount(0);
+  await expect(page.getByTestId('hub')).toHaveCount(0);
 });
 
 test('la démo tient sans défiler à 360×640, à chaque écran', async ({ page }) => {
