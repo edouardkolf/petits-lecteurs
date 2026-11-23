@@ -4,7 +4,7 @@ import type { ColoringRecord, ColoringSettings } from './colorings';
 import type { DictationRecord } from './dictations';
 import type { HangmanRecord } from './hangmans';
 import type { PuzzleRecord } from './puzzles';
-import type { ReadingRecord, ReadingSettingsValue } from './readings';
+import type { PauseSettingsValue, ReadingRecord, ReadingSettingsValue } from './readings';
 import type { TicTacToeRecord } from './tictactoes';
 
 export type AvatarId = string; // un emoji d'animal, ex. "🦊" (liste dans src/socle/ui/avatars.ts)
@@ -42,6 +42,8 @@ export interface Profile {
 export interface GameSettingsMap {
   coloring?: ColoringSettings;
   reading?: ReadingSettingsValue;
+  /** Pauses de révision pendant les mini-jeux (docs/specs/PAUSES-REVISION.md). */
+  pauses?: PauseSettingsValue;
 }
 
 /** Résultat d'une manche dans une partie. */
@@ -157,6 +159,13 @@ export interface AppSettings {
    * lecture, pour tous les enfants de ce téléphone. Absent = désactivé. Jamais exporté.
    */
   adminUnlockAll?: boolean;
+  /** Mode admin : pauses de révision toutes les 30 s (test), pour ce téléphone. Absent = désactivé. Jamais exporté. */
+  adminPauseTest?: boolean;
+  /**
+   * Temps actif cumulé en mini-jeux depuis la dernière pause de révision (ms), par enfant (clé = profileId) :
+   * un rechargement ou un changement de jeu ne le remet pas à zéro. Jamais exporté.
+   */
+  pauseMs?: Record<string, number>;
 }
 
 export const EXPORT_FORMAT = 'petits-malins-export';

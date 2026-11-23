@@ -143,6 +143,8 @@ interface Ctx {
   wordStartSide: { pos: number; run: number };
   /** Sons « pas A » déjà posés dans la séance. */
   usedGateSounds: Set<GraphemeId>;
+  /** Pause de révision : les leurres de lettres ne sortent que de graphèmes déjà présentés par l'aventure. */
+  onlyIntroduced?: boolean;
 }
 
 function newCtx(progress: ReadingProgress, rng: Rng): Ctx {
@@ -179,7 +181,8 @@ function letterDecoys(
   const tg = getGrapheme(target);
   if (!tg) return [];
   const targetSound = soundText(target);
-  const eligible = (id: GraphemeId): boolean => id !== target && id !== 'h' && soundText(id) !== targetSound && !exclude(id);
+  const eligible = (id: GraphemeId): boolean =>
+    id !== target && id !== 'h' && soundText(id) !== targetSound && !exclude(id) && !(ctx.onlyIntroduced && !isIntroduced(ctx.progress, id));
   const near = NEAR.get(target) ?? [];
   const allowNear = seen >= NEAR_DECOY_MIN_SEEN;
   const intro = GRAPHEMES.map((g) => g.id).filter((id) => eligible(id) && isIntroduced(ctx.progress, id));
@@ -706,7 +709,24 @@ function makeQuestion(ctx: Ctx, slot: Slot): ReadingQuestion | null {
       return makeMystery(ctx, slot);
     case 'letter-twins':
       return makeTwins(ctx, slot);
+    case 'name-letter':
+      return null; // pauses de révision seulement (src/games/pause/content.ts)
   }
+}
+
+/**
+ * Fabricant de questions isolées, hors séance d'aventure (pauses de révision, docs/specs/PAUSES-REVISION.md) : une
+ * question d'un jeu sur un item, sans présentation. Un même fabricant évite de répéter une image d'une question à l'autre.
+ * `onlyIntroduced` : les leurres de lettres sont tous des graphèmes déjà présentés. Rend null si le contenu manque.
+ */
+export function createQuestionMaker(
+  progress: ReadingProgress,
+  rng: Rng,
+  opts: { onlyIntroduced?: boolean } = {},
+): (item: ItemId, game: ReadingGameId, gate?: GateAnswer) => ReadingQuestion | null {
+  const ctx = newCtx(progress, rng);
+  if (opts.onlyIntroduced) ctx.onlyIntroduced = true;
+  return (item, game, gate) => makeQuestion(ctx, { item, game, forNew: false, presentation: false, ...(gate ? { gate } : {}) });
 }
 
 // ---------- Composition ----------

@@ -61,6 +61,14 @@ function answerFor(q: ReadingQuestion, chosen: string, retry = false, now = 10_0
 }
 
 describe('buildAnswer', () => {
+  it('pause de révision : la réponse à la question « retention » est marquée, jamais une reposée', () => {
+    const q = { ...question('letter-sound', 'a'), retention: true };
+    const base = { question: q, chosen: 'b', replays: 0, hinted: false, readyAt: 0, now: 100 };
+    expect(buildAnswer({ ...base, retry: false }).retention).toBe(true);
+    expect(buildAnswer({ ...base, retry: true }).retention).toBeUndefined();
+    expect(buildAnswer({ ...base, question: question('letter-sound', 'a'), retry: false }).retention).toBeUndefined();
+  });
+
   it('juste du premier coup : chosen est null', () => {
     const a = answerFor(q1, 'a');
     expect(a).toMatchObject({ correct: true, chosen: null, choiceCount: 3, replays: 1, hinted: false, retry: false, ms: 1200, at: 10_000 });

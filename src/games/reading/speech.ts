@@ -64,6 +64,7 @@ const INSTRUCTIONS: Readonly<Record<ReadingGameId, string>> = {
   'syllable-machine': 'Écoute la syllabe. Touche la même.',
   'mystery-word': "Lis le mot. Touche la bonne image.",
   'letter-twins': 'Touche la même lettre, en petit.',
+  'name-letter': 'Touche la lettre de ton prénom.',
 };
 
 /** Phrase courte de consigne d'un jeu, dite à la démonstration : « Touche la lettre qui chante. » */
@@ -201,6 +202,15 @@ export function readPraise(w: string): SpeechStep[] {
 /** « Elle s'appelle elle » : uniquement pour une lettre seule. */
 export function twinsPraise(grapheme: GraphemeId): SpeechStep[] {
   return [{ text: `Elle s'appelle ${nameText(grapheme)}.` }];
+}
+
+/** Pauses de révision : « Touche la lettre de Chloé. » — la lettre est seulement regardée, jamais chantée. */
+export function nameLetterPrompt(name: string): SpeechStep[] {
+  return [{ text: `Touche la lettre de ${name}.` }];
+}
+
+export function nameLetterPraise(): SpeechStep[] {
+  return [{ text: 'Bravo !' }];
 }
 
 // ---------- Banc d'écoute (espace parent) ----------

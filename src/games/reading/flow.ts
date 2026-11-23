@@ -161,6 +161,7 @@ export function buildAnswer(info: AttemptInfo): ReadingAnswer {
     retry: info.retry,
     ms: Math.max(0, Math.round(info.now - info.readyAt)),
     at: info.now,
+    ...(question.retention && !info.retry ? { retention: true } : {}),
   };
 }
 
@@ -189,6 +190,8 @@ export function soundOfChoice(choice: ReadingChoice | undefined): ChoiceSound | 
  * pareil, par quoi ça commence) ou le son (la lettre qui chante). `null` : ce jeu n'a pas de modèle à réécouter.
  */
 export function modelSpeech(question: ReadingQuestion): SpeechStep[] | null {
+  // La lettre du prénom : toucher l'avatar redit la consigne (jamais un son).
+  if (question.game === 'name-letter') return [...question.prompt];
   const s = question.stimulus;
   if (s.kind === 'sound') return [soundStep(s.grapheme)];
   if (s.kind !== 'picture') return null;

@@ -22,6 +22,18 @@ export interface ReadingRecord extends GameRecordBase {
   review: boolean;
   /** Niveau du parcours (src/games/reading/levels.ts). Absent sur les séances d'avant le parcours (ignorées). */
   levelId?: string;
+  /**
+   * 'pause' : réponses d'une pause de révision pendant un mini-jeu (docs/specs/PAUSES-REVISION.md). Jamais comptées
+   * pour le parcours de niveaux ni pour la maîtrise des items ; ni `levelId`, ni séance d'aventure.
+   */
+  context?: 'pause';
+  /** Pause terminée au 3e échec (« pause difficile ») : signal pour le parent, daté par `endedAt`. */
+  hard?: boolean;
+}
+
+/** Une séance de la page de statistiques « J'apprends à lire » compte-t-elle comme une pause de révision ? */
+export function isPauseRecord(record: Pick<ReadingRecord, 'context'>): boolean {
+  return record.context === 'pause';
 }
 
 /** Réglage par enfant (fiche enfant) : `Profile.gameSettings.reading`. */
@@ -29,7 +41,14 @@ export interface ReadingSettingsValue {
   startStage?: ReadingStage;
 }
 
-export type ReadingInit = Pick<ReadingRecord, 'stage' | 'planned' | 'newItemId' | 'demos' | 'answers' | 'review' | 'levelId'>;
+/** Réglage parent « Pauses de lecture » : `Profile.gameSettings.pauses`. Absent = activées, toutes les 5 minutes. */
+export interface PauseSettingsValue {
+  enabled?: boolean;
+  intervalMin?: 3 | 5 | 10;
+}
+
+export type ReadingInit = Pick<ReadingRecord, 'stage' | 'planned' | 'newItemId' | 'demos' | 'answers' | 'review' | 'levelId'> &
+  Partial<Pick<ReadingRecord, 'context'>>;
 
 /** Une séance ne dépasse jamais 60 premières tentatives (10 questions prévues + questions reposées). */
 const MAX_ANSWERS = 60;
@@ -56,12 +75,14 @@ export async function completeReading(
   answers: ReadingAnswer[],
   demos: ReadingGameId[],
   activeMs: number,
+  extra: { hard?: boolean } = {},
 ): Promise<void> {
   await finishGameRecord('readings', id, { status: 'completed' }, (record) => ({
     ...record,
     answers: [...answers],
     demos: [...demos],
     activeMs,
+    ...(extra.hard ? { hard: true } : {}),
   }));
 }
 
@@ -108,6 +129,7 @@ function isReadingAnswer(value: unknown): value is ReadingAnswer {
   if (!Number.isInteger(value.replays) || (value.replays as number) < 0) return false;
   if (typeof value.hinted !== 'boolean' || typeof value.retry !== 'boolean') return false;
   if (!isFiniteNumber(value.ms) || value.ms < 0) return false;
+  if (value.retention !== undefined && typeof value.retention !== 'boolean') return false;
   return isFiniteNumber(value.at);
 }
 
@@ -115,6 +137,15 @@ function isReadingAnswer(value: unknown): value is ReadingAnswer {
 export function isReadingSettings(value: unknown): value is ReadingSettingsValue {
   if (!isPlainObject(value)) return false;
   return value.startStage === undefined || isReadingStage(value.startStage);
+}
+
+const PAUSE_INTERVALS: readonly unknown[] = [3, 5, 10];
+
+/** Réglage parent « Pauses de lecture » : absent, ou `enabled` booléen et `intervalMin` parmi 3, 5, 10. */
+export function isPauseSettings(value: unknown): value is PauseSettingsValue {
+  if (!isPlainObject(value)) return false;
+  if (value.enabled !== undefined && typeof value.enabled !== 'boolean') return false;
+  return value.intervalMin === undefined || PAUSE_INTERVALS.includes(value.intervalMin);
 }
 
 /** Validation à l'import. */
@@ -129,5 +160,7 @@ export function isReadingRecord(value: unknown): value is ReadingRecord {
   if (!Array.isArray(v.answers) || v.answers.length > MAX_ANSWERS || !v.answers.every(isReadingAnswer)) return false;
   if (typeof v.review !== 'boolean') return false;
   if (v.levelId !== undefined && !(isNonEmptyString(v.levelId) && v.levelId.length <= 40)) return false;
+  if (v.context !== undefined && v.context !== 'pause') return false;
+  if (v.hard !== undefined && typeof v.hard !== 'boolean') return false;
   return true;
 }
