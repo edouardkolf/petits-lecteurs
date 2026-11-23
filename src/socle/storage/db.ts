@@ -1,6 +1,6 @@
 // Connexion IndexedDB : schéma typé (base "petits-malins", version 5), ouverture paresseuse,
 // connexion mise en cache. `__resetForTests` ferme et oublie cette connexion (utilisé par les tests).
-import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
+import { deleteDB, openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { ColoringRecord } from './colorings';
 import type { DictationRecord } from './dictations';
 import type { HangmanRecord } from './hangmans';
@@ -11,6 +11,10 @@ import type { AppSettings, LevelOverride, Profile, Run, UsageDay } from './types
 
 /** Base IndexedDB de l'app : ne jamais changer (données des utilisateurs). */
 export const DB_NAME = 'petits-lecteurs';
+/** Base du « mode test » (bac à sable admin) : mêmes schéma et code, données totalement séparées. */
+export const SANDBOX_DB_NAME = 'petits-lecteurs-test';
+/** Clé localStorage du mode test ('1' = actif). Lue de façon synchrone au démarrage. */
+export const SANDBOX_FLAG_KEY = 'petits-lecteurs:sandbox';
 /** v2 : parties des jeux hors parcours (stores "dictations" et "colorings", docs/specs/HUB.md §5.1).
  * v3 : morpion et pendu (stores "tictactoes" et "hangmans", docs/specs/MORPION-PENDU.md §4).
  * v4 : jeux libres de logique (store "puzzles", docs/specs/JEUX-LOGIQUE.md §4).
@@ -92,12 +96,56 @@ export interface StorageSchema extends DBSchema {
   };
 }
 
+/** Mode test actif ? localStorage absent, bloqué ou qui lève = pas de mode test (vraies données). */
+export function isSandbox(): boolean {
+  try {
+    return localStorage.getItem(SANDBOX_FLAG_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/** Nom de la base à ouvrir : celle du mode test si le drapeau est posé, sinon la vraie. */
+export function resolveDbName(): string {
+  return isSandbox() ? SANDBOX_DB_NAME : DB_NAME;
+}
+
+/** Pose ou retire le drapeau du mode test (false si localStorage est inutilisable). */
+export function setSandboxFlag(on: boolean): boolean {
+  try {
+    if (on) localStorage.setItem(SANDBOX_FLAG_KEY, '1');
+    else localStorage.removeItem(SANDBOX_FLAG_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 let dbPromise: Promise<IDBPDatabase<StorageSchema>> | null = null;
+
+/** Ferme et oublie la connexion en cache (sans erreur si elle n'a jamais pu s'ouvrir). */
+async function closeCachedDB(): Promise<void> {
+  const pending = dbPromise;
+  dbPromise = null;
+  if (pending) {
+    try {
+      (await pending).close();
+    } catch {
+      /* ouverture échouée : rien à fermer */
+    }
+  }
+}
+
+/** Supprime la base du mode test (jamais la vraie). Ne bloque pas plus de 2 s si une autre fenêtre la tient. */
+export async function deleteSandboxDB(): Promise<void> {
+  await closeCachedDB();
+  await Promise.race([deleteDB(SANDBOX_DB_NAME), new Promise<void>((resolve) => setTimeout(resolve, 2000))]);
+}
 
 /** Connexion mise en cache : ouverte à la première utilisation, réutilisée ensuite. */
 export function getDB(): Promise<IDBPDatabase<StorageSchema>> {
   if (!dbPromise) {
-    dbPromise = openDB<StorageSchema>(DB_NAME, DB_VERSION, {
+    dbPromise = openDB<StorageSchema>(resolveDbName(), DB_VERSION, {
       // F5 : `oldVersion < N` en cascade (jamais `=== N`), pour qu'un téléphone qui saute plusieurs
       // versions d'un coup rejoue bien toutes les étapes intermédiaires. Prêt pour un futur `if
       // (oldVersion < 2) { ... }` : les nouveaux stores/index se rajoutent sans toucher au bloc v1.

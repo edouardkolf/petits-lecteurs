@@ -1040,3 +1040,13 @@
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
+
+/* Bloc « Mode test » du mode admin (Settings.tsx). */
+.pa-sandbox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 2px dashed var(--pa-border, #e8dfc9);
+}

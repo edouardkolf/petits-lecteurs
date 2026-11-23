@@ -11,7 +11,7 @@ export * from './types';
 export { dayKey } from './day';
 
 /** Connexion IndexedDB mise en cache : la fermer et l'oublier. Utilisé par les tests entre deux cas. */
-export { __resetForTests } from './db';
+export { __resetForTests, isSandbox, setSandboxFlag, deleteSandboxDB } from './db';
 
 // ---------- Réglages de l'app (code parent, son, session, écran de fin) ----------
 export { requestPersistence, isPersisted, getSettings, updateSettings } from './settings';

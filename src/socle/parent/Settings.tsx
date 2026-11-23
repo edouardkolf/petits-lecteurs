@@ -2,7 +2,8 @@
 // apparaît après 7 tapes sur le nom de l'app en bas de l'onglet, ou s'il est déjà actif).
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { APP_NAME } from '../../app/appInfo';
-import { getSettings, isPersisted, requestPersistence, updateSettings } from '../storage';
+import { enterSandbox, leaveSandbox, resetSandbox } from '../app/sandbox';
+import { getSettings, isPersisted, isSandbox, requestPersistence, updateSettings } from '../storage';
 import type { AppSettings } from '../storage';
 import { Icon } from '../ui/icons/Icon';
 import { setSoundEnabled } from '../ui/sound';
@@ -282,6 +283,28 @@ export function ParentSettings() {
               <span className="pa-toggle__knob" aria-hidden="true" />
               <span className="pa-toggle__text">{settings.adminUnlockAll ? 'Activé' : 'Désactivé'}</span>
             </button>
+          </div>
+          <div className="pa-sandbox" data-testid="sandbox-block">
+            <h3 className="pa-field__label">Mode test</h3>
+            <p className="pa-muted">
+              {isSandbox()
+                ? 'Mode test actif : ces données sont séparées des vraies, qui ne sont pas touchées.'
+                : 'Données séparées et vides : les vraies données ne sont pas touchées. Rejoue le premier lancement.'}
+            </p>
+            {isSandbox() ? (
+              <>
+                <button type="button" className="pa-button pa-button--secondary" data-testid="sandbox-settings-reset" onClick={() => void resetSandbox()}>
+                  <span>Recommencer</span>
+                </button>
+                <button type="button" className="pa-button pa-button--secondary" data-testid="sandbox-settings-leave" onClick={leaveSandbox}>
+                  <span>Quitter le mode test</span>
+                </button>
+              </>
+            ) : (
+              <button type="button" className="pa-button pa-button--secondary" data-testid="sandbox-enter" onClick={enterSandbox}>
+                <span>Entrer en mode test</span>
+              </button>
+            )}
           </div>
         </section>
       )}

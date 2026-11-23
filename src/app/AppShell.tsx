@@ -1,6 +1,7 @@
 // Coquille de l'app : routeur par hash + état global (profil actif) + initialisation.
 import { useEffect, useState } from 'preact/hooks';
 import { ensureHistoryDepth, isChildRoute, isGameRoute, isSoftEndRoute, parseHash, navigate, type Route } from '../socle/app/routes';
+import { SandboxBadge } from '../socle/app/SandboxBadge';
 import { ProfileContext, useProfile } from '../socle/app/context';
 import { SessionProvider, useSession } from '../socle/app/SessionProvider';
 import type { Profile } from '../socle/storage/types';
@@ -55,6 +56,7 @@ export function AppShell() {
       <SessionProvider route={route}>
         <RouteGuard route={route} />
         {renderRoute(route, profile)}
+        <SandboxBadge />
       </SessionProvider>
     </ProfileContext.Provider>
   );
