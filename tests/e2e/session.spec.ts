@@ -7,7 +7,7 @@
 // Les parties se jouent sur le memory libre (hub) ; la carte de lecture porte le minuteur hors partie.
 import { test, expect, type Page, type Locator } from '@playwright/test';
 import { chooseProfile, enterMap, profileCard } from './nav';
-import { readReadings } from './reading-helpers';
+import { readReadings, ensureFakeVoice, finishOnboarding, skipDemo } from './reading-helpers';
 
 /**
  * Après `clock.runFor('15:05')`, l'appli a 15 minutes de tics d'horloge à enregistrer d'un coup (écritures IndexedDB
@@ -65,23 +65,19 @@ async function enterPin(page: Page, pin: string): Promise<void> {
 }
 
 async function onboardWithChild(page: Page, name: string): Promise<void> {
+  await ensureFakeVoice(page);
   await page.goto('/');
-  await expect(page.getByText('Commencer : espace parent')).toBeVisible();
-  await page.getByText('Commencer : espace parent').click();
+  await skipDemo(page);
 
   await expect(page.getByText('Créer le code parent')).toBeVisible();
   await enterPin(page, PARENT_PIN);
   await expect(page.getByText('Confirme le code')).toBeVisible();
   await enterPin(page, PARENT_PIN);
 
-  await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
-  await page.getByTestId('add-child').click();
   await page.locator('input[name=name]').fill(name);
   await page.getByTestId('save-child').click();
 
-  await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
-  await page.getByTestId('back-to-game').click();
-  await expect(page.getByText('Commencer : espace parent')).toHaveCount(0);
+  await finishOnboarding(page);
 }
 
 // ---------- Aides propres à ce fichier ----------
@@ -116,6 +112,7 @@ test('minuteur de session sur la carte : écran de fin, persiste au rechargement
   await enterMap(page, 'Lina');
   await expect(page.getByTestId('reading-level-1')).toBeVisible();
 
+  await page.waitForTimeout(1000); // laisse la synchro de session (stockage) finir avant de faire avancer l'horloge
   await page.clock.runFor('15:05'); // dépasse les 15 min de session par défaut (fixées à la création de l'enfant)
 
   // Sur la carte ("hors partie") : l'horloge de session navigue elle-même vers l'écran de fin.
@@ -141,6 +138,7 @@ test("verrou de la veille : le lendemain, l'enfant n'est plus bloqué et repart 
   await page.clock.install();
   await onboardWithChild(page, 'Lina');
   await enterMap(page, 'Lina');
+  await page.waitForTimeout(1000); // laisse la synchro de session (stockage) finir avant de faire avancer l'horloge
   await page.clock.runFor('15:05'); // limite de session atteinte : écran de fin, personne ne déverrouille
   await expect(page.getByTestId('lock-parent')).toBeVisible({ timeout: LOCK_AFTER_FAST_FORWARD_MS });
 
@@ -228,6 +226,7 @@ test('F1 : le bouton retour Android après l\'écran de fin reste bloqué, aucun
   await expect(page.getByTestId('reading-level-1')).toBeVisible();
 
   // Fin du temps sur la carte : l'écran de fin s'affiche directement.
+  await page.waitForTimeout(1000); // laisse la synchro de session (stockage) finir avant de faire avancer l'horloge
   await page.clock.runFor('15:05');
   await expect(page.getByTestId('lock-parent')).toBeVisible({ timeout: LOCK_AFTER_FAST_FORWARD_MS });
 
@@ -265,6 +264,7 @@ test('quota du jour épuisé : le profil apparaît estompé et non sélectionnab
   // Une session de 15 min n'épuise que le minuteur de session : il en faut deux pour atteindre le
   // quota du jour (30 min par défaut). On repart via « Terminer » (pas « +X ») entre les deux : le
   // quota du jour ne dépend que du temps cumulé (`usage`), jamais de la session en cours.
+  await page.waitForTimeout(1000); // laisse la synchro de session (stockage) finir avant de faire avancer l'horloge
   await page.clock.runFor('15:05');
   await expect(page.getByTestId('lock-parent')).toBeVisible({ timeout: LOCK_AFTER_FAST_FORWARD_MS });
   await unlockAndTap(page, 'end-session');

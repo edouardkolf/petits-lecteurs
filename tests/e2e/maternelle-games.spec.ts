@@ -6,6 +6,7 @@
 // `.maze-view[data-size|data-start|data-goal|data-right|data-down]` (murs ; le chemin est calculé par BFS ici).
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import { backToHub, backToProfiles, chooseProfile } from './nav';
+import { ensureFakeVoice, finishOnboarding, skipDemo } from './reading-helpers';
 
 const PARENT_PIN = '1234';
 
@@ -36,21 +37,18 @@ async function enterPin(page: Page, pin: string): Promise<void> {
 
 /** Premier lancement : code parent 1234, puis un enfant MS (sans limite de temps). Termine sur l'écran profils. */
 async function onboardMs(page: Page, name: string): Promise<void> {
+  await ensureFakeVoice(page);
   await page.goto('/');
-  await page.getByText('Commencer : espace parent').click();
+  await skipDemo(page);
   await expect(page.getByText('Créer le code parent')).toBeVisible();
   await enterPin(page, PARENT_PIN);
   await expect(page.getByText('Confirme le code')).toBeVisible();
   await enterPin(page, PARENT_PIN);
-  await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
-  await page.getByTestId('add-child').click();
   await page.locator('input[name=name]').fill(name);
   await page.locator('select[name=sessionMinutes]').selectOption('');
   await page.locator('select[name=dailyMinutes]').selectOption('');
   await page.getByTestId('save-child').click();
-  await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
-  await page.getByTestId('back-to-game').click();
-  await expect(page.getByText('Commencer : espace parent')).toHaveCount(0);
+  await finishOnboarding(page);
 }
 
 async function longPress(page: Page, locator: Locator, ms: number): Promise<void> {

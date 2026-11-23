@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { test, expect, type Page, type Locator } from '@playwright/test';
 import { backToProfiles, enterMap, profileCard } from './nav';
-import { finishEnd, installFakeVoice, playFullSession, startCurrentLevel } from './reading-helpers';
+import { ensureFakeVoice, finishEnd, installFakeVoice, playFullSession, skipDemo, startCurrentLevel } from './reading-helpers';
 
 const PARENT_PIN = '1234';
 
@@ -38,12 +38,20 @@ async function enterPin(page: Page, pin: string): Promise<void> {
 
 /** Premier lancement : crée le code parent 1234. Termine sur le tableau de bord (aucun enfant). */
 async function createParentCode(page: Page): Promise<void> {
+  await ensureFakeVoice(page);
   await page.goto('/');
-  await expect(page.getByText('Commencer : espace parent')).toBeVisible();
-  await page.getByText('Commencer : espace parent').click();
+  await skipDemo(page);
   await expect(page.getByText('Créer le code parent')).toBeVisible();
   await enterPin(page, PARENT_PIN);
   await expect(page.getByText('Confirme le code')).toBeVisible();
+  await enterPin(page, PARENT_PIN);
+  // Le parcours enchaîne sur la fiche du premier enfant : on rouvre l'espace parent (code déjà créé) pour arriver
+  // sur le tableau de bord vide, comme avant.
+  await expect(page.locator('input[name=name]')).toBeVisible();
+  await page.evaluate(() => {
+    location.hash = '#/parent';
+  });
+  await expect(page.getByText('Code parent', { exact: true })).toBeVisible();
   await enterPin(page, PARENT_PIN);
   await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
 }

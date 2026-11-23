@@ -4,7 +4,7 @@
 // 30 s réelles de l'option admin « Pauses toutes les 30 s (test) ».
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import { chooseProfile, backToHub } from './nav';
-import { PARENT_PIN, answerCurrent, enterPin, installFakeVoice, openParentDashboard, readReadings, spokenTexts, type VoiceMode } from './reading-helpers';
+import { PARENT_PIN, answerCurrent, enterPin, installFakeVoice, openParentDashboard, readReadings, spokenTexts, type VoiceMode, ensureFakeVoice, finishOnboarding, skipDemo } from './reading-helpers';
 
 let jsErrors: string[] = [];
 let consoleErrors: string[] = [];
@@ -34,14 +34,13 @@ interface Onboard {
 
 /** Premier lancement : code parent, un enfant MS sans limite de temps, retour au choix des profils. */
 async function onboard(page: Page, name: string, opts: Onboard = {}): Promise<void> {
+  await ensureFakeVoice(page);
   await page.goto('/');
-  await page.getByText('Commencer : espace parent').click();
+  await skipDemo(page);
   await expect(page.getByText('Créer le code parent')).toBeVisible();
   await enterPin(page, PARENT_PIN);
   await expect(page.getByText('Confirme le code')).toBeVisible();
   await enterPin(page, PARENT_PIN);
-  await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
-  await page.getByTestId('add-child').click();
   await page.locator('input[name=name]').fill(name);
   await page.locator('select[name=sessionMinutes]').selectOption('');
   await page.locator('select[name=dailyMinutes]').selectOption('');
@@ -54,9 +53,7 @@ async function onboard(page: Page, name: string, opts: Onboard = {}): Promise<vo
     await expect(page.getByTestId('pause-interval')).toHaveCount(0);
   }
   await page.getByTestId('save-child').click();
-  await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
-  await page.getByTestId('back-to-game').click();
-  await expect(page.getByText('Commencer : espace parent')).toHaveCount(0);
+  await finishOnboarding(page);
 }
 
 /** Pose le temps de mini-jeu déjà joué : la pause est due au prochain point de contrôle d'un mini-jeu. */
