@@ -1,0 +1,108 @@
+/* Pause de révision (src/games/pause). Classes préfixées rp-. Réutilise les classes rd- de la séance de lecture. */
+
+.screen.rp-pause {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  height: 100dvh;
+  animation: rp-in 260ms ease-out both;
+}
+
+.rp-announce,
+.rp-end {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  position: relative;
+}
+
+.rp-avatar {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 46px;
+}
+
+.rp-avatar--big {
+  width: min(46vw, 200px);
+  height: min(46vw, 200px);
+  font-size: min(28vw, 120px);
+  border: 6px solid var(--rd-main);
+  animation: rp-bounce 900ms ease-in-out infinite;
+}
+
+.rp-avatar--happy {
+  animation: rp-pop 500ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+/* Bulle de l'avatar : un livre ouvert, aucun texte (l'enfant ne lit pas encore). */
+.rp-bubble {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: min(30vw, 120px);
+  height: min(30vw, 120px);
+  border-radius: 32%;
+  background: #fff;
+  border: 5px solid var(--rd-main);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  animation: rp-pop 500ms 200ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.rp-bubble svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes rp-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rp-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes rp-pop {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen.rp-pause,
+  .rp-avatar--big,
+  .rp-avatar--happy,
+  .rp-bubble {
+    animation: none;
+  }
+}

@@ -24,6 +24,7 @@ import { Icon } from '../../socle/ui/icons/Icon';
 import { IconButton } from '../../socle/ui/IconButton';
 import { playError, playSuccess, playTap } from '../../socle/ui/sound';
 import { useActiveClock } from '../useActiveClock';
+import { useReviewPause } from '../pause/useReviewPause';
 import { useSoftEnd } from '../useSoftEnd';
 import { PresetPreview } from './PresetPreview';
 import { PUZZLE_PRESET_PARAMS, type HubPuzzleId } from './presets';
@@ -70,9 +71,12 @@ export function PuzzleScreen({ game }: PuzzleScreenProps) {
   const unmountedRef = useRef(false);
   const clock = useActiveClock();
 
+  // Pause de révision : posée au début de la manche suivante, jamais au milieu d'une manche (PAUSES-REVISION.md §2.1).
+  const pause = useReviewPause();
+
   // Une manche commencée et pas encore remplacée (animation de réussite comprise) est une unité en cours.
   const softEnd = useSoftEnd({
-    busy: started,
+    busy: started || pause.open,
     onTimeUp: async () => {
       await closeRecord('time-up');
     },
@@ -144,6 +148,7 @@ export function PuzzleScreen({ game }: PuzzleScreenProps) {
   /** Début d'une unité : point de contrôle de la fin douce, puis nouvelle manche (graine nouvelle). */
   function startRound() {
     if (softEnd.checkpoint() || !mechanic) return;
+    if (pause.checkpoint(startRound)) return;
     const params = PUZZLE_PRESET_PARAMS[game][presetRef.current];
     const seed = (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0;
     const [next] = mechanic.generateRounds(params as never, 1, createRng(seed));
@@ -215,6 +220,7 @@ export function PuzzleScreen({ game }: PuzzleScreenProps) {
     return (
       <div class="screen screen--puzzle" data-testid="puzzle" data-game={game} data-phase="choose" data-preset={preset}>
         <div class="puzzle-topbar">{homeButton}</div>
+        {pause.overlay}
         <div class="puzzle-choose">
           <div class="puzzle-choose__icon" aria-hidden="true">
             <GameIcon id={game} size={72} />
@@ -273,6 +279,7 @@ export function PuzzleScreen({ game }: PuzzleScreenProps) {
           <Stars count={STAR_COUNT[preset]} size={20} />
         </button>
       </div>
+      {pause.overlay}
       <div class="puzzle-stage" onPointerDownCapture={ensureStarted}>
         {round && (
           <div class="play-round" data-answer={round.answer}>

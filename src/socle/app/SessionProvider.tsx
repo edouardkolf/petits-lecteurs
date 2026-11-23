@@ -8,6 +8,7 @@ import { isChildRoute, isSoftEndRoute, navigate } from './routes';
 import { useProfile } from './context';
 import { activityForRoute, computeTime, remainingRatio as computeRemainingRatio, resumeOrCreateSession } from './session';
 import type { ActivityId, TimeStatus } from './session';
+import { accumulatePause, isPauseDue, pauseIntervalMs } from '../../games/pause/trigger';
 import { addActiveSeconds, dayKey, getSettings, getUsage, updateSettings } from '../storage';
 import type { Profile, SessionState } from '../storage';
 
@@ -24,6 +25,16 @@ export interface SessionInfo extends TimeStatus {
   softEndActive: boolean;
   /** À appeler par `useSoftEnd` dès que l'unité en cours est traitée (§8) : la fin douce est close. */
   clearSoftEnd: () => void;
+  /**
+   * Pauses de révision (docs/specs/PAUSES-REVISION.md) : le temps actif cumulé en mini-jeux a atteint l'intervalle.
+   * Ref pour les callbacks différés des écrans de jeu, qui capturent un ancien rendu.
+   */
+  pauseDue: boolean;
+  pauseDueRef: { readonly current: boolean };
+  /** La pause est faite (ou close en douceur) : compteur remis à zéro. */
+  completePause: () => void;
+  /** Pause ouverte : le temps actif est imputé à la lecture (`'reading'`), pas au mini-jeu. `false` : retour à l'écran. */
+  setPauseOpen: (open: boolean) => void;
 }
 
 const EMPTY_STATUS: TimeStatus = { sessionRemainingSec: null, dailyRemainingSec: null, timeUp: null };
@@ -36,6 +47,10 @@ const SessionContext = createContext<SessionInfo>({
   timeUpRef: { current: null },
   softEndActive: false,
   clearSoftEnd: () => {},
+  pauseDue: false,
+  pauseDueRef: { current: false },
+  completePause: () => {},
+  setPauseOpen: () => {},
 });
 
 export function useSession(): SessionInfo {
@@ -47,6 +62,7 @@ export function SessionProvider({ route, children }: { route: Route; children: C
   const [status, setStatus] = useState<TimeStatus>(EMPTY_STATUS);
   const [ratio, setRatio] = useState<number | null>(null);
   const [softEndActive, setSoftEndActive] = useState(false);
+  const [pauseDue, setPauseDue] = useState(false);
 
   const profileRef = useRef<Profile | null>(null);
   const routeNameRef = useRef(route.name);
@@ -59,13 +75,44 @@ export function SessionProvider({ route, children }: { route: Route; children: C
   const timeUpRef = useRef<TimeStatus['timeUp']>(null);
   /** Activité à laquelle imputer le temps actif (HUB.md §5.4, §6.1) : capturée au début de `flushElapsed`. */
   const activityRef = useRef<ActivityId | null>(null);
+  /** Pause de révision ouverte : le temps actif est imputé à la lecture et ne compte pas pour la pause suivante. */
+  const pauseOpenRef = useRef(false);
+  /** Miroir de `settings.pauseMs` (une entrée par enfant), comme `sessionsRef`. */
+  const pauseMsRef = useRef<Record<string, number>>({});
+  const adminPauseTestRef = useRef(false);
+  const pauseDueRef = useRef(false);
 
   useEffect(() => {
     profileRef.current = profile;
+    refreshPauseDue(); // le parent a pu changer le réglage des pauses
   }, [profile]);
   useEffect(() => {
     routeNameRef.current = route.name;
   }, [route.name]);
+
+  /** Recalcule « pause due » pour l'enfant actif (réglage du profil, option admin, compteur). */
+  function refreshPauseDue() {
+    const active = profileRef.current;
+    const due = active
+      ? isPauseDue(pauseMsRef.current[active.id] ?? 0, pauseIntervalMs(active.gameSettings?.pauses, adminPauseTestRef.current))
+      : false;
+    pauseDueRef.current = due;
+    setPauseDue(due);
+  }
+
+  function completePause() {
+    const active = profileRef.current;
+    if (!active) return;
+    pauseMsRef.current = { ...pauseMsRef.current, [active.id]: 0 };
+    refreshPauseDue();
+    void updateSettings({ pauseMs: pauseMsRef.current }).catch((err) => console.error('updateSettings(pauseMs) failed', err));
+  }
+
+  function setPauseOpen(open: boolean) {
+    // Le temps écoulé jusque-là reste imputé à l'activité d'avant (capturée de façon synchrone par `flushElapsed`).
+    void flushElapsed(Date.now(), { requireVisible: false });
+    pauseOpenRef.current = open;
+  }
 
   function applyStatus(next: TimeStatus, nextRatio: number | null) {
     timeUpRef.current = next.timeUp;
@@ -109,7 +156,7 @@ export function SessionProvider({ route, children }: { route: Route; children: C
   async function flushElapsed(now: number, { requireVisible = true }: { requireVisible?: boolean } = {}) {
     // Capturée en premier, de façon synchrone : l'activité à laquelle imputer l'écart est celle de
     // l'écran quitté, pas celle déjà posée par la synchro de route qui a pu tourner avant cet `await`.
-    const activity = activityRef.current;
+    const activity: ActivityId | null = pauseOpenRef.current ? 'reading' : activityRef.current;
     const activeProfile = profileRef.current;
     const session = sessionRef.current;
     if (!activeProfile || !session || lockedRef.current || (requireVisible && document.visibilityState !== 'visible')) {
@@ -127,10 +174,17 @@ export function SessionProvider({ route, children }: { route: Route; children: C
     sessionRef.current = updatedSession;
     const nextSessions = { ...sessionsRef.current, [activeProfile.id]: updatedSession };
     sessionsRef.current = nextSessions;
+    // Compteur des pauses de révision : seul le temps de mini-jeu compte ; écrit seulement s'il a changé.
+    const before = pauseMsRef.current[activeProfile.id] ?? 0;
+    const after = accumulatePause(before, activity, elapsed * 1000);
+    if (after !== before) {
+      pauseMsRef.current = { ...pauseMsRef.current, [activeProfile.id]: after };
+      refreshPauseDue();
+    }
     try {
       const [usage] = await Promise.all([
         addActiveSeconds(activeProfile.id, dayKey(), elapsed, activity ?? undefined),
-        updateSettings({ sessions: nextSessions }),
+        updateSettings({ sessions: nextSessions, ...(after !== before ? { pauseMs: pauseMsRef.current } : {}) }),
       ]);
       const result = computeTime(activeProfile, usage, updatedSession);
       applyStatus(result, computeRemainingRatio(activeProfile, usage, updatedSession));
@@ -151,6 +205,7 @@ export function SessionProvider({ route, children }: { route: Route; children: C
       sessionRef.current = null;
       lockedRef.current = false;
       activityRef.current = null;
+      pauseOpenRef.current = false;
       applyStatus(EMPTY_STATUS, null);
       return undefined;
     }
@@ -160,11 +215,15 @@ export function SessionProvider({ route, children }: { route: Route; children: C
       // quittée (capturée par `flushElapsed` avant qu'on ne pose la nouvelle ci-dessous).
       const flushing = flushElapsed(Date.now(), { requireVisible: false });
       activityRef.current = activityForRoute(route.name);
+      pauseOpenRef.current = false; // une pause ouverte ne survit pas à un changement d'écran
       await flushing;
       if (cancelled) return;
       const settings = await getSettings();
       if (cancelled) return;
       sessionsRef.current = settings.sessions;
+      pauseMsRef.current = settings.pauseMs ?? {};
+      adminPauseTestRef.current = settings.adminPauseTest === true;
+      refreshPauseDue();
       if (settings.lock) {
         // F1 : le verrou est déjà actif (ex. retour Android vers une route map/play pendant qu'il
         // l'est encore) — ne JAMAIS ouvrir/reprendre une session ici, sinon le compteur repartirait
@@ -215,7 +274,7 @@ export function SessionProvider({ route, children }: { route: Route; children: C
   }, []);
 
   return (
-    <SessionContext.Provider value={{ ...status, remainingRatio: ratio, timeUpRef, softEndActive, clearSoftEnd }}>
+    <SessionContext.Provider value={{ ...status, remainingRatio: ratio, timeUpRef, softEndActive, clearSoftEnd, pauseDue, pauseDueRef, completePause, setPauseOpen }}>
       {children}
     </SessionContext.Provider>
   );

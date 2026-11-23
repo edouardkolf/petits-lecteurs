@@ -13,6 +13,7 @@ import { playBoing, playBubble, playDing, playDrain, playFanfare, playPour, play
 import { recipeFor } from '../../mechanics/color-mix/generate';
 import { DROP_D } from '../../mechanics/color-mix/parts';
 import { COLOR_HEX } from '../../socle/ui/palette';
+import { useReviewPause } from '../pause/useReviewPause';
 import { useSoftEnd } from '../useSoftEnd';
 import {
   abandonColoring,
@@ -60,7 +61,7 @@ interface RecordSlot {
 }
 
 /** Ce qui arrête le temps actif : page cachée, ou frigo ouvert pendant la peinture (§5.1). */
-type PauseReason = 'hidden' | 'fridge';
+type PauseReason = 'hidden' | 'fridge' | 'review';
 
 interface Session {
   recordId: string | null;
@@ -221,8 +222,11 @@ export function ColoringScreen() {
     });
   }
 
+  // Pause de révision : posée après une case peinte ou au choix du dessin suivant, jamais au milieu d'un geste.
+  const pause = useReviewPause();
+
   const softEnd = useSoftEnd({
-    busy: (phase === 'painting' && !(Boolean(timeUp) && paintedSinceTimeUpRef.current)) || phase === 'celebrating',
+    busy: (phase === 'painting' && !(Boolean(timeUp) && paintedSinceTimeUpRef.current)) || phase === 'celebrating' || pause.open,
     onTimeUp: async () => {
       await closeRecord('time-up');
     },
@@ -381,8 +385,15 @@ export function ColoringScreen() {
     setPhase('choosing');
   }
 
+  /** Fin d'une unité : si une pause de révision est due, elle s'ouvre ; le temps actif du dessin s'arrête pendant ce temps. */
+  function pauseAfterUnit() {
+    if (unmountedRef.current) return;
+    if (pause.checkpoint(() => resumeClock('review'))) pauseClock('review');
+  }
+
   function pickChoice(index: number) {
     if (softEnd.checkpoint()) return;
+    if (pause.checkpoint(() => pickChoice(index))) return;
     const card = choices[index];
     if (!card) return;
     playTap();
@@ -466,6 +477,7 @@ export function ColoringScreen() {
       clearHelp();
       setTransient({ id: zoneId, outcome: 'painted' });
       schedule(() => setTransient((t) => (t?.id === zoneId ? null : t)), SPREAD_MS);
+      if (!nowComplete) schedule(pauseAfterUnit, SPREAD_MS + 50);
       const nextPainted = addTo(s.painted, zoneId);
       const nextSession = { ...s, painted: nextPainted };
       setSession(nextSession);
@@ -654,6 +666,7 @@ export function ColoringScreen() {
         <div class="clr-stage" ref={stageRef}>
           <ChoiceBoard cards={choices} onPick={pickChoice} />
         </div>
+        {pause.overlay}
       </div>
     );
   }
@@ -724,6 +737,7 @@ export function ColoringScreen() {
         )}
       </div>
 
+      {pause.overlay}
       {tutorialTargets && <TutorialHand targets={tutorialTargets} />}
       {helpHandTargets && <TutorialHand targets={helpHandTargets} />}
       {drag && (
