@@ -7,6 +7,7 @@ import { dayKey } from '../../socle/storage/day';
 import type { UsageDay } from '../../socle/storage/types';
 import { formatDateTime, formatDuration, formatPercentage } from '../../socle/parent/format';
 import { GAMES, isAdventureGame } from '..';
+import { summarizePauses } from '../pause/stats';
 import { VoiceBench } from './VoiceBench';
 import { STAGE_TITLES, summarizeReading, summarizeReadingTime } from './stats';
 import type { ReadingStatsSummary } from './stats';
@@ -28,6 +29,7 @@ export function ReadingStats({ profile, records, usageDays }: GameStatsProps<Rea
     }
   }, [records, settings]);
 
+  const pauses = useMemo(() => summarizePauses(records, Date.now()), [records]);
   const time = useMemo(() => summarizeReadingTime(usageDays, dayKey(), MINI_GAME_IDS), [usageDays]);
   const adventure = summary?.adventure;
   const wonPercent = adventure ? Math.round((adventure.levelsPassed / adventure.levelTotal) * 100) : 0;
@@ -94,6 +96,42 @@ export function ReadingStats({ profile, records, usageDays }: GameStatsProps<Rea
             </table>
           </section>
 
+          <section data-testid="reading-stats-pauses" data-done={pauses.doneThisWeek} data-hard={pauses.hardAt.length}>
+            <h3 class="rp-stage__title">Pauses de lecture</h3>
+            <p class="pa-muted">Pendant les jeux libres : quelques questions sur les lettres déjà acquises.</p>
+            <div class="pa-summary">
+              <div class="pa-stat">
+                <span class="pa-stat__value" data-testid="reading-stats-pauses-done">
+                  {pauses.doneThisWeek}
+                </span>
+                <span class="pa-stat__label">Pauses cette semaine</span>
+              </div>
+              <div class="pa-stat">
+                <span class="pa-stat__value" data-testid="reading-stats-pauses-rate">
+                  {formatPercentage(pauses.firstRate)}
+                </span>
+                <span class="pa-stat__label">1re question réussie</span>
+              </div>
+            </div>
+            {pauses.hardAt.length === 0 ? (
+              <p class="pa-muted" data-testid="reading-stats-pause-hard-empty">Aucune pause difficile.</p>
+            ) : (
+              <>
+                <p class="rp-alert" role="status">
+                  <span class="rp-alert__title">Pause difficile.</span> Ces pauses se sont arrêtées au 3e échec : votre enfant
+                  avait peut-être oublié ces lettres, ou n'était pas disponible. Une séance à côté de votre enfant peut aider.
+                </p>
+                <ul class="rp-hard" data-testid="reading-stats-pause-hard">
+                  {pauses.hardAt.map((at) => (
+                    <li key={at} data-testid="reading-stats-pause-hard-item">
+                      {formatDateTime(at)}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </section>
+
           <div class="pa-summary">
             <div class="pa-stat">
               <span class="pa-stat__value" data-testid="reading-stats-level">
@@ -117,8 +155,8 @@ export function ReadingStats({ profile, records, usageDays }: GameStatsProps<Rea
 
           {summary.alerts.map((a) => (
             <p class="rp-alert" key={a.game} data-testid={`reading-stats-alert-${a.game}`}>
-              <span class="rp-alert__title">À accompagner : {a.label}.</span> Elle semble répondre au hasard à ce jeu :
-              restez à côté d'elle pour une séance.
+              <span class="rp-alert__title">À accompagner : {a.label}.</span> Les réponses à ce jeu semblent données au hasard :
+              restez à côté de votre enfant pour une séance.
             </p>
           ))}
 
@@ -199,8 +237,14 @@ export function ReadingStats({ profile, records, usageDays }: GameStatsProps<Rea
           </li>
           <li>
             <strong>À accompagner</strong> : sur un jeu, l'enfant répond à peu près comme au hasard (au moins 12
-            réponses ces 14 derniers jours). Restez à côté de lui pour une séance : ce n'est pas un échec, il a juste
-            besoin d'aide pour entrer dans le jeu.
+            réponses ces 14 derniers jours). Restez à côté de votre enfant pour une séance : ce n'est pas un échec, un peu
+            d'aide suffit pour entrer dans le jeu.
+          </li>
+          <li>
+            <strong>Pauses de lecture</strong> : toutes les quelques minutes de jeu libre, 2 à 3 questions sur des lettres
+            déjà acquises. Elles ne comptent ni pour les niveaux ni pour les lettres acquises. « 1re question réussie » =
+            la question tirée au hasard parmi les lettres acquises, du premier coup. Une « pause difficile » s'arrête au
+            3e échec.
           </li>
           <li>
             <strong>Temps de jeu</strong> : le temps actif compté par le minuteur. « Lecture » = la carte d'aventure et

@@ -162,6 +162,15 @@ export function Dashboard() {
         <Icon name="plus" size={26} />
         <span>Ajouter un enfant</span>
       </button>
+      <button
+        type="button"
+        className="pa-button pa-button--secondary"
+        data-testid="parent-how-it-works"
+        onClick={() => navigate({ name: 'parent', path: ['how'] })}
+      >
+        <Icon name="replay" size={26} />
+        <span>Comment ça marche</span>
+      </button>
     </>
   );
 }

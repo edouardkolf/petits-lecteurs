@@ -33,7 +33,7 @@ export function ReadingSettings({ value, onChange }: GameSettingsProps<ReadingSe
           </option>
         ))}
       </select>
-      <p class="pa-muted">Si elle connaît déjà ses lettres, commencez plus loin.</p>
+      <p class="pa-muted">Si votre enfant connaît déjà ses lettres, commencez plus loin.</p>
     </div>
   );
 }

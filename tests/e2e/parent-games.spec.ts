@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { test, expect, type Page } from '@playwright/test';
 import { chooseProfile } from './nav';
+import { ensureFakeVoice, skipDemo } from './reading-helpers';
 
 const PARENT_PIN = '1234';
 
@@ -34,12 +35,20 @@ async function enterPin(page: Page, pin: string): Promise<void> {
 }
 
 async function createParentCode(page: Page): Promise<void> {
+  await ensureFakeVoice(page);
   await page.goto('/');
-  await expect(page.getByText('Commencer : espace parent')).toBeVisible();
-  await page.getByText('Commencer : espace parent').click();
+  await skipDemo(page);
   await expect(page.getByText('Créer le code parent')).toBeVisible();
   await enterPin(page, PARENT_PIN);
   await expect(page.getByText('Confirme le code')).toBeVisible();
+  await enterPin(page, PARENT_PIN);
+  // Le parcours enchaîne sur la fiche du premier enfant : on rouvre l'espace parent (code déjà créé) pour arriver
+  // sur le tableau de bord vide, comme avant.
+  await expect(page.locator('input[name=name]')).toBeVisible();
+  await page.evaluate(() => {
+    location.hash = '#/parent';
+  });
+  await expect(page.getByText('Code parent', { exact: true })).toBeVisible();
   await enterPin(page, PARENT_PIN);
   await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
 }
@@ -148,13 +157,23 @@ test('temps de jeu : 60 s simulées sur la carte apparaissent dans « Lecture »
   await page.getByTestId('back-to-game').click();
 
   await chooseProfile(page, 'Noa');
+  await expect(page.getByTestId('hub-tile-map')).toBeVisible();
+
+  // L'horloge simulée s'écoule aussi en temps réel tant qu'elle n'est pas figée : on la fige avant
+  // d'ouvrir la carte pour que seules les 60 s de `runFor` comptent (sinon 61 s selon la lenteur de la machine).
+  const nowMs = await page.evaluate(() => Date.now());
+  await page.clock.pauseAt(nowMs + 1000);
+
   await page.getByTestId('hub-tile-map').click();
   await expect(page.locator('.screen--map')).toBeVisible();
-
+  await page.waitForTimeout(500); // laisse la synchro de session (stockage, temps réel) finir
   await page.clock.runFor(60_000);
 
   await page.getByTestId('to-hub').click();
   await expect(page.getByTestId('hub')).toBeVisible();
+  await page.waitForTimeout(500); // laisse le relevé du changement de route finir avant de relancer l'horloge
+  await page.clock.resume(); // l'appui long ci-dessous s'appuie sur des minuteries réelles
+
   await page.getByTestId('hub-to-profiles').click();
 
   await longPress(page, page.getByTestId('parent-access'), 2100);

@@ -4,6 +4,7 @@ import type { ReadingGameId, ReadingViewProps } from "../types";
 import { FirstSoundView } from "./FirstSoundView";
 import { LetterSoundView } from "./LetterSoundView";
 import { LetterTwinsView } from "./LetterTwinsView";
+import { NameLetterView } from "./NameLetterView";
 import { MysteryWordView } from "./MysteryWordView";
 import { SameEndView } from "./SameEndView";
 import { SameStartView } from "./SameStartView";
@@ -27,4 +28,5 @@ export const READING_VIEWS: Record<
   "syllable-machine": SyllableMachineView,
   "mystery-word": MysteryWordView,
   "letter-twins": LetterTwinsView,
+  "name-letter": NameLetterView,
 };

@@ -198,35 +198,6 @@ svg {
   background: var(--bg);
 }
 
-/* ---------- Accueil (aucun profil) ---------- */
-
-.screen--welcome {
-  background: radial-gradient(circle at 50% 20%, var(--bg-sky-bottom), var(--bg));
-  text-align: center;
-}
-
-.welcome-illustration {
-  font-family: var(--emoji-font);
-  font-size: 88px;
-  line-height: 1;
-  animation: bounce 2.4s ease-in-out infinite;
-}
-
-.welcome-button {
-  min-height: 56px;
-  padding: 14px 28px;
-  border-radius: var(--radius);
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-size: 18px;
-  font-weight: 600;
-  box-shadow: var(--shadow);
-}
-
-.welcome-button:active {
-  transform: scale(0.96);
-}
-
 /* ---------- Profils ---------- */
 
 .screen--profiles {

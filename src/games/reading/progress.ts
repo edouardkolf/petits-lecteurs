@@ -1,6 +1,6 @@
 // CONTRAT (signatures) — maîtrise et progression, recalculées à partir des séances. LECTURE.md §5. Pur.
 import { dayKey } from '../../socle/storage/day';
-import type { ReadingRecord } from '../../socle/storage/readings';
+import { isPauseRecord, type ReadingRecord } from '../../socle/storage/readings';
 import { allItems, gatedItems, stageItems } from './curriculum';
 import { READING_STAGES } from './types';
 import type { ItemId, ItemProgress, ReadingGameId, ReadingProgress, ReadingStage } from './types';
@@ -136,6 +136,8 @@ export function computeProgressFor(
   let order = 0;
   for (const { record } of sorted) {
     for (const game of record.demos) if (!demosDone.includes(game)) demosDone.push(game);
+    // Pause de révision : ses démonstrations comptent (l'enfant les a vues), jamais ses réponses ni sa clôture.
+    if (isPauseRecord(record)) continue;
     let lastAt = record.startedAt;
     let counted = 0;
     let right = 0;

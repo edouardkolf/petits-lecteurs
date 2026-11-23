@@ -1,7 +1,7 @@
 // Mode test (bac à sable admin) : base séparée, onboarding rejoué, vraies données intactes.
 import { test, expect, type Page } from '@playwright/test';
 import { chooseProfile, profileCard } from './nav';
-import { enterPin, onboardMs, openParentDashboard } from './reading-helpers';
+import { createPin, onboardMs, openParentDashboard, passVoiceAndHandoff, skipDemo } from './reading-helpers';
 
 async function longPressBadge(page: Page): Promise<void> {
   const box = await page.getByTestId('sandbox-badge').boundingBox();
@@ -32,17 +32,14 @@ async function readProfiles(page: Page, dbName: string): Promise<{ name: string 
   );
 }
 
-/** Premier lancement dans le bac à sable : code 1234 puis un enfant. */
+/** Premier lancement dans le bac à sable : démo passée, code 1234, un enfant, voix, passage du téléphone, profils. */
 async function onboardSandbox(page: Page, name: string): Promise<void> {
-  await page.getByText('Commencer : espace parent').click();
-  await enterPin(page, '1234');
-  await enterPin(page, '1234');
-  await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
-  await page.getByTestId('add-child').click();
+  await skipDemo(page);
+  await createPin(page);
   await page.locator('input[name=name]').fill(name);
   await page.getByTestId('save-child').click();
-  await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
-  await page.getByTestId('back-to-game').click();
+  await passVoiceAndHandoff(page);
+  await page.getByTestId('hub-to-profiles').click();
 }
 
 test('mode test : base séparée, recommencer, quitter, vraies données intactes', async ({ page }) => {
@@ -57,7 +54,7 @@ test('mode test : base séparée, recommencer, quitter, vraies données intactes
   await page.getByTestId('sandbox-enter').click();
 
   // Bac à sable vide : premier lancement, badge visible.
-  await expect(page.getByText('Commencer : espace parent')).toBeVisible();
+  await expect(page.getByTestId('onboarding-demo')).toBeVisible();
   await expect(page.getByTestId('sandbox-badge')).toBeVisible();
   await onboardSandbox(page, 'Test');
   await expect(profileCard(page, 'Test')).toBeVisible();
@@ -72,7 +69,7 @@ test('mode test : base séparée, recommencer, quitter, vraies données intactes
   await longPressBadge(page);
   await expect(page.getByTestId('sandbox-overlay')).toBeVisible();
   await page.getByTestId('sandbox-reset').click();
-  await expect(page.getByText('Commencer : espace parent')).toBeVisible();
+  await expect(page.getByTestId('onboarding-demo')).toBeVisible();
   await expect(page.getByTestId('sandbox-badge')).toBeVisible();
   await expect(page.getByText('Test', { exact: true })).toHaveCount(0);
 

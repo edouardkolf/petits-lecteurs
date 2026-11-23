@@ -177,7 +177,7 @@ export function levelProgress(records: readonly ReadingRecord[], settings?: Read
   const attempts: Record<string, number> = {};
   for (const record of records) {
     const id = record.levelId;
-    if (!id || !LEVEL_BY_ID.has(id) || record.status !== 'completed') continue;
+    if (!id || !LEVEL_BY_ID.has(id) || record.status !== 'completed' || record.context === 'pause') continue;
     attempts[id] = (attempts[id] ?? 0) + 1;
     if (isLevelPass(record)) passed.add(id);
   }

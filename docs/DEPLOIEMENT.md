@@ -36,7 +36,7 @@ apps s'installent côte à côte sur le même téléphone.
 1. Ouvrir l'URL dans **Chrome** (pas dans le navigateur intégré d'une autre app).
 2. Menu **⋮ → Installer l'application** (selon la version : *Ajouter à l'écran d'accueil → Installer*).
 3. Lancer l'app depuis l'icône : elle s'ouvre en plein écran, sans barre d'adresse.
-4. Premier lancement : bouton « Commencer : espace parent ». On y crée le code parent, puis on ajoute les enfants.
+4. Premier lancement : démo en quatre écrans (« Passer » pour la sauter), création du code parent, fiche du premier enfant, test de la voix, puis passage du téléphone à l'enfant. Les autres enfants s'ajoutent ensuite depuis l'espace parent.
 5. Dans l'espace parent, vérifier **« Stockage protégé ✓ »**. Si ce n'est pas le cas, relancer l'app depuis l'icône installée.
 6. Test hors ligne : mode avion, fermer puis rouvrir l'app. Elle doit fonctionner normalement.
 

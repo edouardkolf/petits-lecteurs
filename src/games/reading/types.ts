@@ -18,6 +18,7 @@ export const READING_GAMES = [
   'syllable-machine', // fusion : syllabe entendue → syllabe écrite
   'mystery-word', // mot écrit → image
   'letter-twins', // capitale → minuscule
+  'name-letter', // pauses de révision seulement : toucher la première lettre du prénom (reconnaissance visuelle)
 ] as const;
 export type ReadingGameId = (typeof READING_GAMES)[number];
 
@@ -166,6 +167,8 @@ export interface ReadingQuestion {
   praisePicture?: PictureId;
   /** L'item est présenté pour la première fois dans cette séance. */
   isNew: boolean;
+  /** Pause de révision : question tirée parmi les graphèmes maîtrisés, la seule qui compte pour la courbe d'oubli. */
+  retention?: boolean;
 }
 
 export interface ReadingSessionPlan {
@@ -202,6 +205,8 @@ export interface ReadingAnswer {
   /** Durée entre la fin de la consigne et la première tentative (ms). */
   ms: number;
   at: number;
+  /** Pause de révision : réponse à la « première question » (graphème maîtrisé tiré au hasard), base de la courbe d'oubli. */
+  retention?: boolean;
 }
 
 // ---------- Vues de jeu ----------

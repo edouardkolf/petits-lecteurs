@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activityForRoute, computeTime, remainingRatio, resumeOrCreateSession, shouldResumeSession } from './session';
+import { activityForRoute, computeTime, remainingRatio, resumeOrCreateSession, sessionAfterSync, shouldResumeSession } from './session';
 import type { Profile, SessionState, UsageDay } from '../storage/types';
 
 function profile(sessionMinutes: number | null, dailyMinutes: number | null): Profile {
@@ -200,5 +200,24 @@ describe('activityForRoute', () => {
     expect(activityForRoute('profiles')).toBeNull();
     expect(activityForRoute('locked')).toBeNull();
     expect(activityForRoute('parent')).toBeNull();
+  });
+});
+
+describe('sessionAfterSync (synchro de route lente)', () => {
+  const mem: SessionState = { profileId: 'a', startedAt: 0, activeSeconds: 42, lastActiveAt: 5_000 };
+  const stale: SessionState = { profileId: 'a', startedAt: 0, activeSeconds: 30, lastActiveAt: 1_000 };
+
+  it("garde la session en mémoire (plus récente que le stockage relu) et ne remet pas l'horloge à zéro", () => {
+    const r = sessionAfterSync(mem, { a: stale }, 'a', 60_000);
+    expect(r.session).toBe(mem);
+    expect(r.restartClock).toBe(false);
+  });
+
+  it('reprend depuis le stockage si la mémoire est vide ou appartient à un autre enfant', () => {
+    for (const inMemory of [null, { ...mem, profileId: 'b' }]) {
+      const r = sessionAfterSync(inMemory, { a: stale }, 'a', 60_000);
+      expect(r.session.activeSeconds).toBe(30);
+      expect(r.restartClock).toBe(true);
+    }
   });
 });

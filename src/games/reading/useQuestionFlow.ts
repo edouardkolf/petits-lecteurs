@@ -13,8 +13,10 @@ import {
   startReading,
 } from '../../socle/storage/readings';
 import type { GameEndReason } from '../../socle/storage/types';
+import { useSession } from '../../socle/app/SessionProvider';
+import { onPauseFailure, replaceCurrent } from '../pause/flow';
 import { useActiveClock } from '../useActiveClock';
-import { useSoftEnd } from '../useSoftEnd';
+import { exitReasonFor, useSoftEnd, type SoftEnd } from '../useSoftEnd';
 import {
   buildAnswer,
   completeDemo,
@@ -33,7 +35,8 @@ import {
   soundOfChoice,
   type FlowState, modelSpeech } from './flow';
 import { gameInstruction, SOUND_RATE, soundText, syllableText } from './speech';
-import type { ReadingAnswer, ReadingGameId, ReadingQuestion, ReadingSessionPlan, ReadingViewProps } from './types';
+import { READING_GAMES } from './types';
+import type { ItemId, ReadingAnswer, ReadingGameId, ReadingQuestion, ReadingSessionPlan, ReadingViewProps } from './types';
 
 /** Attente maximale de la voix avant d'activer les choix (LECTURE.md §11). */
 export const ACTIVATE_MAX_MS = 6000;
@@ -75,12 +78,37 @@ const NEW_TURN: TurnState = {
   wrong: [],
 };
 
+/** Pause de révision pendant un mini-jeu (docs/specs/PAUSES-REVISION.md) : mêmes questions, autre enregistrement. */
+export interface PauseFlowOptions {
+  /** Question plus sûre qui remplace la question en cours au 2e échec ; null : rien de mieux. */
+  fallback: (failed: ItemId | null) => ReadingQuestion | null;
+}
+
+export interface FlowEnd {
+  /** Pause terminée au 3e échec (« pause difficile »). */
+  hard: boolean;
+}
+
 export interface UseQuestionFlowOptions {
   plan: ReadingSessionPlan;
   review: boolean;
   profileId: string;
   /** Appelé une fois, quand la séance est terminée et enregistrée. */
-  onFinish: (answers: readonly ReadingAnswer[]) => void;
+  onFinish: (answers: readonly ReadingAnswer[], end: FlowEnd) => void;
+  /** Absent : séance d'aventure. Présent : pause de révision (réponses marquées `context: 'pause'`, fin douce laissée au jeu). */
+  pause?: PauseFlowOptions;
+}
+
+/** Fin douce d'une pause : c'est le mini-jeu en dessous qui gère le minuteur ; la pause ne navigue jamais. */
+function usePauseSoftEnd(): SoftEnd {
+  const { timeUp, timeUpRef } = useSession();
+  const endedRef = useRef(false);
+  return {
+    timeUp: Boolean(timeUp),
+    checkpoint: () => false,
+    exitReason: () => exitReasonFor(Boolean(timeUpRef.current)),
+    endedRef,
+  };
 }
 
 export interface QuestionFlow {
@@ -131,18 +159,28 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
   const timersRef = useRef(new Set<number>());
   const unmountedRef = useRef(false);
   /** Jeux dont la consigne complète a déjà été dite dans cette séance (démonstration comprise). */
-  const fullSpokenRef = useRef(new Set<ReadingGameId>());
+  // Pause de révision : l'enfant connaît les jeux (la démonstration, elle, dit toujours la consigne complète).
+  const fullSpokenRef = useRef(new Set<ReadingGameId>(opts.pause ? READING_GAMES : []));
   const recordRef = useRef<RecordSlot>({ id: null, closed: false });
   const writeQueueRef = useRef<Promise<void>>(Promise.resolve());
   const clock = useActiveClock();
 
-  const softEnd = useSoftEnd({
-    busy: active,
-    onTimeUp: async () => {
-      cancelSpeech();
-      await closeRecord('time-up');
-    },
-  });
+  const pauseMode = opts.pause !== undefined;
+  /** Les échecs de la pause (un choix faux, un mauvais nombre de frappes) et le repli, une seule fois. */
+  const failuresRef = useRef(0);
+  const fallbackUsedRef = useRef(false);
+  // `pauseMode` ne change jamais pendant la vie du composant : le nombre de hooks appelés reste stable.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const softEnd: SoftEnd = pauseMode
+    ? usePauseSoftEnd()
+    : // eslint-disable-next-line react-hooks/rules-of-hooks
+      useSoftEnd({
+        busy: active,
+        onTimeUp: async () => {
+          cancelSpeech();
+          await closeRecord('time-up');
+        },
+      });
 
   // ---------- Utilitaires ----------
 
@@ -196,8 +234,8 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
     });
   }
 
-  /** Crée la séance à la première réponse, la sauvegarde ensuite, la clôt à la fin. */
-  function persist(state: FlowState, kind: 'save' | 'complete') {
+  /** Crée la séance à la première réponse, la sauvegarde ensuite, la clôt à la fin. `hard` : pause terminée au 3e échec. */
+  function persist(state: FlowState, kind: 'save' | 'complete', hard = false) {
     const slot = recordRef.current;
     const activeMs = clock.elapsed();
     const answers = [...state.answers];
@@ -217,6 +255,7 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
           answers,
           review,
           ...(plan.levelId ? { levelId: plan.levelId } : {}),
+          ...(pauseMode ? { context: 'pause' as const } : {}),
         });
         if (unmountedRef.current && kind !== 'complete') {
           slot.closed = true;
@@ -226,13 +265,13 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
         slot.id = created.id;
         if (kind === 'complete') {
           slot.closed = true;
-          await completeReading(created.id, answers, demos, activeMs);
+          await completeReading(created.id, answers, demos, activeMs, { hard });
         }
         return;
       }
       if (kind === 'complete') {
         slot.closed = true;
-        await completeReading(slot.id, answers, demos, activeMs);
+        await completeReading(slot.id, answers, demos, activeMs, { hard });
       } else {
         await saveReadingAnswers(slot.id, answers, demos, activeMs);
       }
@@ -347,13 +386,46 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
     void speakQuestion(q, turnId, speechId, demo, full).then(() => activate(turnId));
   }
 
-  async function finish(state: FlowState) {
+  async function finish(state: FlowState, hard = false) {
     clearHintTimer();
     setActive(false);
     setFinishing(true);
-    persist(state, 'complete');
+    persist(state, 'complete', hard);
     await writeQueueRef.current;
-    if (!unmountedRef.current) onFinishRef.current(state.answers);
+    if (!unmountedRef.current) onFinishRef.current(state.answers, { hard });
+  }
+
+  /** Pause de révision : compte l'échec qui vient d'arriver ; 2e : repli ; 3e : fin en douceur. `true` : la question est remplacée ou la pause finie. */
+  function onPauseMiss(q: ReadingQuestion, turnId: number): boolean {
+    const failures = (failuresRef.current += 1);
+    // Plus aucun toucher n'est pris en compte le temps de la décision (repli ou fin).
+    turnRef.current.activated = false;
+    const action = onPauseFailure(failures, fallbackUsedRef.current);
+    if (action === 'exit') {
+      timersRef.current.forEach((id) => window.clearTimeout(id));
+      timersRef.current.clear();
+      turnIdRef.current += 1; // plus aucun tour en cours ne réagit
+      speechIdRef.current += 1;
+      cancelSpeech();
+      void finish(flowRef.current, true);
+      return true;
+    }
+    if (action === 'fallback') {
+      fallbackUsedRef.current = true;
+      const safer = opts.pause?.fallback(q.itemId) ?? null;
+      if (safer) {
+        setDisabled(true);
+        const next = replaceCurrent(flowRef.current, safer);
+        setFlow(next);
+        // Laisse la voix de la mauvaise réponse finir, puis pose la question plus sûre.
+        later(() => {
+          if (turnAlive(turnId)) beginTurn(next);
+        }, 900);
+        return true;
+      }
+    }
+    turnRef.current.activated = true;
+    return false;
   }
 
   function advance(turnId: number) {
@@ -412,7 +484,8 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
         readyAt: t.readyAt,
         now: Date.now(),
       });
-      const next = recordFirstAttempt(flowRef.current, answer);
+      // Pause : une question ratée n'est pas reposée plus tard (l'enfant continue jusqu'à la bonne réponse).
+      const next = recordFirstAttempt(flowRef.current, answer, pauseMode ? (queue) => [...queue] : undefined);
       setFlow(next);
       persist(next, 'save');
     }
@@ -426,9 +499,10 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
       setWrong(t.wrong);
     }
     playError();
-    // La lettre ou la syllabe touchée chante son propre son.
+    if (pauseMode && onPauseMiss(q, turnId)) return;
+    // La lettre ou la syllabe touchée chante son propre son (jamais pour la lettre du prénom : visuelle seulement).
     const touched = q.choices.find((c) => c.id === id);
-    const sound = soundOfChoice(touched);
+    const sound = q.game === 'name-letter' ? null : soundOfChoice(touched);
     if (q.game === 'word-start' && touched?.speech) {
       // « Quel mot commence par… » : l'image touchée dit son nom, pour entendre que ce n'est pas le bon son.
       void say([{ text: touched.speech, rate: SOUND_RATE }]);

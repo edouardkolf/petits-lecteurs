@@ -10,7 +10,15 @@ export type VoiceMode = 'fr' | 'en' | 'none' | 'absent';
  * Installe une fausse `speechSynthesis` avant toute navigation (même technique que dictation.spec.ts).
  * Chaque énoncé se termine en quelques millisecondes pour garder la suite rapide. `absent` : l'API n'existe pas.
  */
+const pagesWithVoice = new WeakSet<Page>();
+
+/** Installe une fausse voix française si le test n'a pas déjà choisi la sienne (évite l'attente de voix de Chromium). */
+export async function ensureFakeVoice(page: Page): Promise<void> {
+  if (!pagesWithVoice.has(page)) await installFakeVoice(page, 'fr');
+}
+
 export async function installFakeVoice(page: Page, mode: VoiceMode): Promise<void> {
+  pagesWithVoice.add(page);
   await page.addInitScript((voiceMode) => {
     (window as unknown as { __spoken: string[] }).__spoken = [];
     if (voiceMode === 'absent') {
@@ -86,19 +94,57 @@ export async function enterPin(page: Page, pin: string): Promise<void> {
   }
 }
 
+/** Démo du premier lancement : « Passer » mène au code parent. */
+export async function skipDemo(page: Page): Promise<void> {
+  await expect(page.getByTestId('onboarding-demo')).toBeVisible();
+  await page.getByTestId('onboarding-skip').click();
+}
+
+/** Code parent 1234 : création puis confirmation (le parcours enchaîne ensuite sur la fiche enfant). */
+export async function createPin(page: Page, pin = PARENT_PIN): Promise<void> {
+  await expect(page.getByText('Créer le code parent')).toBeVisible();
+  await enterPin(page, pin);
+  await expect(page.getByText('Confirme le code')).toBeVisible();
+  await enterPin(page, pin);
+}
+
 /**
- * Premier lancement : code parent 1234, puis une enfant de moyenne section (parcours par défaut) sans limite de
- * temps. `startStage` règle « Étape de départ » dès la création de la fiche.
+ * Test de la voix : « Oui » quand la voix est prête (fausse voix française), sinon le guide s'affiche et on continue
+ * quand même. Puis passage du téléphone : « C'est parti » ouvre l'accueil de l'enfant (`hub`).
+ */
+export async function passVoiceAndHandoff(page: Page): Promise<void> {
+  const play = page.getByTestId('onboarding-voice-play');
+  const carryOn = page.getByTestId('onboarding-voice-continue');
+  await expect(play.or(carryOn)).toBeVisible({ timeout: 15_000 });
+  if (await play.isVisible()) {
+    await play.click();
+    await page.getByTestId('onboarding-voice-yes').click();
+  } else {
+    await carryOn.click();
+  }
+  await expect(page.getByTestId('onboarding-handoff')).toBeVisible();
+  await page.getByTestId('onboarding-go').click();
+  await expect(page.getByTestId('hub')).toBeVisible();
+}
+
+/** Fin du parcours (fiche enfant enregistrée) : voix, passage du téléphone, puis retour à l'écran des profils. */
+export async function finishOnboarding(page: Page): Promise<void> {
+  await passVoiceAndHandoff(page);
+  await page.getByTestId('hub-to-profiles').click();
+  await expect(page.getByTestId('hub')).toHaveCount(0);
+  await expect(page.getByTestId('onboarding-demo')).toHaveCount(0);
+}
+
+/**
+ * Premier lancement : démo passée, code parent 1234, puis une enfant de moyenne section (parcours par défaut) sans
+ * limite de temps, voix et passage du téléphone traversés, retour à l'écran des profils. `startStage` règle
+ * « Étape de départ » dès la création de la fiche. Une fausse voix française est installée si le test n'en a pas.
  */
 export async function onboardMs(page: Page, name: string, startStage?: 1 | 2 | 3 | 4 | 5): Promise<void> {
+  await ensureFakeVoice(page);
   await page.goto('/');
-  await page.getByText('Commencer : espace parent').click();
-  await expect(page.getByText('Créer le code parent')).toBeVisible();
-  await enterPin(page, PARENT_PIN);
-  await expect(page.getByText('Confirme le code')).toBeVisible();
-  await enterPin(page, PARENT_PIN);
-  await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
-  await page.getByTestId('add-child').click();
+  await skipDemo(page);
+  await createPin(page);
   await page.locator('input[name=name]').fill(name);
   await page.locator('select[name=sessionMinutes]').selectOption('');
   await page.locator('select[name=dailyMinutes]').selectOption('');
@@ -106,9 +152,7 @@ export async function onboardMs(page: Page, name: string, startStage?: 1 | 2 | 3
     await page.getByTestId('reading-start-stage').selectOption(String(startStage));
   }
   await page.getByTestId('save-child').click();
-  await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
-  await page.getByTestId('back-to-game').click();
-  await expect(page.getByText('Commencer : espace parent')).toHaveCount(0);
+  await finishOnboarding(page);
 }
 
 async function longPress(page: Page, locator: Locator, ms: number): Promise<void> {

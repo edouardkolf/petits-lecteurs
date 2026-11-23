@@ -332,6 +332,35 @@ describe('export → import', () => {
     expect(await importAll(bad)).toMatchObject({ ok: false });
   });
 
+  it('accepte les réglages de pauses de lecture et refuse un intervalle inconnu', async () => {
+    await seed();
+    const bundle = await exportAll();
+    const [pr] = bundle.profiles;
+    if (!pr) throw new Error('seed invalide');
+
+    const good = { ...bundle, profiles: [{ ...pr, gameSettings: { pauses: { enabled: false, intervalMin: 10 } } }] };
+    expect(await importAll(good)).toMatchObject({ ok: true });
+    const bad = { ...bundle, profiles: [{ ...pr, gameSettings: { pauses: { intervalMin: 7 } } }] };
+    expect(await importAll(bad)).toMatchObject({ ok: false });
+  });
+
+  it('importe une pause de révision (context, hard, retention) comme une séance de lecture', async () => {
+    await seed();
+    const bundle = await exportAll();
+    const [rd] = bundle.readings;
+    if (!rd) throw new Error('seed invalide');
+    const pause = {
+      ...rd,
+      id: 'pause-1',
+      context: 'pause' as const,
+      hard: true,
+      levelId: undefined,
+      answers: [{ ...READING_ANSWER, retention: true }],
+    };
+    delete (pause as { levelId?: string }).levelId;
+    expect(await importAll({ ...bundle, readings: [rd, pause] })).toMatchObject({ ok: true });
+  });
+
   it('un fichier v4 sans le tableau des puzzles est refusé', async () => {
     await seed();
     const bundle = await exportAll();

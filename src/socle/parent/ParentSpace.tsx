@@ -5,6 +5,8 @@
 import { useEffect, useState } from 'preact/hooks';
 import { getSettings } from '../storage';
 import type { AppSettings } from '../storage';
+import { navigate } from '../app/routes';
+import { DemoTour } from '../../screens/onboarding/DemoTour';
 import { ChildForm } from './ChildForm';
 import { ChildStats } from './ChildStats';
 import { Dashboard } from './Dashboard';
@@ -76,6 +78,10 @@ function ParentRoutes(props: { path: string[] }) {
   }
   if (segment === 'child' && id) {
     return <ChildStats profileId={id} />;
+  }
+  if (segment === 'how') {
+    // « Comment ça marche » : la démo du premier lancement, rejouée. Fin ou « Passer » : retour aux enfants.
+    return <DemoTour mode="replay" onDone={() => navigate({ name: 'parent', path: [] }, { replace: true })} />;
   }
   if (segment === 'data') {
     return (

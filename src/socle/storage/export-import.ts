@@ -5,7 +5,7 @@ import { getDB } from './db';
 import { isDictationRecord, type DictationRecord } from './dictations';
 import { isHangmanRecord, type HangmanRecord } from './hangmans';
 import { isPuzzleRecord, type PuzzleRecord } from './puzzles';
-import { isReadingRecord, isReadingSettings, type ReadingRecord } from './readings';
+import { isPauseSettings, isReadingRecord, isReadingSettings, type ReadingRecord } from './readings';
 import { isTicTacToeRecord, type TicTacToeRecord } from './tictactoes';
 import { DEFAULT_SETTINGS } from './settings';
 import {
@@ -145,6 +145,8 @@ function isProfile(value: unknown): value is Profile {
     if (coloring !== undefined && !isColoringSettings(coloring)) return false;
     const { reading } = value.gameSettings as Record<string, unknown>;
     if (reading !== undefined && !isReadingSettings(reading)) return false;
+    const { pauses } = value.gameSettings as Record<string, unknown>;
+    if (pauses !== undefined && !isPauseSettings(pauses)) return false;
   }
   return true;
 }

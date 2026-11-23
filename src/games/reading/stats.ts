@@ -1,7 +1,7 @@
 // Indicateurs du bloc parent « J'apprends à lire » (LECTURE.md §8.3). Pur, testé sous Vitest.
 // Les confusions et les alertes se calculent à partir des seules réponses (`confusionsFrom`, `alertsFrom`) :
 // elles se testent sans la progression ni le contenu.
-import type { ReadingRecord } from '../../socle/storage/readings';
+import { isPauseRecord, type ReadingRecord } from '../../socle/storage/readings';
 import { getGrapheme, gatedItems, stageItems } from './curriculum';
 import { summarizeActivityTime } from '../../socle/parent/stats';
 import type { ActivityTotals } from '../../socle/parent/stats';
@@ -162,6 +162,7 @@ export const GAME_LABELS: Readonly<Record<ReadingGameId, string>> = {
   'syllable-machine': 'Assembler une syllabe',
   'mystery-word': 'Lire un mot',
   'letter-twins': 'Majuscule et minuscule',
+  'name-letter': 'Lettre du prénom',
 };
 
 /** Jeux dont le choix est une lettre ou une syllabe (les seuls qui entrent dans la table des confusions). */
@@ -248,10 +249,12 @@ export function alertsFrom(answers: readonly ReadingAnswer[], now: number): Gues
 // ---------- Synthèse ----------
 
 export function summarizeReading(
-  records: readonly ReadingRecord[],
+  allRecords: readonly ReadingRecord[],
   settings: ReadingSettings | undefined,
   now: number,
 ): ReadingStatsSummary {
+  // Les pauses de révision ont leur propre bloc (`summarizePauses`) : elles ne comptent ni pour l'aventure ni pour les alertes.
+  const records = allRecords.filter((r) => !isPauseRecord(r));
   const progress = computeProgress(records, settings);
   const items: ItemStat[] = [];
   for (const stage of READING_STAGES) {

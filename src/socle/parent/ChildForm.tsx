@@ -7,9 +7,10 @@ import type { Track } from '../../engine';
 import { GAMES, defaultGameIds, isAdventureGame, resolveAvailability } from '../../games';
 import type { Availability, GameId } from '../../games';
 import { ColoringSettings } from '../../games/coloring/ColoringSettings';
+import { PauseSettings } from '../../games/pause/PauseSettings';
 import { ReadingSettings } from '../../games/reading/ReadingSettings';
 import type { ColoringSettings as ColoringSettingsValue } from '../storage/colorings';
-import type { ReadingSettingsValue } from '../storage/readings';
+import type { PauseSettingsValue, ReadingSettingsValue } from '../storage/readings';
 import { deleteProfile, getProfile, getSettings, saveProfile } from '../storage';
 import type { AvatarId, GameSettingsMap, Profile, ProfileLimits } from '../storage';
 import { AVATARS, AVATAR_NAMES } from '../ui/avatars';
@@ -34,7 +35,10 @@ function isGameId(value: string): value is GameId {
   return GAMES.some((game) => game.id === value);
 }
 
-export type ChildFormProps = { mode: 'create' } | { mode: 'edit'; profileId: string };
+export type ChildFormProps =
+  /** `onCreated` : parcours de premier lancement (pas d'espace parent derrière) : rend la main au parcours au lieu de naviguer. */
+  | { mode: 'create'; onCreated?: (profile: Profile) => void }
+  | { mode: 'edit'; profileId: string };
 
 export function ChildForm(props: ChildFormProps) {
   const { setProfile } = useProfile();
@@ -148,6 +152,15 @@ export function ChildForm(props: ChildFormProps) {
     });
   }
 
+  function handlePauseSettingsChange(next: PauseSettingsValue | undefined) {
+    setGameSettings((prev) => {
+      const updated = { ...prev };
+      if (next === undefined) delete updated.pauses;
+      else updated.pauses = next;
+      return Object.keys(updated).length > 0 ? updated : undefined;
+    });
+  }
+
   async function handleSubmit(ev: Event) {
     ev.preventDefault();
     const trimmed = name.trim();
@@ -185,7 +198,7 @@ export function ChildForm(props: ChildFormProps) {
           ...(gameSettings !== undefined ? { gameSettings } : {}),
         });
       } else {
-        await saveProfile({
+        const created = await saveProfile({
           name: trimmed,
           avatar,
           trackId,
@@ -193,6 +206,10 @@ export function ChildForm(props: ChildFormProps) {
           ...(games !== null ? { games } : {}),
           ...(gameSettings !== undefined ? { gameSettings } : {}),
         });
+        if (props.onCreated) {
+          props.onCreated(created);
+          return;
+        }
       }
       navigate({ name: 'parent', path: [] });
     } catch (err) {
@@ -253,9 +270,11 @@ export function ChildForm(props: ChildFormProps) {
     );
   }
 
+  const inOnboarding = props.mode === 'create' && props.onCreated !== undefined;
+
   return (
     <div className="pa-space">
-      <BackToChildren />
+      {!inOnboarding && <BackToChildren />}
       <header className="pa-header">
         <h1>{isEdit ? `Modifier ${existing?.name ?? 'un enfant'}` : 'Ajouter un enfant'}</h1>
       </header>
@@ -379,6 +398,8 @@ export function ChildForm(props: ChildFormProps) {
           )}
         </fieldset>
 
+        <PauseSettings value={gameSettings?.pauses} onChange={handlePauseSettingsChange} />
+
         <label className="pa-field">
           <span className="pa-field__label">Durée d'une session</span>
           <select
@@ -425,13 +446,15 @@ export function ChildForm(props: ChildFormProps) {
             <Icon name="check" size={24} />
             <span>{saving ? 'Enregistrement…' : 'Enregistrer'}</span>
           </button>
-          <button
-            type="button"
-            className="pa-button pa-button--ghost"
-            onClick={() => navigate({ name: 'parent', path: [] })}
-          >
-            Annuler
-          </button>
+          {!inOnboarding && (
+            <button
+              type="button"
+              className="pa-button pa-button--ghost"
+              onClick={() => navigate({ name: 'parent', path: [] })}
+            >
+              Annuler
+            </button>
+          )}
         </div>
       </form>
 
