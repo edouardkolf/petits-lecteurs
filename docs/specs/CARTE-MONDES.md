@@ -65,6 +65,9 @@ le parcours reboucle, jamais avec 80 niveaux) : rivière et pont (forêt).
 
 ## Les quatre mondes
 
+Note (lecture) : la carte de Petits Lecteurs compte 104 niveaux, soit 4 mondes de 26 (`LEVELS_PER_WORLD`, layout.ts), sans bouclage :
+le dernier niveau est dans les nuages et le chemin finit au château. Un test (layout.test.ts) garde `LEVELS.length = 4 × 26`.
+
 Maquettes validées par le PM (9 niveaux compressés sur 1 500 px ; la carte réelle a 20 niveaux sur
 ≈ 3 450 px, donc chaque étape y est ≈ 2,3 fois plus longue) : voir les images de référence fournies aux
 agents. Les dessins des maquettes peuvent être repris tels quels.

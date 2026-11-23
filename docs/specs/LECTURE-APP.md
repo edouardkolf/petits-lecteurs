@@ -37,7 +37,7 @@ lecture`, une seule commande par usage.
 ## 3. L'aventure
 
 - Hub → tuile carte → `#/map` → `ReadingMap` (`src/screens/adventure/`) : les 104 niveaux de `LEVELS`
-  (LECTURE.md §16) sur le chemin des mondes (forêt, mer, montagne, nuages, puis on reboucle), chacun en médaillon
+  (LECTURE.md §16) sur le chemin des mondes (forêt 1-26, mer 27-52, montagne 53-78, nuages 79-104 : 26 niveaux par monde, `LEVELS_PER_WORLD`), chacun en médaillon
   de lecture (couleur de sa piste, lettre ou picto du jeu). L'avatar se pose sur le niveau en cours ; le panneau
   d'arrivée dans un nouveau monde se joue une fois (`profile.seenWorld`).
 - Toucher un niveau ouvert → `#/reading/<niveau>` : la séance démarre tout de suite (pas d'accueil du programme).
@@ -86,4 +86,4 @@ de compétences. Le temps du jour reste sur la carte du tableau de bord ; le sui
 1. Nom, icône et couleurs de l'app (provisoire : « Petits Lecteurs », charte de Petits Malins).
 2. Mini-jeux : ceux de maternelle repris de Petits Malins, sans lien avec la lecture. Des mini-jeux de lecture (memory des lettres,
    coloriage par son) renforceraient la proposition.
-3. Fin du chemin : le 104e niveau tombe dans le 2e monde de la mer (trésor), pas au château de nuages.
+3. ~~Fin du chemin~~ réglé : 26 niveaux par monde, le 104e niveau est le dernier des nuages et le chemin s'achève au château de nuages.
