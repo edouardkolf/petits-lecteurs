@@ -32,12 +32,12 @@ test('arrivée dans un nouveau monde : panneau, puis plus jamais', async ({ page
   await page.waitForTimeout(300);
   await expect(page.getByTestId('world-banner')).toHaveCount(0);
 
-  // L'enfant saute loin dans le parcours (étape de départ 4).
+  // L'enfant saute loin dans le parcours (étape de départ 5 : les nuages).
   await page.getByTestId('to-hub').click();
   await page.getByTestId('hub-to-profiles').click();
   await openParentDashboard(page);
   await page.getByRole('button', { name: 'Modifier' }).click();
-  await page.getByTestId('reading-start-stage').selectOption('4');
+  await page.getByTestId('reading-start-stage').selectOption('5');
   await page.getByTestId('save-child').click();
   await expect(page.getByRole('heading', { name: 'Espace parent' })).toBeVisible();
   await page.getByTestId('back-to-game').click();

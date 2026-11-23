@@ -23,8 +23,11 @@ export const PATH_WIDTH = 38;
 export const END_RISE = 190;
 export const END_ROOM = 250;
 
-/** Nombre de niveaux d'un monde avant de changer d'univers : 16 de compétence + 4 de raisonnement (docs/specs/JEUX-LOGIQUE.md). */
-export const LEVELS_PER_WORLD = 20;
+/**
+ * Nombre de niveaux d'un monde avant de changer d'univers. La carte de lecture compte 104 niveaux : quatre
+ * mondes de 26, de la forêt au château des nuages, sans reboucler (test dans layout.test.ts).
+ */
+export const LEVELS_PER_WORLD = 26;
 
 export type WorldId = 'forest' | 'sea' | 'mountain' | 'clouds';
 /** Ordre des mondes ; au-delà du dernier, on reboucle. */

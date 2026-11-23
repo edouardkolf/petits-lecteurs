@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { LEVELS } from '../../games/reading/levels';
+import { sceneContexts } from './MapScenery';
 import {
   BACKDROP_HEIGHT,
   BORDER_HALF,
@@ -42,6 +44,28 @@ import {
 } from './layout';
 
 const WIDTH = 412;
+
+describe('carte de lecture : quatre mondes, jusqu\'au château des nuages', () => {
+  it('les niveaux de lecture remplissent exactement les quatre mondes', () => {
+    expect(LEVELS.length).toBe(WORLD_ORDER.length * LEVELS_PER_WORLD);
+  });
+
+  it('forêt 1-26, mer 27-52, montagne 53-78, nuages 79-104, le dernier niveau dans les nuages', () => {
+    const count = LEVELS.length;
+    const bands = worldBands(count);
+    expect(bands.map((b) => b.world)).toEqual(['forest', 'sea', 'mountain', 'clouds']);
+    expect(worldIndexForLevel(count - 1)).toBe(3);
+    expect(worldIdAt(worldIndexForLevel(count - 1))).toBe('clouds');
+    expect(passages(count, WIDTH).map((p) => p.kind)).toEqual(['pier', 'pass', 'summit']);
+  });
+
+  it('le chemin s\'achève au château des nuages, seule fin de parcours', () => {
+    const ctxs = sceneContexts(LEVELS.length, WIDTH);
+    expect(ctxs.at(-1)!.band.world).toBe('clouds');
+    expect(ctxs.at(-1)!.end).not.toBeNull();
+    expect(ctxs.slice(0, -1).every((c) => c.end === null)).toBe(true);
+  });
+});
 
 describe('mondes', () => {
   it('change de monde tous les LEVELS_PER_WORLD niveaux, puis reboucle', () => {
