@@ -174,6 +174,14 @@ async function waitReady(question: Locator): Promise<void> {
   await expect(question).toHaveAttribute('data-ready', 'true', { timeout: 10_000 });
 }
 
+/** Frappes de tambour espacées de plus que l'anti double tap (150 ms) : chacune compte. */
+export async function tapDrum(page: Page, drum: Locator, times: number): Promise<void> {
+  for (let i = 0; i < times; i += 1) {
+    await drum.click();
+    await page.waitForTimeout(170);
+  }
+}
+
 /**
  * Répond juste à la question affichée : tambour (on tape `data-answer` fois, puis la coche `drum-ok`) ou
  * choix `data-choice=<data-answer>`. Rend ce qui a été joué.
@@ -200,13 +208,13 @@ export async function answerCurrent(
     if (wrongFirst && !info.guided) {
       // Mauvais nombre de frappes, validé par la coche : les points s'effacent et elle recommence.
       const wrong = info.answer === '1' ? 2 : 1;
-      for (let i = 0; i < wrong; i += 1) await drum.click();
+      await tapDrum(page, drum, wrong);
       await question.locator('[data-choice="drum-ok"]').click();
       info.wrongChoice = String(wrong);
       await expect(question.locator('[data-taps]')).toHaveAttribute('data-taps', '0');
       if (afterWrong) await afterWrong(info, page);
     }
-    for (let i = 0; i < Number(info.answer); i += 1) await drum.click();
+    await tapDrum(page, drum, Number(info.answer));
     await question.locator('[data-choice="drum-ok"]').click();
   } else {
     if (wrongFirst && !info.guided) {
@@ -258,7 +266,7 @@ export async function playFullSession(
     await waitReady(question);
     const game = await question.getAttribute('data-game');
     // Erreur volontaire seulement sur un jeu à lettres ou syllabes : ce sont les seuls choix qui « chantent ».
-    const lettered = ['letter-sound', 'first-sound', 'syllable-machine', 'letter-twins'].includes(game ?? '');
+    const lettered = ['letter-sound', 'sound-gate', 'first-sound', 'syllable-machine', 'letter-twins'].includes(game ?? '');
     const guided = (await question.getAttribute('data-guided')) === 'true';
     const retry = (await question.getAttribute('data-retry')) === 'true';
     const eligible = (errOnce && !erred && lettered && !guided) || (missed < missFirst && !guided && !retry);

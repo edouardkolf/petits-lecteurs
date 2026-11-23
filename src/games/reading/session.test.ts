@@ -73,6 +73,13 @@ function check(plan: ReturnType<typeof planSession>, progress: ReadingProgress, 
 
   for (const q of qs) {
     expect(gamesForItem(q.itemId), `${label} : jeu ${q.game} pour ${q.itemId}`).toContain(q.game);
+    // Rappel court : le stimulus seul, jamais la phrase de consigne (LECTURE.md §9.10).
+    expect(q.shortPrompt.length, `${label} ${q.game}`).toBeLessThanOrEqual(q.prompt.length);
+    for (const step of q.shortPrompt) {
+      if ('text' in step) expect(step.text, `${label} ${q.game}`).not.toMatch(/Touche|Qui |Par quoi|Quel mot/);
+    }
+    if (q.game === 'mystery-word') expect(q.shortPrompt).toEqual([]);
+    else expect(q.shortPrompt.some((st) => 'text' in st), `${label} ${q.game}`).toBe(true);
     if (q.game === 'syllable-drum') {
       expect(q.choices).toHaveLength(0);
       expect(['1', '2', '3']).toContain(q.answer);

@@ -6,12 +6,13 @@ import type { SpeechStep } from '../../socle/ui/voice';
 export type ReadingStage = 1 | 2 | 3 | 4 | 5;
 export const READING_STAGES: readonly ReadingStage[] = [1, 2, 3, 4, 5];
 
-/** Les neuf jeux (LECTURE.md §4). */
+/** Les dix jeux (LECTURE.md §4). */
 export const READING_GAMES = [
   'syllable-drum', // taper une fois par syllabe
   'same-start', // qui commence pareil ?
   'same-end', // qui finit pareil ? (rime)
   'letter-sound', // la lettre qui chante : son → lettre
+  'sound-gate', // « A ou pas A ? » : son → la lettre ou « pas A » (seule lettre connue : A)
   'first-sound', // par quoi ça commence ? image → lettre
   'word-start', // trouve le mot qui commence par… : son → image (première lettre seule connue)
   'syllable-machine', // fusion : syllabe entendue → syllabe écrite
@@ -119,7 +120,7 @@ export interface ReadingProgress {
 
 // ---------- Questions et séances ----------
 
-export type ChoiceKind = 'letter' | 'lower' | 'syllable' | 'picture' | 'word';
+export type ChoiceKind = 'letter' | 'lower' | 'syllable' | 'picture' | 'word' | 'none';
 
 export interface ReadingChoice {
   /** Valeur envoyée à `onChoose`, unique dans la question (`data-choice`). */
@@ -152,6 +153,11 @@ export interface ReadingQuestion {
   answer: string;
   /** Consigne et stimulus parlés, joués à l'arrivée de la question et par le bouton haut-parleur. */
   prompt: readonly SpeechStep[];
+  /**
+   * Rappel court : le stimulus seul (le son, le mot…), dit à la place de `prompt` dès la 2e question d'un jeu dans
+   * la séance (LECTURE.md §9.10). Vide : la voix ne dit rien (mot mystère).
+   */
+  shortPrompt: readonly SpeechStep[];
   /** true : après la consigne, la voix énumère les choix (`choice.speech`) en les mettant en avant. */
   speakChoices: boolean;
   /** Dit après une bonne réponse (ex. « la, comme lama »), ou vide. */
@@ -221,4 +227,9 @@ export interface ReadingViewProps {
    * sans rien valider. Les choix de réponse, eux, ne font jamais répéter : toucher un choix = répondre.
    */
   onReplayModel: () => void;
+  /**
+   * Petit haut-parleur d'un choix image (commence pareil, finit pareil, quel mot commence par) : la voix dit le mot
+   * du choix (`choice.speech`) sans répondre ni griser. Compté dans `replays`.
+   */
+  onReplayChoice: (choiceId: string) => void;
 }

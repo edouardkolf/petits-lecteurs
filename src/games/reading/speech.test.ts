@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { GRAPHEMES, SYLLABLES } from './curriculum';
 import { PICTURES } from './pictures';
-import { BLEND_PAUSE_MS, SOUND_RATE, benchEntries, gameInstruction, machinePrompt, nameText, soundText, syllableText, wordStartPraise, wordStartPrompt } from './speech';
+import { BLEND_PAUSE_MS, SOUND_RATE, benchEntries, gameInstruction, machineCue, machinePrompt, nameText, shortSoundCue, shortWordCue, soundGateNonePraise, soundGatePrompt, soundText, syllableText, twinsCue, wordStartPraise, wordStartPrompt } from './speech';
 import { READING_GAMES } from './types';
 
 describe('soundText', () => {
@@ -64,6 +64,25 @@ describe('gameInstruction', () => {
   it('« quel mot commence par » : le son est dit seul, à débit lent, après la consigne', () => {
     expect(wordStartPrompt('a')).toEqual([{ text: 'Quel mot commence par' }, { pauseMs: 300 }, { text: 'a', rate: SOUND_RATE }]);
     expect(wordStartPraise('avion', 'a')).toEqual([{ text: 'avion', rate: SOUND_RATE }, { pauseMs: 250 }, { text: 'a', rate: SOUND_RATE }]);
+  });
+});
+
+describe('rappels courts', () => {
+  it('le stimulus seul : le mot, le son, la fusion sans « Touche »', () => {
+    expect(shortWordCue('lapin')).toEqual([{ text: 'lapin', rate: SOUND_RATE }]);
+    expect(shortSoundCue('m')).toEqual([{ text: 'meu', rate: SOUND_RATE }]);
+    expect(machineCue('l', 'a', 'la')).toEqual(machinePrompt('l', 'a', 'la').slice(0, 5));
+    expect(machineCue('l', 'a', 'la').some((s) => 'text' in s && s.text === 'Touche')).toBe(false);
+    expect(twinsCue()).toEqual([{ text: 'En petit.' }]);
+  });
+});
+
+describe('« A ou pas A ? »', () => {
+  it('consigne complète puis le son ; bravo court pour « pas a »', () => {
+    expect(soundGatePrompt('i')).toEqual([{ text: gameInstruction('sound-gate') }, { pauseMs: 500 }, { text: 'i', rate: SOUND_RATE }]);
+    expect(soundGatePrompt('m')[2]).toEqual({ text: 'meu', rate: SOUND_RATE });
+    expect(soundGateNonePraise()).toEqual([{ text: 'Bravo !' }]);
+    expect(gameInstruction('sound-gate')).toContain('nuage');
   });
 });
 

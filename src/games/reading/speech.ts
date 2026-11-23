@@ -58,6 +58,7 @@ const INSTRUCTIONS: Readonly<Record<ReadingGameId, string>> = {
   'same-start': 'Écoute les mots. Touche celui qui commence pareil.',
   'same-end': 'Écoute les mots. Touche celui qui finit pareil.',
   'letter-sound': 'Écoute le son. Touche la lettre qui chante.',
+  'sound-gate': "Écoute. Si c'est le son a, touche la lettre. Sinon, touche le nuage barré.",
   'first-sound': "Regarde l'image. Touche la lettre par laquelle ça commence.",
   'word-start': "Écoute le son. Touche l'image du mot qui commence par ce son.",
   'syllable-machine': 'Écoute la syllabe. Touche la même.',
@@ -107,6 +108,16 @@ export function letterSoundPrompt(grapheme: GraphemeId): SpeechStep[] {
   return [{ text: 'Touche la lettre qui chante.' }, pause(500), soundStep(grapheme)];
 }
 
+/** « A ou pas A ? » : consigne complète, pause, puis le son à juger. */
+export function soundGatePrompt(grapheme: GraphemeId): SpeechStep[] {
+  return [{ text: gameInstruction('sound-gate') }, pause(500), soundStep(grapheme)];
+}
+
+/** Bonne réponse « pas A » : un bravo court (aucun mot à nommer). */
+export function soundGateNonePraise(): SpeechStep[] {
+  return [{ text: 'Bravo !' }];
+}
+
 export function firstSoundPrompt(w: string): SpeechStep[] {
   return [word(w), pause(300), { text: 'Par quoi ça commence ?' }];
 }
@@ -129,6 +140,28 @@ export function machinePrompt(first: GraphemeId, second: GraphemeId, syllable: s
     pause(300),
     syllableStep(syllable),
   ];
+}
+
+/**
+ * Rappels courts (LECTURE.md §9.10) : dès la 2e question d'un jeu, la voix ne dit que le stimulus, la consigne
+ * complète n'ayant été dite qu'à la première. Le mot, le son ou la syllabe, rien d'autre.
+ */
+export function shortWordCue(w: string): SpeechStep[] {
+  return [word(w)];
+}
+
+export function shortSoundCue(grapheme: GraphemeId): SpeechStep[] {
+  return [soundStep(grapheme)];
+}
+
+/** Fusion sans la phrase « Touche » : son 1, pause, son 2, pause, syllabe. */
+export function machineCue(first: GraphemeId, second: GraphemeId, syllable: string): SpeechStep[] {
+  return [soundStep(first), pause(BLEND_PAUSE_MS), soundStep(second), pause(BLEND_PAUSE_MS), syllableStep(syllable)];
+}
+
+/** Jumelles : seulement « en petit », la capitale est affichée. */
+export function twinsCue(): SpeechStep[] {
+  return [{ text: 'En petit.' }];
 }
 
 export function twinsPrompt(): SpeechStep[] {

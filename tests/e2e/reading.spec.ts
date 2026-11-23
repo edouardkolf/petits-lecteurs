@@ -16,6 +16,7 @@ import {
   readReadings,
   spokenTexts,
   startCurrentLevel,
+  tapDrum,
 } from './reading-helpers';
 
 let jsErrors: string[] = [];
@@ -117,11 +118,18 @@ test('niveau 1 (tambour seul, 5 questions) gagné → le niveau 2 s’ouvre sur 
   // Niveau 2 : la première lettre, à la deuxième séance.
   await startCurrentLevel(page);
   await expect(page.getByTestId('reading-dots').locator('.rd-dot')).toHaveCount(5);
+  await expect(page.getByTestId('reading-question')).toHaveAttribute('data-game', 'sound-gate');
   const letters = await playFullSession(page);
+  // « A ou pas A ? » : la lettre ou le nuage barré, les deux réponses reviennent dans la séance.
   for (const q of letters) {
-    expect(q.game).toBe('letter-sound');
-    expect(q.answer).toBe('a');
+    expect(q.game).toBe('sound-gate');
+    expect(q.item).toBe('g:a');
+    expect(['a', 'none']).toContain(q.answer);
   }
+  const real = letters.filter((q) => !q.guided);
+  expect(real.filter((q) => q.answer === 'a').length).toBeGreaterThanOrEqual(2);
+  expect(real.filter((q) => q.answer === 'none').length).toBeGreaterThanOrEqual(2);
+  await expect(page.getByTestId('reading-end')).toHaveAttribute('data-passed', 'true');
   await finishEnd(page);
   await expect(page.getByTestId('reading-level-2')).toHaveAttribute('data-state', 'done');
   await expect(currentLevel(page)).toHaveAttribute('data-level', 'drum-2');
@@ -135,6 +143,50 @@ test('niveau 1 (tambour seul, 5 questions) gagné → le niveau 2 s’ouvre sur 
   await expect(page.getByTestId('reading-session')).toBeVisible();
   await page.getByTestId('to-map').click();
   await expect(page.getByTestId('adventure-map')).toBeVisible();
+});
+
+// ==================== 1b. Tambour : effacer et anti double tap ====================
+
+test('tambour : « effacer » retire la dernière frappe, un double tap involontaire ne compte qu’une fois', async ({ page }) => {
+  await installFakeVoice(page, 'fr');
+  await onboardMs(page, 'Alice');
+  await chooseProfile(page, 'Alice');
+  await openReading(page);
+  await startCurrentLevel(page);
+  const question = page.getByTestId('reading-question');
+  await expect(question).toHaveAttribute('data-ready', 'true', { timeout: 10_000 });
+  const drum = question.locator('[data-choice="drum"]');
+  const undo = question.getByTestId('drum-undo');
+  const taps = question.locator('[data-taps]');
+  const dots = question.locator('.rv-dot--on');
+
+  // « Effacer » n'est pas un choix de réponse et reste caché tant qu'il n'y a pas de frappe.
+  await expect(undo).toBeHidden();
+  await expect(undo).not.toHaveAttribute('data-choice', /.*/);
+  await tapDrum(page, drum, 1);
+  await expect(undo).toBeVisible();
+  const box = await undo.boundingBox();
+  expect(box!.width).toBeGreaterThanOrEqual(72);
+  expect(box!.height).toBeGreaterThanOrEqual(72);
+
+  // Deux touchers à quelques millisecondes d'écart : un seul compte.
+  await drum.evaluate((el) => {
+    (el as HTMLElement).click();
+    (el as HTMLElement).click();
+  });
+  await expect(taps).toHaveAttribute('data-taps', '2');
+  await expect(dots).toHaveCount(2);
+
+  // Chaque toucher d'« effacer » retire un point, sans valider ni répondre.
+  await undo.click();
+  await expect(taps).toHaveAttribute('data-taps', '1');
+  await expect(dots).toHaveCount(1);
+  await undo.click();
+  await expect(taps).toHaveAttribute('data-taps', '0');
+  await expect(dots).toHaveCount(0);
+  await expect(undo).toBeHidden();
+  await expect(question).not.toHaveAttribute('data-solved', 'true');
+  await expect(page.getByTestId('reading-dots').locator('.rd-dot[data-state="done"]')).toHaveCount(0);
 });
 
 // ==================== 2. Niveau raté : on le rejoue ====================
@@ -197,8 +249,9 @@ test('erreur volontaire : le choix se grise, la lettre touchée chante, la quest
       }
       spokenBefore = (await spokenTexts(p)).length;
     },
-    afterWrong: async (_info, p) => {
-      // La lettre touchée dit son propre son.
+    afterWrong: async (info, p) => {
+      // La lettre touchée dit son propre son (le nuage « pas A » ne dit rien).
+      if (info.wrongChoice === 'none') return;
       await expect.poll(async () => (await spokenTexts(p)).length).toBeGreaterThan(spokenBefore);
     },
   });
@@ -272,7 +325,7 @@ test('étape de départ 2 (réglage parent) : le parcours reprend à la lettre A
 
   await startCurrentLevel(page);
   const played = await playFullSession(page);
-  for (const q of played) expect(q.game).toBe('letter-sound');
+  for (const q of played) expect(q.game).toBe('sound-gate');
   await finishEnd(page);
 
   const records = await readReadings(page);
@@ -373,7 +426,7 @@ test('étape de départ 2 : « la lettre qui chante » puis le niveau 4 « quel 
   await onboardMs(page, 'Alice', 2);
   await chooseProfile(page, 'Alice');
   await openReading(page);
-  expect(await playCurrent(page, 'letter-sound', 5)).toBe('sound-a');
+  expect(await playCurrent(page, 'sound-gate', 5)).toBe('sound-a');
   await expect(page.getByTestId('reading-level-4')).toHaveAttribute('data-level', 'first-a');
   await expect(page.getByTestId('reading-level-4')).toHaveAttribute('data-game', 'word-start');
   // Niveau 4 : 2 images au choix, la bonne se touche par data-answer ; une image fausse se grise.
@@ -384,16 +437,50 @@ test('étape de départ 2 : « la lettre qui chante » puis le niveau 4 « quel 
   await expect(question).toHaveAttribute('data-item', 'g:a');
   await expect(question.locator('[data-choice]')).toHaveCount(2);
   await expect(page.getByTestId('reading-model')).toBeVisible();
-  const played = await playFullSession(page, { missFirst: 1 });
+  let checkedSpeakers = false;
+  const played = await playFullSession(page, {
+    missFirst: 1,
+    beforeAnswer: async (info, p) => {
+      if (info.guided || checkedSpeakers) return;
+      checkedSpeakers = true;
+      // Chaque image a son petit haut-parleur : bien séparé de la tuile (≥ 56 px, ≥ 12 px d'écart).
+      const tiles = question.locator('[data-choice]');
+      for (let i = 0; i < 2; i += 1) {
+        const id = (await tiles.nth(i).getAttribute('data-choice')) as string;
+        const tile = (await tiles.nth(i).boundingBox())!;
+        const speaker = (await question.getByTestId(`reading-choice-speaker-${id}`).boundingBox())!;
+        expect(speaker.width).toBeGreaterThanOrEqual(56);
+        expect(speaker.height).toBeGreaterThanOrEqual(56);
+        expect(speaker.y - (tile.y + tile.height)).toBeGreaterThanOrEqual(12);
+      }
+      // Toucher le haut-parleur d'une image dit son mot, sans répondre : ni tuile grisée, ni question résolue.
+      const decoy = question.locator(`[data-choice]:not([data-choice="${info.answer}"])`);
+      const decoyId = (await decoy.getAttribute('data-choice')) as string;
+      const before = (await spokenTexts(p)).length;
+      await question.getByTestId(`reading-choice-speaker-${decoyId}`).click();
+      await expect.poll(async () => (await spokenTexts(p)).length).toBeGreaterThan(before);
+      const said = (await spokenTexts(p)).at(-1) as string;
+      const plain = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      expect(plain(said)).toBe(plain(decoyId));
+      await expect(decoy).not.toHaveClass(/rv-choice--wrong/);
+      await expect(question).not.toHaveAttribute('data-solved', 'true');
+      await expect(page.getByTestId('reading-dots').locator('.rd-dot[data-state="done"]')).toHaveCount(0);
+    },
+  });
+  expect(checkedSpeakers).toBe(true);
   expect(played.length).toBeGreaterThanOrEqual(5);
   for (const q of played) {
     expect(q.game).toBe('word-start');
     expect(q.item).toBe('g:a');
   }
+  // La consigne complète n'est dite qu'à la première question (la démonstration) : ensuite, seulement le son.
+  expect((await spokenTexts(page)).filter((t) => t === 'Quel mot commence par')).toHaveLength(1);
   await finishEnd(page);
   const record = (await readReadings(page)).find((r) => r.levelId === 'first-a');
   expect(record?.status).toBe('completed');
   expect(record?.answers.every((a) => a.game === 'word-start' && a.itemId === 'g:a')).toBe(true);
+  // Le haut-parleur d'une image compte dans les écoutes de la question, sans faire une réponse.
+  expect(record?.answers.some((a) => a.replays > 0)).toBe(true);
 });
 
 test('étape de départ 4 : la machine à syllabes a son niveau à elle', async ({ page }) => {

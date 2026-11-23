@@ -23,3 +23,32 @@ export function Speaker() {
     </div>
   );
 }
+
+/**
+ * Petit haut-parleur d'un choix image : dit le mot sans répondre. Un bouton à part (≥ 56 px), posé sous la tuile
+ * et bien écarté d'elle, pour qu'un enfant ne réponde jamais par accident.
+ */
+export function ChoiceSpeaker({
+  id,
+  inert,
+  onTap,
+}: {
+  id: string;
+  inert: boolean;
+  onTap: (choiceId: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      class="rv-choice-speaker"
+      data-testid={`reading-choice-speaker-${id}`}
+      aria-label="écouter le mot"
+      aria-disabled={inert ? "true" : "false"}
+      onClick={() => {
+        if (!inert) onTap(id);
+      }}
+    >
+      <Speaker />
+    </button>
+  );
+}

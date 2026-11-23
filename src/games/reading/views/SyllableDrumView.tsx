@@ -1,14 +1,40 @@
 // « Le tambour » : l'enfant tape une fois par syllabe (la vue compte), puis touche la coche pour valider.
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { Icon } from "../../../socle/ui/icons/Icon";
 import { playTap } from "../../../socle/ui/sound";
 import type { ReadingViewProps } from "../types";
 import { PictureCard } from "./PictureCard";
 import {
+  acceptTap,
   addTap,
   DRUM_MAX_TAPS,
   drumPulseTimes,
+  removeTap,
 } from "./logic";
+
+/** Flèche qui revient en arrière : « effacer la dernière frappe » (aucun texte). */
+function UndoArt() {
+  return (
+    <svg viewBox="0 0 48 48" class="rv-undo-art" aria-hidden="true">
+      <path
+        d="M17 14L8 23l9 9"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="5.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M9 23h19a10 10 0 0 1 0 20h-6"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="5.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  );
+}
 
 function DrumArt() {
   return (
@@ -37,10 +63,13 @@ export function SyllableDrumView(props: ReadingViewProps) {
   const [bounce, setBounce] = useState(0);
   const [pulseKey, setPulseKey] = useState(0);
   const [ring, setRing] = useState(false);
+  // Instant de la dernière frappe acceptée (anti double tap).
+  const lastHitRef = useRef<number | null>(null);
 
   // Nouvelle question ou erreur : les points s'effacent, on recommence.
   useEffect(() => {
     setTaps(0);
+    lastHitRef.current = null;
   }, [question, wrongChoices.length]);
 
   // Relance : le tambour pulse `answer` fois en rythme.
@@ -71,9 +100,20 @@ export function SyllableDrumView(props: ReadingViewProps) {
 
   const hit = () => {
     if (inert) return;
+    const now = Date.now();
+    if (!acceptTap(now, lastHitRef.current)) return;
+    lastHitRef.current = now;
     playTap();
     setTaps((n) => addTap(n));
     setBounce((b) => b + 1);
+  };
+
+  // « Effacer » : visible dès la première frappe ; retire la dernière, sans compter comme une réponse.
+  const canUndo = !inert && taps > 0;
+  const undo = () => {
+    if (!canUndo) return;
+    lastHitRef.current = null;
+    setTaps((n) => removeTap(n));
   };
 
   const validate = () => {
@@ -116,6 +156,16 @@ export function SyllableDrumView(props: ReadingViewProps) {
         </span>
       </button>
       <div class="rv-drum-foot">
+        <button
+          type="button"
+          class={canUndo ? "rv-drum-undo" : "rv-drum-undo rv-drum-undo--hidden"}
+          data-testid="drum-undo"
+          aria-disabled={canUndo ? "false" : "true"}
+          aria-label="effacer"
+          onClick={undo}
+        >
+          <UndoArt />
+        </button>
         <div class="rv-dots" aria-hidden="true">
           {Array.from({ length: DRUM_MAX_TAPS }, (_, i) => (
             <span

@@ -16,6 +16,7 @@ import type { ReadingLevel } from './levels';
 import { PICTURES, getPicture, isDrumAmbiguous, onsetKey, picturesStartingWith } from './pictures';
 import {
   drumPrompt,
+  machineCue,
   firstSoundPraise,
   firstSoundPrompt,
   letterSoundPraise,
@@ -27,7 +28,12 @@ import {
   readPraise,
   sameEndPrompt,
   sameStartPrompt,
+  shortSoundCue,
+  soundGateNonePraise,
+  soundGatePrompt,
+  shortWordCue,
   soundText,
+  twinsCue,
   twinsPraise,
   twinsPrompt,
   wordStartPraise,
@@ -135,6 +141,8 @@ interface Ctx {
   praiseUsed: Map<GraphemeId, Set<string>>;
   /** Position (0 ou 1) de la bonne image à « quel mot commence par », et combien de fois de suite. */
   wordStartSide: { pos: number; run: number };
+  /** Sons « pas A » déjà posés dans la séance. */
+  usedGateSounds: Set<GraphemeId>;
 }
 
 function newCtx(progress: ReadingProgress, rng: Rng): Ctx {
@@ -148,6 +156,7 @@ function newCtx(progress: ReadingProgress, rng: Rng): Ctx {
     blendStopShort: 0,
     praiseUsed: new Map(),
     wordStartSide: { pos: -1, run: 0 },
+    usedGateSounds: new Set(),
   };
 }
 
@@ -211,6 +220,44 @@ interface Slot {
   forNew: boolean;
   /** Première question de l'item nouveau : la présentation. */
   presentation: boolean;
+  /** « A ou pas A ? » : la réponse attendue de cette question (fixée pour toute la séance par `soundGateAnswers`). */
+  gate?: GateAnswer;
+}
+
+// ---------- « A ou pas A ? » ----------
+
+/** Réponse d'une question « A ou pas A ? » : la lettre (`a`) ou le nuage barré (`none`). */
+export type GateAnswer = 'a' | 'none';
+
+/**
+ * Sons qui servent de « pas A » : très éloignés de « a ». Jamais é (couple a/é), ni an, ai, au (sonnent comme « a »).
+ * On prend les textes de voix existants (speech.ts) : i, o, ou, « meu », « leu ».
+ */
+export const SOUND_GATE_OTHERS: readonly GraphemeId[] = ['i', 'o', 'ou', 'm', 'l'];
+export const SOUND_GATE_EXCLUDED: readonly GraphemeId[] = ['é', 'an', 'ai', 'au'];
+/** Au plus autant de fois de suite la même réponse. */
+export const GATE_MAX_RUN = 2;
+
+/**
+ * Suite des réponses d'une séance « A ou pas A ? » : la première est « a » (la présentation), au moins 2 « a » et
+ * 2 « pas a », jamais plus de 2 identiques d'affilée. Déterministe pour une graine.
+ */
+export function soundGateAnswers(n: number, rng: Rng): GateAnswer[] {
+  const minEach = Math.min(2, Math.floor(n / 2));
+  const found: GateAnswer[][] = [];
+  const walk = (seq: GateAnswer[]): void => {
+    if (seq.length === n) {
+      const as = seq.filter((x) => x === 'a').length;
+      if (as >= minEach && n - as >= minEach) found.push(seq);
+      return;
+    }
+    for (const next of ['a', 'none'] as const) {
+      const run = seq.length >= GATE_MAX_RUN && seq.slice(-GATE_MAX_RUN).every((x) => x === next);
+      if (!run) walk([...seq, next]);
+    }
+  };
+  walk(['a']);
+  return found.length > 0 ? rng.pick(found) : Array.from({ length: n }, (_, i): GateAnswer => (i % 2 === 0 ? 'a' : 'none'));
 }
 
 function makeLetterSound(ctx: Ctx, slot: Slot): ReadingQuestion | null {
@@ -234,6 +281,7 @@ function makeLetterSound(ctx: Ctx, slot: Slot): ReadingQuestion | null {
     choices: ctx.rng.shuffle([id, ...decoys]).map(letterChoice),
     answer: id,
     prompt: slot.presentation ? [...presentationSteps(id, keyword), ...base] : base,
+    shortPrompt: slot.presentation ? [...presentationSteps(id, keyword), ...shortSoundCue(id)] : shortSoundCue(id),
     speakChoices: false,
     praise: letterSoundPraise(id, praisePic ? praisePic.word : keyword),
     ...(praisePic ? { praisePicture: praisePic.id } : {}),
@@ -261,6 +309,57 @@ function pickPraisePicture(ctx: Ctx, id: GraphemeId, keyword: Picture | undefine
   return pic;
 }
 
+function noneChoice(): ReadingChoice {
+  return { id: 'none', kind: 'none' };
+}
+
+function makeSoundGate(ctx: Ctx, slot: Slot): ReadingQuestion | null {
+  const id = slot.item.slice(2);
+  const gr = getGrapheme(id);
+  if (!gr) return null;
+  const choices = [letterChoice(id), noneChoice()];
+  if (slot.gate === 'none') {
+    // Un autre son, jamais le même deux fois dans la séance tant qu'il en reste.
+    const pool = SOUND_GATE_OTHERS.filter((g) => g !== id);
+    const fresh = pool.filter((g) => !ctx.usedGateSounds.has(g));
+    const other = ctx.rng.pick(fresh.length > 0 ? fresh : pool);
+    ctx.usedGateSounds.add(other);
+    return {
+      game: 'sound-gate',
+      itemId: slot.item,
+      target: other,
+      stimulus: { kind: 'sound', grapheme: other },
+      choices,
+      answer: 'none',
+      prompt: soundGatePrompt(other),
+      shortPrompt: shortSoundCue(other),
+      speakChoices: false,
+      praise: soundGateNonePraise(),
+      isNew: false,
+    };
+  }
+  const kw = keywordPicture(id);
+  const keyword = kw && kw.firstSound === id ? kw : undefined;
+  // Comme « la lettre qui chante » : le mot repère présente la lettre, les bonnes réponses « a » disent des mots variés.
+  const praisePic = slot.presentation ? undefined : pickPraisePicture(ctx, id, keyword);
+  if (slot.presentation && keyword) markPraiseUsed(ctx, id, keyword.id);
+  const intro = slot.presentation ? presentationSteps(id, keyword ? keyword.word : null) : [];
+  return {
+    game: 'sound-gate',
+    itemId: slot.item,
+    target: id,
+    stimulus: { kind: 'sound', grapheme: id },
+    choices,
+    answer: id,
+    prompt: [...intro, ...soundGatePrompt(id)],
+    shortPrompt: [...intro, ...shortSoundCue(id)],
+    speakChoices: false,
+    praise: letterSoundPraise(id, praisePic ? praisePic.word : keyword ? keyword.word : null),
+    ...(praisePic ? { praisePicture: praisePic.id } : {}),
+    isNew: slot.presentation,
+  };
+}
+
 function makeFirstSound(ctx: Ctx, slot: Slot): ReadingQuestion | null {
   const id = slot.item.slice(2);
   const pic = pickUnused(ctx, picturesStartingWith(id), (p) => p.id);
@@ -279,6 +378,7 @@ function makeFirstSound(ctx: Ctx, slot: Slot): ReadingQuestion | null {
     choices: ctx.rng.shuffle([id, ...decoys]).map(letterChoice),
     answer: id,
     prompt: firstSoundPrompt(pic.word),
+    shortPrompt: shortWordCue(pic.word),
     speakChoices: false,
     praise: firstSoundPraise(pic.word, id),
     isNew: slot.presentation,
@@ -326,6 +426,7 @@ function makeWordStart(ctx: Ctx, slot: Slot): ReadingQuestion | null {
     choices: picks.map((p) => pictureChoice(p, true)),
     answer: pic.id,
     prompt: wordStartPrompt(id),
+    shortPrompt: shortSoundCue(id),
     speakChoices: true,
     praise: wordStartPraise(pic.word, id),
     isNew: slot.presentation,
@@ -354,6 +455,7 @@ function makeDrum(ctx: Ctx, slot: Slot): ReadingQuestion | null {
     choices: [],
     answer: String(pic.syllables.length),
     prompt: drumPrompt(pic.word),
+    shortPrompt: drumPrompt(pic.word),
     speakChoices: false,
     praise: [],
     isNew: slot.presentation,
@@ -444,6 +546,7 @@ function makePairQuestion(ctx: Ctx, slot: Slot, kind: 'start' | 'end'): ReadingQ
     choices: ctx.rng.shuffle([answer, ...decoys]).map((p) => pictureChoice(p, true)),
     answer: answer.id,
     prompt: kind === 'start' ? sameStartPrompt(model.word) : sameEndPrompt(model.word),
+    shortPrompt: shortWordCue(model.word),
     speakChoices: true,
     praise: pairPraise(model.word, answer.word, kind),
     isNew: slot.presentation,
@@ -500,6 +603,7 @@ function makeMachine(ctx: Ctx, slot: Slot): ReadingQuestion | null {
     choices: ctx.rng.shuffle([target, ...decoys]).map((s): ReadingChoice => ({ id: s.id, kind: 'syllable', label: s.id.toUpperCase() })),
     answer: target.id,
     prompt: machinePrompt(target.onset, target.vowel, target.id),
+    shortPrompt: machineCue(target.onset, target.vowel, target.id),
     speakChoices: false,
     praise: machinePraise(target.id, pic ? pic.word : null),
     isNew: slot.presentation,
@@ -534,6 +638,7 @@ function makeMystery(ctx: Ctx, slot: Slot): ReadingQuestion | null {
     choices: ctx.rng.shuffle([word, ...decoys]).map((w) => ({ id: w.picture, kind: 'picture' as const, picture: w.picture })),
     answer: word.picture,
     prompt: [],
+    shortPrompt: [],
     speakChoices: false,
     praise: readPraise(word.text),
     isNew: slot.presentation,
@@ -572,6 +677,7 @@ function makeTwins(ctx: Ctx, slot: Slot): ReadingQuestion | null {
     choices: ctx.rng.shuffle([target, ...two]).map(lowerChoice),
     answer: target,
     prompt: twinsPrompt(),
+    shortPrompt: twinsCue(),
     speakChoices: false,
     praise: twinsPraise(target),
     isNew: slot.presentation,
@@ -588,6 +694,8 @@ function makeQuestion(ctx: Ctx, slot: Slot): ReadingQuestion | null {
       return makePairQuestion(ctx, slot, 'end');
     case 'letter-sound':
       return makeLetterSound(ctx, slot);
+    case 'sound-gate':
+      return makeSoundGate(ctx, slot);
     case 'first-sound':
       return makeFirstSound(ctx, slot);
     case 'word-start':
@@ -809,6 +917,7 @@ function emergencyDrum(index: number): ReadingQuestion {
     choices: [],
     answer: String(pic.syllables.length),
     prompt: drumPrompt(pic.word),
+    shortPrompt: drumPrompt(pic.word),
     speakChoices: false,
     praise: [],
     isNew: false,
@@ -826,6 +935,7 @@ function emergencyPlan(progress: ReadingProgress, rng: Rng): ReadingSessionPlan 
       choices: [],
       answer: String(pic.syllables.length),
       prompt: drumPrompt(pic.word),
+      shortPrompt: drumPrompt(pic.word),
       speakChoices: false,
       praise: [],
       isNew: false,
@@ -892,6 +1002,10 @@ function levelSlots(level: ReadingLevel, rng: Rng): Slot[] {
   if (level.game === 'word-start') {
     // Toutes les questions portent sur la lettre du niveau, chacune avec une image cible différente.
     return Array.from({ length: n }, () => plain(level.item, true));
+  }
+  if (level.game === 'sound-gate') {
+    // La première question présente la lettre (« a… comme avion ») ; les réponses suivent `soundGateAnswers`.
+    return soundGateAnswers(n, rng).map((gate, i) => ({ ...plain(level.item, true, i === 0), gate }));
   }
   if (level.game !== 'letter-sound' && level.game !== 'first-sound') {
     return Array.from({ length: n }, () => plain(level.item));

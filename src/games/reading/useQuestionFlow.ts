@@ -21,16 +21,19 @@ import {
   currentQuestion,
   dotsProgress,
   guidedTargets,
+  hintPrompt,
   initFlow,
   isDemoTurn,
+  isFirstOfGame,
   isFlowOver,
   isRetryTurn,
   nextQuestion,
+  promptFor,
   recordFirstAttempt,
   soundOfChoice,
   type FlowState, modelSpeech } from './flow';
 import { gameInstruction, SOUND_RATE, soundText, syllableText } from './speech';
-import type { ReadingAnswer, ReadingQuestion, ReadingSessionPlan, ReadingViewProps } from './types';
+import type { ReadingAnswer, ReadingGameId, ReadingQuestion, ReadingSessionPlan, ReadingViewProps } from './types';
 
 /** Attente maximale de la voix avant d'activer les choix (LECTURE.md §11). */
 export const ACTIVATE_MAX_MS = 6000;
@@ -127,6 +130,8 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
   const hintTimerRef = useRef<number | null>(null);
   const timersRef = useRef(new Set<number>());
   const unmountedRef = useRef(false);
+  /** Jeux dont la consigne complète a déjà été dite dans cette séance (démonstration comprise). */
+  const fullSpokenRef = useRef(new Set<ReadingGameId>());
   const recordRef = useRef<RecordSlot>({ id: null, closed: false });
   const writeQueueRef = useRef<Promise<void>>(Promise.resolve());
   const clock = useActiveClock();
@@ -243,12 +248,16 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
     return result === 'ended';
   }
 
-  /** Consigne (précédée de la consigne du jeu en démonstration), puis énumération des choix. */
+  /**
+   * Consigne (précédée de la consigne du jeu en démonstration), puis énumération des choix. `full` : consigne
+   * complète et choix énumérés ; sinon le rappel court seul (LECTURE.md §9.10).
+   */
   async function speakQuestion(
     q: ReadingQuestion,
     turnId: number,
     speechId: number,
     withInstruction: boolean,
+    full = true,
   ): Promise<void> {
     try {
       if (withInstruction) {
@@ -257,8 +266,9 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
         await sleep(300);
         if (!speechAlive(turnId, speechId)) return;
       }
-      if (!(await say(q.prompt)) || !speechAlive(turnId, speechId)) return;
-      if (!q.speakChoices) return;
+      const spoken = promptFor(q, { firstOfGame: full });
+      if (!(await say(spoken.steps)) || !speechAlive(turnId, speechId)) return;
+      if (!spoken.enumerate) return;
       for (const choice of q.choices) {
         if (!choice.speech) continue;
         await sleep(ENUM_GAP_MS);
@@ -306,7 +316,7 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
       t.hinted = true;
       setHint(q.answer);
     }
-    void say(q.prompt).then(() => {
+    void say(hintPrompt(q, t.guided)).then(() => {
       if (speechAlive(turnId, speechId)) armHint(turnId);
     });
   }
@@ -331,7 +341,10 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
     setActive(true);
     setTurn(turnId);
     later(() => activate(turnId), ACTIVATE_MAX_MS);
-    void speakQuestion(q, turnId, speechId, demo).then(() => activate(turnId));
+    // Consigne complète à la première question de chaque jeu (la démonstration compte), rappel court ensuite.
+    const full = demo || isFirstOfGame(fullSpokenRef.current, q);
+    fullSpokenRef.current.add(q.game);
+    void speakQuestion(q, turnId, speechId, demo, full).then(() => activate(turnId));
   }
 
   async function finish(state: FlowState) {
@@ -436,7 +449,7 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
     const speechId = ++speechIdRef.current;
     cancelSpeech();
     setSpoken(null);
-    void speakQuestion(q, turnId, speechId, false).then(() => {
+    void speakQuestion(q, turnId, speechId, false, true).then(() => {
       if (!speechAlive(turnId, speechId)) return;
       activate(turnId);
       armHint(turnId);
@@ -457,6 +470,24 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
     cancelSpeech();
     setSpoken(null);
     void say(steps).then(() => {
+      if (turnAlive(turnId)) armHint(turnId);
+    });
+  }
+
+  /** Petit haut-parleur d'un choix image : dit le mot, sans répondre (compté dans `replays`). */
+  function replayChoice(id: string) {
+    const t = turnRef.current;
+    const q = currentQuestion(flowRef.current);
+    if (!q || !t.activated || t.solved || finishing || unmountedRef.current) return;
+    const text = q.choices.find((c) => c.id === id)?.speech;
+    if (!text) return;
+    if (!t.attempted) t.replays += 1;
+    const turnId = turnIdRef.current;
+    clearHintTimer();
+    speechIdRef.current += 1;
+    cancelSpeech();
+    setSpoken(null);
+    void say([{ text, rate: SOUND_RATE }]).then(() => {
       if (turnAlive(turnId)) armHint(turnId);
     });
   }
@@ -498,6 +529,7 @@ export function useQuestionFlow(opts: UseQuestionFlowOptions): QuestionFlow {
           disabled,
           onChoose,
           onReplayModel: replayModel,
+          onReplayChoice: replayChoice,
         };
 
   return {
