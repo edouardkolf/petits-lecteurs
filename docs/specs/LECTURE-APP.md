@@ -65,6 +65,12 @@ de compétences. Le temps du jour reste sur la carte du tableau de bord ; le sui
 - Effet : tous les niveaux sont ouverts pour tous les enfants du téléphone, — carte de lecture
   (état `open`, contour pointillé) et lancement d'un niveau (`levelState(…, { unlockAll })`). Une clé s'affiche en haut de la carte de lecture tant qu'il est actif.
 - Les séances jouées en mode admin sont enregistrées comme les autres : tester avec un profil dédié.
+- **Mode test** (bac à sable) : même bloc caché, bouton « Entrer en mode test ». Drapeau `localStorage`
+  `petits-lecteurs:sandbox` = `1`, lu au démarrage ; l'app recharge sur une base IndexedDB séparée et vide
+  `petits-lecteurs-test` (la vraie base `petits-lecteurs` n'est jamais ouverte) : premier lancement rejoué
+  (code parent, premier enfant, démos, bannières). Une pastille « TEST » reste affichée en bas à gauche ; un appui
+  long (~1,5 s) ouvre « Recommencer » (supprime la base de test, repart du premier lancement) et « Quitter le mode
+  test » (retour aux vraies données et au vrai code), sans code parent. Les mêmes actions sont dans le bloc admin.
 
 ## 6. Tests
 

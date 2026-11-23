@@ -7,7 +7,7 @@ chacune dans son dépôt). Il contient tout ce qui ne dépend pas de ce que l'ap
 |---|---|
 | `app/` | routes par hash et historique (`routes.ts`), minuteur de session et quota (`session.ts`, `SessionProvider.tsx`), profil actif (`context.ts`), mises à jour de la PWA (`updates.ts`) |
 | `parent/` | espace parent : code (PIN), fiches enfant, limites, statistiques, export et import JSON |
-| `storage/` | base IndexedDB (`db.ts`, schéma v5), profils, parties, temps d'usage, réglages, export et import (format v5) |
+| `storage/` | base IndexedDB (`db.ts`, schéma v5 ; nom résolu par `resolveDbName()` : `petits-lecteurs`, ou `petits-lecteurs-test` si le drapeau localStorage du mode test est posé), profils, parties, temps d'usage, réglages, export et import (format v5) |
 | `ui/` | composants et ressources partagés : émojis, icônes, sons, voix, palette, avatars |
 
 ## La règle
