@@ -164,7 +164,7 @@ export function ReadingScreen({ levelId }: ReadingScreenProps) {
           exitTo="map"
         />
       )}
-      {phase === 'end' && end && <ReadingEnd info={end} onContinue={backToMap} />}
+      {phase === 'end' && end && <ReadingEnd info={end} profileId={profile.id} onContinue={backToMap} />}
     </div>
   );
 }

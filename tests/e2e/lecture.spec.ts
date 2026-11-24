@@ -227,6 +227,41 @@ test('mode admin : caché, révélé par 7 tapes, ouvre tous les niveaux de la c
   await expect(page.getByTestId('reading-level-104')).toHaveAttribute('data-state', 'locked');
 });
 
+test('mode admin : la fête suit le monde et l’objet du niveau (étoile en mer, « OU » en montagne)', async ({ page }) => {
+  test.setTimeout(240_000);
+  await installFakeVoice(page, 'fr');
+  await onboardMs(page, 'Alice');
+  await openParentDashboard(page);
+  await page.getByTestId('tab-settings').click();
+  const name = page.getByTestId('app-name');
+  for (let i = 0; i < 7; i += 1) await name.click();
+  await page.getByTestId('toggle-admin').click();
+  await expect(page.getByTestId('toggle-admin')).toHaveAttribute('aria-pressed', 'true');
+  await page.getByTestId('back-to-game').click();
+  await chooseProfile(page, 'Alice');
+  await openAdventure(page);
+
+  // Niveau 27 : tambour, premier niveau de la mer → étoile.
+  // Niveau 58 : « OU », en montagne → la lettre à deux signes.
+  for (const [index, world, object] of [
+    [27, 'mer', 'star'],
+    [58, 'montagne', 'OU'],
+  ] as const) {
+    const node = page.getByTestId(`reading-level-${index}`);
+    await node.scrollIntoViewIfNeeded();
+    await node.click();
+    await expect(page.getByTestId('reading-session')).toBeVisible();
+    await playFullSession(page);
+    await expect(page.getByTestId('reading-end')).toHaveAttribute('data-passed', 'true');
+    const party = page.getByTestId('reading-celebration');
+    await expect(party).toHaveAttribute('data-world', world);
+    await expect(party).toHaveAttribute('data-object', object);
+    await expect(party).toHaveAttribute('data-scene', new RegExp(`^${world}-`));
+    await page.getByTestId('reading-end-continue').click();
+    await expect(page.getByTestId('adventure-map')).toBeVisible();
+  }
+});
+
 test('voix absente : badge sur la tuile de la carte, carte non jouable', async ({ page }) => {
   await installFakeVoice(page, 'absent');
   await onboardMs(page, 'Alice');

@@ -1,0 +1,31 @@
+/* Fête de fin de niveau. Les keyframes de chaque scène sont produites avec la scène (scenes/*.ts) et injectées dans un
+ * <style> au rendu ; ici : le conteneur et les règles communes. */
+.cel {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #cbe8fb;
+}
+
+.cel__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cel__svg * {
+  transform-box: view-box;
+}
+
+/* Un toucher sur la scène, ou mouvement réduit : pose finale tout de suite (l'animation dure 3 s sur 4 s de ligne de
+ * temps ; un délai de -3 s la place déjà à son terme). */
+.cel--skipped *,
+.cel--skipped *::before {
+  animation-delay: -3s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cel * {
+    animation-delay: -3s !important;
+  }
+}

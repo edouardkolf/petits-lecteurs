@@ -98,9 +98,17 @@ test('niveau 1 (tambour seul, 5 questions) gagné → le niveau 2 s’ouvre sur 
   expect(played.filter((q) => q.guided)).toHaveLength(1);
   expect(played.filter((q) => !q.guided)).toHaveLength(5);
 
-  // Niveau gagné : fête, et le niveau suivant s'ouvre.
+  // Niveau gagné : scène de fête de la forêt avec une étoile (niveau de tambour), sans voix, puis le niveau suivant s'ouvre.
   await expect(page.getByTestId('reading-end')).toHaveAttribute('data-passed', 'true');
-  await expect(page.getByTestId('reading-end-next')).toBeVisible();
+  const party = page.getByTestId('reading-celebration');
+  await expect(party).toBeVisible();
+  const spokenAtEnd = (await spokenTexts(page)).length; // les « Bravo ! » de la séance sont déjà dits ; la fête, elle, est muette
+  await expect(party).toHaveAttribute('data-world', 'foret');
+  await expect(party).toHaveAttribute('data-object', 'star');
+  await expect(party).toHaveAttribute('data-scene', /^foret-(ecureuil|herisson|lapin)$/);
+  await expect(page.locator('[data-testid="reading-celebration"] svg')).toBeVisible();
+  await expect(page.getByTestId('reading-end-continue')).toBeVisible({ timeout: 6_000 });
+  expect((await spokenTexts(page)).slice(spokenAtEnd)).toEqual([]);
   await finishEnd(page);
   await expect(page.getByTestId('reading-level-1')).toHaveAttribute('data-state', 'done');
   await expect(currentLevel(page)).toHaveAttribute('data-level', 'sound-a');
@@ -130,6 +138,12 @@ test('niveau 1 (tambour seul, 5 questions) gagné → le niveau 2 s’ouvre sur 
   expect(real.filter((q) => q.answer === 'a').length).toBeGreaterThanOrEqual(2);
   expect(real.filter((q) => q.answer === 'none').length).toBeGreaterThanOrEqual(2);
   await expect(page.getByTestId('reading-end')).toHaveAttribute('data-passed', 'true');
+  // Niveau de lettre : l'objet de la fête est la lettre du niveau (« A ou pas A ? »).
+  await expect(page.getByTestId('reading-celebration')).toHaveAttribute('data-object', 'A');
+  await expect(page.getByTestId('reading-celebration')).toHaveAttribute('data-world', 'foret');
+  const spokenAtEnd2 = (await spokenTexts(page)).length;
+  await expect(page.getByTestId('reading-end-continue')).toBeVisible({ timeout: 6_000 });
+  expect((await spokenTexts(page)).slice(spokenAtEnd2)).toEqual([]);
   await finishEnd(page);
   await expect(page.getByTestId('reading-level-2')).toHaveAttribute('data-state', 'done');
   await expect(currentLevel(page)).toHaveAttribute('data-level', 'drum-2');
@@ -201,7 +215,9 @@ test('3 bonnes réponses sur 5 : pas de fête, le niveau reste à rejouer ; 4 su
   await startCurrentLevel(page);
   await playFullSession(page, { missFirst: 2 });
   await expect(page.getByTestId('reading-end')).toHaveAttribute('data-passed', 'false');
-  await expect(page.getByTestId('reading-end-next')).toHaveCount(0);
+  // Pas de fête : l'écran sobre, la voix invite à réessayer (jamais « Bravo ! »).
+  await expect(page.getByTestId('reading-celebration')).toHaveCount(0);
+  await expect.poll(async () => (await spokenTexts(page)).at(-1)).toBe('On réessaie !');
   await finishEnd(page);
   await expect(page.getByTestId('reading-level-1')).toHaveAttribute('data-state', 'current');
   await expect(page.getByTestId('reading-level-2')).toHaveAttribute('data-state', 'locked');
